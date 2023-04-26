@@ -1,1 +1,6 @@
 /target
+**/*.rs.bk
+.vscode
+
+# Refactor
+src-old/

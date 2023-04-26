@@ -1,31 +1,15 @@
 [package]
-name = "rustic-rs"
-version = "0.5.3"
+name = "rustic_core"
+version = "0.1.0"
+edition = "2021"
 description = """
 fast, encrypted, deduplicated backups powered by Rust
 """
 authors = ["Alexander Weiss"]
-edition = "2021"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
-documentation = "https://docs.rs/rustic-rs"
-repository = "https://github.com/rustic-rs/rustic"
-keywords = ["backup", "restic", "deduplication", "encryption", "cli"]
-categories = ["command-line-utilities"]
-
-[workspace]
-members = ["crates/rustic_core"]
-
-[[bin]]
-name = "rustic"
-path = "src/bin/rustic.rs"
-test = true
-bench = true
-doc = true
-harness = true
-edition = "2021"
-#required-features = []  
-
+keywords = ["backup", "restic", "deduplication", "encryption"]
+# categories = []
 
 [lib]
 path = "src/lib.rs"
@@ -40,12 +24,14 @@ edition = "2021"
 strip = true
 
 [dependencies]
-# macros
-anyhow = "1"
+# errors
+displaydoc = "0.2.3"
 thiserror = "1"
+
+# macros
 derive_more = "0.99"
 derivative = "2"
-lazy_static = "1"
+lazy_static = "1"    # TODO: once_cell?
 log = "0.4"
 # parallelize
 crossbeam-channel = "0.5"
@@ -98,38 +84,6 @@ semver = "1"
 # cache
 dirs = "5"
 cachedir = "0.3"
-# commands
-clap = { version = "4", features = ["derive", "env", "wrap_help"] }
-clap_complete = "4"
-directories = "5"
-nom = "7"
-toml = "0.7"
-merge = "0.1"
-rpassword = "7"
-bytesize = "1"
-indicatif = "0.17"
-path-dedot = "3"
-dunce = "1"
-gethostname = "0.4"
-humantime = "2"
-itertools = "0.10"
-simplelog = "0.12"
-comfy-table = "6.1.4"
-libc = "0.2"
-rhai = { version = "1.13", features = [
-    "sync",
-    "serde",
-    "no_optimize",
-    "no_module",
-    "no_custom_syntax",
-    "only_i64",
-] }
-
-[dependencies.abscissa_core]
-version = "0.7.0"
-# optional: use `gimli` to capture backtraces
-# see https://github.com/rust-lang/backtrace-rs/issues/189
-# features = ["gimli-backtrace"]
 
 [target.'cfg(not(windows))'.dependencies]
 sha2 = { version = "0.10", features = ["asm"] }
@@ -146,5 +100,3 @@ xattr = "1"
 rstest = "0.17"
 quickcheck = "1"
 quickcheck_macros = "1"
-abscissa_core = { version = "0.7.0", features = ["testing"] }
-once_cell = "1.2"

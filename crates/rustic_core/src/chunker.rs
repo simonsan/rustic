@@ -1,6 +1,5 @@
 use std::io::{self, Read};
 
-use anyhow::{anyhow, Result};
 use rand::{thread_rng, Rng};
 
 pub use crate::cdc::Rabin64;
