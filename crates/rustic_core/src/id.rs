@@ -1,17 +1,20 @@
-use std::fmt;
-use std::ops::Deref;
-use std::path::Path;
+use std::{fmt, ops::Deref, path::Path};
 
 use binrw::{BinRead, BinWrite};
 use derive_more::{Constructor, Display};
 use rand::{thread_rng, RngCore};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
-const LEN: usize = 32;
-const HEX_LEN: usize = LEN * 2;
+use crate::{error::IdErrorKind, RusticResult};
+
+pub(super) mod constants {
+    pub(super) const LEN: usize = 32;
+    pub(super) const HEX_LEN: usize = LEN * 2;
+}
 
 #[derive(
+    Serialize,
+    Deserialize,
     Clone,
     Copy,
     Default,
@@ -21,8 +24,6 @@ const HEX_LEN: usize = LEN * 2;
     PartialOrd,
     Ord,
     Constructor,
-    Serialize,
-    Deserialize,
     BinWrite,
     BinRead,
     Display,
@@ -31,31 +32,26 @@ const HEX_LEN: usize = LEN * 2;
 pub struct Id(
     #[serde(serialize_with = "hex::serde::serialize")]
     #[serde(deserialize_with = "hex::serde::deserialize")]
-    [u8; LEN],
+    [u8; constants::LEN],
 );
 
-/// [`IdError`] describes the errors that can be returned by processing IDs
-#[derive(Error, Debug)]
-pub enum IdError {
-    #[error("Hex decoding error")]
-    HexError(#[from] hex::FromHexError),
-}
-
 impl Id {
-    pub fn from_hex(s: &str) -> Result<Self, IdError> {
+    pub fn from_hex(s: &str) -> RusticResult<Self> {
         let mut id = Self::default();
 
-        hex::decode_to_slice(s, &mut id.0).map_err(IdError::HexError)?;
+        hex::decode_to_slice(s, &mut id.0).map_err(IdErrorKind::HexError)?;
 
         Ok(id)
     }
 
+    #[must_use]
     pub fn random() -> Self {
         let mut id = Self::default();
         thread_rng().fill_bytes(&mut id.0);
         id
     }
 
+    #[must_use]
     pub fn to_hex(self) -> HexId {
         let mut hex_id = HexId::EMPTY;
         // HexId's len is LEN * 2
@@ -63,22 +59,23 @@ impl Id {
         hex_id
     }
 
+    #[must_use]
     pub fn is_null(&self) -> bool {
-        self == &Id::default()
+        self == &Self::default()
     }
 }
 
 impl fmt::Debug for Id {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", &*self.to_hex())
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct HexId([u8; HEX_LEN]);
+#[derive(Copy, Clone, Debug)]
+pub struct HexId([u8; constants::HEX_LEN]);
 
 impl HexId {
-    const EMPTY: Self = Self([b'0'; HEX_LEN]);
+    const EMPTY: Self = Self([b'0'; constants::HEX_LEN]);
 
     pub fn as_str(&self) -> &str {
         // This is only ever filled with hex chars, which are ascii

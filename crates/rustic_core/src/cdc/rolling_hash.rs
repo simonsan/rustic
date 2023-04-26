@@ -1,6 +1,6 @@
-use super::{Polynom, Polynom64};
+use crate::cdc::polynom::{Polynom, Polynom64};
 
-pub trait RollingHash64 {
+pub(crate) trait RollingHash64 {
     fn reset(&mut self);
     fn prefill_window<I>(&mut self, iter: &mut I) -> usize
     where
@@ -13,24 +13,24 @@ pub trait RollingHash64 {
 }
 
 #[derive(Clone)]
-pub struct Rabin64 {
+pub(crate) struct Rabin64 {
     // Configuration
-    window_size: usize, // The size of the data window used in the hash calculation.
-    window_size_mask: usize, // = window_size - 1, supposing that it is an exponent of 2.
+    pub(crate) window_size: usize, // The size of the data window used in the hash calculation.
+    pub(crate) window_size_mask: usize, // = window_size - 1, supposing that it is an exponent of 2.
 
     // Precalculations
-    polynom_shift: i32,
-    out_table: [Polynom64; 256],
-    mod_table: [Polynom64; 256],
+    pub(crate) polynom_shift: i32,
+    pub(crate) out_table: [Polynom64; 256],
+    pub(crate) mod_table: [Polynom64; 256],
 
     // Current state
-    window_data: Vec<u8>,
-    window_index: usize,
-    pub hash: Polynom64,
+    pub(crate) window_data: Vec<u8>,
+    pub(crate) window_index: usize,
+    pub(crate) hash: Polynom64,
 }
 
 impl Rabin64 {
-    pub fn calculate_out_table(window_size: usize, mod_polynom: Polynom64) -> [Polynom64; 256] {
+    fn calculate_out_table(window_size: usize, mod_polynom: Polynom64) -> [Polynom64; 256] {
         let mut out_table = [0; 256];
         for (b, elem) in out_table.iter_mut().enumerate() {
             let mut hash = (b as Polynom64).modulo(mod_polynom);
@@ -44,7 +44,7 @@ impl Rabin64 {
         out_table
     }
 
-    pub fn calculate_mod_table(mod_polynom: Polynom64) -> [Polynom64; 256] {
+    fn calculate_mod_table(mod_polynom: Polynom64) -> [Polynom64; 256] {
         let mut mod_table = [0; 256];
         let k = mod_polynom.degree();
         for (b, elem) in mod_table.iter_mut().enumerate() {
@@ -55,12 +55,12 @@ impl Rabin64 {
         mod_table
     }
 
-    pub fn new_with_polynom(window_size_nb_bits: u32, mod_polynom: Polynom64) -> Rabin64 {
+    pub(crate) fn new_with_polynom(window_size_nb_bits: u32, mod_polynom: Polynom64) -> Self {
         let window_size = 1 << window_size_nb_bits;
 
         let window_data = vec![0; window_size];
 
-        Rabin64 {
+        Self {
             window_size,
             window_size_mask: window_size - 1,
             polynom_shift: mod_polynom.degree() - 8,

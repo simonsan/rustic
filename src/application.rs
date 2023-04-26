@@ -1,18 +1,26 @@
-//! RusticRs Abscissa Application
+//! Rustic Abscissa Application
+use std::fs::File;
+use std::str::FromStr;
 
-use crate::{commands::EntryPoint, config::RusticConfig};
 use abscissa_core::{
     application::{self, AppCell},
     config::{self, CfgCell},
-    trace, Application, FrameworkError, StandardPaths,
+    terminal::{component::Terminal, ColorChoice},
+    Application, Component, FrameworkError, FrameworkErrorKind, StandardPaths,
 };
 
-/// Application state
-pub static APP: AppCell<RusticRsApp> = AppCell::new();
+use anyhow::Result;
+use simplelog::{CombinedLogger, LevelFilter, TermLogger, TerminalMode, WriteLogger};
 
-/// RusticRs Application
+// use crate::helpers::*;
+use crate::{commands::EntryPoint, config::RusticConfig};
+
+/// Application state
+pub static RUSTIC_APP: AppCell<RusticApp> = AppCell::new();
+
+/// Rustic Application
 #[derive(Debug)]
-pub struct RusticRsApp {
+pub struct RusticApp {
     /// Application configuration.
     config: CfgCell<RusticConfig>,
 
@@ -24,7 +32,7 @@ pub struct RusticRsApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for RusticRsApp {
+impl Default for RusticApp {
     fn default() -> Self {
         Self {
             config: CfgCell::default(),
@@ -33,7 +41,7 @@ impl Default for RusticRsApp {
     }
 }
 
-impl Application for RusticRsApp {
+impl Application for RusticApp {
     /// Entrypoint command for this application.
     type Cmd = EntryPoint;
 
@@ -51,6 +59,17 @@ impl Application for RusticRsApp {
     /// Borrow the application state immutably.
     fn state(&self) -> &application::State<Self> {
         &self.state
+    }
+
+    /// Returns the framework components used by this application.
+    fn framework_components(
+        &mut self,
+        command: &Self::Cmd,
+    ) -> Result<Vec<Box<dyn Component<Self>>>, FrameworkError> {
+        // we only ue the terminal component
+        let terminal = Terminal::new(self.term_colors(command));
+
+        Ok(vec![Box::new(terminal)])
     }
 
     /// Register all components used by this application.
@@ -71,18 +90,45 @@ impl Application for RusticRsApp {
     /// possible.
     fn after_config(&mut self, config: Self::Cfg) -> Result<(), FrameworkError> {
         // Configure components
-        let mut components = self.state.components_mut();
-        components.after_config(&config)?;
-        self.config.set_once(config);
-        Ok(())
-    }
+        self.state.components_mut().after_config(&config)?;
 
-    /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint) -> trace::Config {
-        if command.verbose {
-            trace::Config::verbose()
-        } else {
-            trace::Config::default()
+        // start logger
+        let level_filter = match &config.global.log_level {
+            Some(level) => LevelFilter::from_str(level)
+                .map_err(|e| FrameworkErrorKind::ConfigError.context(e))?,
+            None => LevelFilter::Info,
+        };
+        match &config.global.log_file {
+            None => TermLogger::init(
+                level_filter,
+                simplelog::ConfigBuilder::new()
+                    .set_time_level(LevelFilter::Off)
+                    .build(),
+                TerminalMode::Stderr,
+                ColorChoice::Auto,
+            )
+            .map_err(|e| FrameworkErrorKind::ConfigError.context(e))?,
+
+            Some(file) => CombinedLogger::init(vec![
+                TermLogger::new(
+                    level_filter.max(LevelFilter::Warn),
+                    simplelog::ConfigBuilder::new()
+                        .set_time_level(LevelFilter::Off)
+                        .build(),
+                    TerminalMode::Stderr,
+                    ColorChoice::Auto,
+                ),
+                WriteLogger::new(
+                    level_filter,
+                    simplelog::Config::default(),
+                    File::options().create(true).append(true).open(file)?,
+                ),
+            ])
+            .map_err(|e| FrameworkErrorKind::ConfigError.context(e))?,
         }
+
+        self.config.set_once(config);
+
+        Ok(())
     }
 }

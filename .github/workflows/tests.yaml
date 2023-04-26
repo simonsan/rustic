@@ -27,14 +27,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
-          command: test
-      - name: Cargo build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          toolchain: stable
-          args: --release
-      - name: Running bats tests
-        shell: bash
-        run: |
-          ./test-bats/run-tests.sh
+          command: test -r --all-targets --all-features --workspace

@@ -85,13 +85,20 @@ jobs:
       - name: Set Version
         shell: bash
         run: echo "PROJECT_VERSION=$(git describe --tags)" >> $GITHUB_ENV
+      - name: Install cargo auditable
+        uses: actions-rs/cargo@v1
+        with:
+          command: install 
+          use-cross: ${{ matrix.job.use-cross }}
+          toolchain: ${{ matrix.rust }}
+          args: cargo-auditable
       - name: Cargo build
         uses: actions-rs/cargo@v1
         with:
-          command: build
+          command: auditable
           use-cross: ${{ matrix.job.use-cross }}
           toolchain: ${{ matrix.rust }}
-          args: --release --target ${{ matrix.job.target }}
+          args: build --release --target ${{ matrix.job.target }}
 
       - name: Packaging final binary
         if: ${{ !contains(github.ref_name, '/') }}

@@ -2,22 +2,31 @@ use std::io::{self, Read};
 
 use rand::{thread_rng, Rng};
 
-pub use crate::cdc::Rabin64;
-use crate::cdc::{Polynom, Polynom64, RollingHash64};
+use crate::{
+    cdc::{
+        polynom::{Polynom, Polynom64},
+        rolling_hash::{Rabin64, RollingHash64},
+    },
+    error::PolynomialErrorKind,
+    RusticResult,
+};
 
-const SPLITMASK: u64 = (1u64 << 20) - 1;
-const KB: usize = 1024;
-const MB: usize = 1024 * KB;
-const MIN_SIZE: usize = 512 * KB;
-const MAX_SIZE: usize = 8 * MB;
-const BUF_SIZE: usize = 64 * KB;
-
-#[inline]
-fn default_predicate(x: u64) -> bool {
-    (x & SPLITMASK) == 0
+pub(super) mod constants {
+    pub(super) const SPLITMASK: u64 = (1u64 << 20) - 1;
+    pub(super) const KB: usize = 1024;
+    pub(super) const MB: usize = 1024 * KB;
+    pub(super) const MIN_SIZE: usize = 512 * KB;
+    pub(super) const MAX_SIZE: usize = 8 * MB;
+    pub(super) const BUF_SIZE: usize = 64 * KB;
+    pub(super) const RAND_POLY_MAX_TRIES: i32 = 1_000_000;
 }
 
-pub struct ChunkIter<R: Read + Send> {
+#[inline]
+const fn default_predicate(x: u64) -> bool {
+    (x & constants::SPLITMASK) == 0
+}
+
+pub(crate) struct ChunkIter<R: Read + Send> {
     buf: Vec<u8>,
     pos: usize,
     reader: R,
@@ -30,16 +39,16 @@ pub struct ChunkIter<R: Read + Send> {
 }
 
 impl<R: Read + Send> ChunkIter<R> {
-    pub fn new(reader: R, size_hint: usize, rabin: Rabin64) -> Self {
+    pub(crate) fn new(reader: R, size_hint: usize, rabin: Rabin64) -> Self {
         Self {
-            buf: Vec::with_capacity(4 * KB),
+            buf: Vec::with_capacity(4 * constants::KB),
             pos: 0,
             reader,
             predicate: default_predicate,
             rabin,
             size_hint, // size hint is used to optimize memory allocation; this should be an upper bound on the size
-            min_size: MIN_SIZE,
-            max_size: MAX_SIZE,
+            min_size: constants::MIN_SIZE,
+            max_size: constants::MAX_SIZE,
             finished: false,
         }
     }
@@ -81,7 +90,8 @@ impl<R: Read + Send> Iterator for ChunkIter<R> {
             return if vec.is_empty() { None } else { Some(Ok(vec)) };
         }
 
-        self.rabin
+        _ = self
+            .rabin
             .reset_and_prefill_window(&mut vec[vec.len() - 64..vec.len()].iter().copied());
 
         loop {
@@ -95,7 +105,7 @@ impl<R: Read + Send> Iterator for ChunkIter<R> {
 
             if self.buf.len() == self.pos {
                 // TODO: use a possibly uninitialized buffer here
-                self.buf.resize(BUF_SIZE, 0);
+                self.buf.resize(constants::BUF_SIZE, 0);
                 match self.reader.read(&mut self.buf[..]) {
                     Ok(0) => {
                         self.finished = true;
@@ -129,10 +139,8 @@ impl<R: Read + Send> Iterator for ChunkIter<R> {
 /// `F_2[X]`, c.f. Michael O. Rabin (1981): "Fingerprinting by Random
 /// Polynomials", page 4. If no polynomial could be found in one
 /// million tries, an error is returned.
-pub fn random_poly() -> Result<u64> {
-    const RAND_POLY_MAX_TRIES: i32 = 1_000_000;
-
-    for _ in 0..RAND_POLY_MAX_TRIES {
+pub fn random_poly() -> RusticResult<u64> {
+    for _ in 0..constants::RAND_POLY_MAX_TRIES {
         let mut poly: u64 = thread_rng().gen();
 
         // mask away bits above bit 53
@@ -146,10 +154,10 @@ pub fn random_poly() -> Result<u64> {
             return Ok(poly);
         }
     }
-    Err(anyhow!("no suitable polynomial found"))
+    Err(PolynomialErrorKind::NoSuitablePolynomialFound.into())
 }
 
-trait PolynomExtend {
+pub(crate) trait PolynomExtend {
     fn irreducible(&self) -> bool;
     fn gcd(self, other: Self) -> Self;
     fn add(self, other: Self) -> Self;
@@ -198,7 +206,7 @@ impl PolynomExtend for Polynom64 {
             return 0;
         }
 
-        let mut res: Polynom64 = 0;
+        let mut res: Self = 0;
         let mut a = self;
         let mut b = other;
 
@@ -247,8 +255,7 @@ mod tests {
         let rabin = Rabin64::new_with_polynom(6, poly);
         let chunker = ChunkIter::new(&mut reader, 0, rabin);
 
-        let chunks: Vec<_> = chunker.into_iter().collect();
-        assert_eq!(0, chunks.len());
+        assert_eq!(0, chunker.into_iter().count());
     }
 
     #[test]
@@ -260,8 +267,7 @@ mod tests {
         let rabin = Rabin64::new_with_polynom(6, poly);
         let chunker = ChunkIter::new(&mut reader, 100, rabin);
 
-        let chunks: Vec<_> = chunker.into_iter().collect();
-        assert_eq!(0, chunks.len());
+        assert_eq!(0, chunker.into_iter().count());
     }
 
     #[test]
@@ -273,6 +279,6 @@ mod tests {
         let mut chunker = ChunkIter::new(&mut reader, usize::MAX, rabin);
 
         let chunk = chunker.next().unwrap().unwrap();
-        assert_eq!(MIN_SIZE, chunk.len());
+        assert_eq!(constants::MIN_SIZE, chunk.len());
     }
 }

@@ -1,52 +1,135 @@
-//! RusticRs Subcommands
-//!
-//! This is where you specify the subcommands of your application.
-//!
-//! The default application comes with two subcommands:
-//!
-//! - `start`: launches the application
-//! - `--version`: print application version
-//!
-//! See the `impl Configurable` below for how to specify the path to the
-//! application's configuration file.
+//! Rustic Subcommands
 
-mod start;
+pub(crate) mod backup;
+pub(crate) mod cat;
+pub(crate) mod check;
+pub(crate) mod completions;
+pub(crate) mod config;
+pub(crate) mod copy;
+pub(crate) mod diff;
+pub(crate) mod dump;
+pub(crate) mod forget;
+pub(crate) mod init;
+pub(crate) mod key;
+pub(crate) mod list;
+pub(crate) mod ls;
+pub(crate) mod merge;
+pub(crate) mod prune;
+pub(crate) mod repair;
+pub(crate) mod repoinfo;
+pub(crate) mod restore;
+pub(crate) mod self_update;
+pub(crate) mod show_config;
+pub(crate) mod snapshots;
+pub(crate) mod tag;
 
-use self::start::StartCmd;
-use crate::config::RusticConfig;
-use abscissa_core::{config::Override, Command, Configurable, FrameworkError, Runnable};
 use std::path::PathBuf;
+use std::sync::Arc;
 
-/// RusticRs Configuration Filename
-pub const CONFIG_FILE: &str = "rustic_rs.toml";
+use crate::{
+    commands::{
+        backup::BackupCmd, cat::CatCmd, check::CheckCmd, completions::CompletionsCmd,
+        config::ConfigCmd, copy::CopyCmd, diff::DiffCmd, dump::DumpCmd, forget::ForgetCmd,
+        init::InitCmd, key::KeyCmd, list::ListCmd, ls::LsCmd, merge::MergeCmd, prune::PruneCmd,
+        repair::RepairCmd, repoinfo::RepoInfoCmd, restore::RestoreCmd, self_update::SelfUpdateCmd,
+        show_config::ShowConfigCmd, snapshots::SnapshotCmd, tag::TagCmd,
+    },
+    config::RusticConfig,
+    {Application, RUSTIC_APP},
+};
 
-/// RusticRs Subcommands
+use abscissa_core::{
+    config::Override, status_err, Command, Configurable, FrameworkError, Runnable, Shutdown,
+};
+use rustic_core::{OpenRepository, Repository};
+
+/// Rustic Subcommands
 /// Subcommands need to be listed in an enum.
 #[derive(clap::Parser, Command, Debug, Runnable)]
-pub enum RusticCmd {
-    /// The `start` subcommand
-    Start(StartCmd),
+enum RusticCmd {
+    /// Backup to the repository
+    Backup(BackupCmd),
+
+    /// Show raw data of repository files and blobs
+    Cat(CatCmd),
+
+    /// Change the repository configuration
+    Config(ConfigCmd),
+
+    /// Generate shell completions
+    Completions(CompletionsCmd),
+
+    /// Check the repository
+    Check(CheckCmd),
+
+    /// Copy snapshots to other repositories. Note: The target repositories must be given in the config file!
+    Copy(CopyCmd),
+
+    /// Compare two snapshots/paths
+    /// Note that the exclude options only apply for comparison with a local path
+    Diff(DiffCmd),
+
+    /// dump the contents of a file in a snapshot to stdout
+    Dump(DumpCmd),
+
+    /// Remove snapshots from the repository
+    Forget(ForgetCmd),
+
+    /// Initialize a new repository
+    Init(InitCmd),
+
+    /// Manage keys
+    Key(KeyCmd),
+
+    /// List repository files
+    List(ListCmd),
+
+    /// List file contents of a snapshot
+    Ls(LsCmd),
+
+    /// Merge snapshots
+    Merge(MergeCmd),
+
+    /// Show a detailed overview of the snapshots within the repository
+    Snapshots(SnapshotCmd),
+
+    /// Show the configuration which has been read from the config file(s)
+    ShowConfig(ShowConfigCmd),
+
+    /// Update to the latest rustic release
+    SelfUpdate(SelfUpdateCmd),
+
+    /// Remove unused data or repack repository pack files
+    Prune(PruneCmd),
+
+    /// Restore a snapshot/path
+    Restore(RestoreCmd),
+
+    /// Repair a snapshot/path
+    Repair(RepairCmd),
+
+    /// Show general information about the repository
+    Repoinfo(RepoInfoCmd),
+
+    /// Change tags of snapshots
+    Tag(TagCmd),
 }
 
 /// Entry point for the application. It needs to be a struct to allow using subcommands!
 #[derive(clap::Parser, Command, Debug)]
-#[command(author, about, version)]
+#[command(author, about, name="rustic", version = option_env!("PROJECT_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
 pub struct EntryPoint {
+    #[command(flatten)]
+    pub config: RusticConfig,
+
     #[command(subcommand)]
-    cmd: RusticCmd,
-
-    /// Enable verbose logging
-    #[arg(short, long)]
-    pub verbose: bool,
-
-    /// Use the specified config file
-    #[arg(short, long)]
-    pub config: Option<String>,
+    commands: RusticCmd,
 }
 
 impl Runnable for EntryPoint {
     fn run(&self) {
-        self.cmd.run()
+        self.commands.run();
+        RUSTIC_APP.shutdown(Shutdown::Graceful)
     }
 }
 
@@ -54,34 +137,60 @@ impl Runnable for EntryPoint {
 impl Configurable<RusticConfig> for EntryPoint {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
-        // Check if the config file exists, and if it does not, ignore it.
-        // If you'd like for a missing configuration file to be a hard error
-        // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = self
-            .config
-            .as_ref()
-            .map(PathBuf::from)
-            .unwrap_or_else(|| CONFIG_FILE.into());
-
-        if filename.exists() {
-            Some(filename)
-        } else {
-            None
-        }
+        // Actually abscissa itself reads a config from `config_path`, but I have now returned None,
+        // i.e. no config is read.
+        None
     }
 
     /// Apply changes to the config after it's been loaded, e.g. overriding
     /// values in a config file using command-line options.
-    ///
-    /// This can be safely deleted if you don't want to override config
-    /// settings from command-line options.
-    fn process_config(&self, config: RusticConfig) -> Result<RusticConfig, FrameworkError> {
-        match &self.cmd {
-            RusticCmd::Start(cmd) => cmd.override_config(config),
-            //
-            // If you don't need special overrides for some
-            // subcommands, you can just use a catch all
-            // _ => Ok(config),
+    fn process_config(&self, _config: RusticConfig) -> Result<RusticConfig, FrameworkError> {
+        // Note: The config that is "not read" is then read here in `process_config()` by the
+        // rustic logic and merged with the CLI options.
+        // That's why it says `_config`, because it's not read at all and therefore not needed.
+        let mut config = self.config.clone();
+        if config.global.use_profile.is_empty() {
+            config.global.use_profile.push("rustic".to_string());
+        }
+
+        // get global options from command line / env and config file
+        for profile in &config.global.use_profile.clone() {
+            config.merge_profile(profile)?;
+        }
+
+        match &self.commands {
+            RusticCmd::Forget(cmd) => cmd.override_config(config),
+
+            // subcommands that don't need special overrides use a catch all
+            _ => Ok(config),
         }
     }
+}
+
+fn open_repository(repo: Repository) -> OpenRepository {
+    match repo.open() {
+        Ok(it) => it,
+        Err(err) => {
+            status_err!("{}", err);
+            RUSTIC_APP.shutdown(Shutdown::Crash);
+        }
+    }
+}
+
+fn get_repository(config: &Arc<RusticConfig>) -> Repository {
+    match Repository::new(&config.repository) {
+        Ok(it) => it,
+        Err(err) => {
+            status_err!("{}", err);
+            RUSTIC_APP.shutdown(Shutdown::Crash);
+        }
+    }
+}
+
+#[test]
+fn verify_cli() {
+    use crate::commands::EntryPoint;
+    use clap::CommandFactory;
+
+    EntryPoint::command().debug_assert();
 }

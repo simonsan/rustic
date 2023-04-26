@@ -1,10 +1,10 @@
 // The irreductible polynom to be used in the fingerprint function.
-pub trait Polynom {
+pub(crate) trait Polynom {
     fn degree(&self) -> i32;
     fn modulo(self, m: Self) -> Self;
 }
 
-pub type Polynom64 = u64;
+pub(crate) type Polynom64 = u64;
 
 impl Polynom for Polynom64 {
     // The degree of the polynom.

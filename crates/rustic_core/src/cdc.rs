@@ -1,5 +1,2 @@
-mod polynom;
-mod rolling_hash;
-
-pub use polynom::{Polynom, Polynom64};
-pub use rolling_hash::{Rabin64, RollingHash64};
+pub(crate) mod polynom;
+pub(crate) mod rolling_hash;
