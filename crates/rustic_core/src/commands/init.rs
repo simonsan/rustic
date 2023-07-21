@@ -3,8 +3,8 @@
 use log::info;
 
 use crate::{
-    chunker::random_poly, commands::config::save_config, ConfigFile, ConfigOpts, Id, Key, KeyOpts,
-    Repository, RusticResult, WriteBackend,
+    backend::WriteBackend, chunker::random_poly, commands::config::save_config, ConfigFile,
+    ConfigOpts, Id, Key, KeyOpts, Repository, RusticResult,
 };
 
 pub(crate) fn init<P, S>(

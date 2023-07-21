@@ -6,8 +6,8 @@ use rayon::ThreadPoolBuilder;
 
 use super::parse_command;
 use crate::{
-    error::RepositoryErrorKind, FileType, Id, Progress, ProgressBars, ReadBackend, Repository,
-    RusticResult,
+    backend::ReadBackend, error::RepositoryErrorKind, FileType, Id, Progress, ProgressBars,
+    Repository, RusticResult,
 };
 
 pub(super) mod constants {

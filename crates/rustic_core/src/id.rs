@@ -5,7 +5,7 @@ use derive_more::{Constructor, Display};
 use rand::{thread_rng, RngCore};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::IdErrorKind, hash, RusticResult};
+use crate::{crypto::hasher::hash, error::IdErrorKind, RusticResult};
 
 pub(super) mod constants {
     pub(super) const LEN: usize = 32;

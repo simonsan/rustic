@@ -1,7 +1,7 @@
 //! `key` subcommand
 use crate::{
-    error::CommandErrorKind, hash, FileType, Id, Key, KeyFile, Open, Repository, RusticResult,
-    WriteBackend,
+    backend::WriteBackend, crypto::hasher::hash, error::CommandErrorKind, FileType, Id, Key,
+    KeyFile, Open, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

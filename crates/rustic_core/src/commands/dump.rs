@@ -2,8 +2,9 @@ use std::io::Write;
 
 use crate::{
     error::CommandErrorKind,
+    index::IndexedBackend,
     repository::{IndexedFull, IndexedTree, Repository},
-    BlobType, IndexedBackend, Node, NodeType, RusticResult,
+    BlobType, Node, NodeType, RusticResult,
 };
 
 pub(crate) fn dump<P, S: IndexedFull>(

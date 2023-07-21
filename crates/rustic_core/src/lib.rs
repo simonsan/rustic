@@ -103,17 +103,14 @@ pub(crate) use crate::crypto::aespoly1305::Key;
 // rustic_core Public API
 pub use crate::{
     backend::{
-        decrypt::{DecryptReadBackend, DecryptWriteBackend},
         ignore::{LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions},
         local::LocalDestination,
         node::{latest_node, Node, NodeType},
-        stdin::StdinSource,
-        FileType, ReadBackend, ReadSourceEntry, WriteBackend, ALL_FILE_TYPES,
+        FileType, ReadSourceEntry, ALL_FILE_TYPES,
     },
     blob::{
-        packer::Packer,
-        tree::{NodeStreamer, Tree, TreeStreamerOnce, TreeStreamerOptions},
-        BlobType, BlobTypeMap, Initialize, Sum,
+        tree::{Tree, TreeStreamerOptions},
+        BlobType, Sum,
     },
     commands::{
         backup::{BackupOpts, ParentOpts},
@@ -127,10 +124,8 @@ pub use crate::{
         repoinfo::{BlobInfo, IndexInfos, PackInfo, RepoFileInfo, RepoFileInfos},
         restore::{FileDirStats, RestoreInfos, RestoreOpts, RestoreStats},
     },
-    crypto::hasher::hash,
     error::{RusticError, RusticResult},
     id::Id,
-    index::{indexer::Indexer, IndexBackend, IndexedBackend, ReadIndex},
     progress::{NoProgress, NoProgressBars, Progress, ProgressBars},
     repofile::{
         configfile::ConfigFile,

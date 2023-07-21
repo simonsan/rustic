@@ -165,7 +165,7 @@ impl<BE> NodeStreamer<BE>
 where
     BE: IndexedBackend,
 {
-    pub fn new(be: BE, node: &Node) -> RusticResult<Self> {
+    fn new(be: BE, node: &Node) -> RusticResult<Self> {
         Self::new_streamer(be, node, None, true)
     }
 

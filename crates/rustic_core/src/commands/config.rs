@@ -2,8 +2,9 @@
 use bytesize::ByteSize;
 
 use crate::{
-    backend::decrypt::DecryptBackend, error::CommandErrorKind, ConfigFile, DecryptWriteBackend,
-    Key, Open, Repository, RusticResult,
+    backend::decrypt::{DecryptBackend, DecryptWriteBackend},
+    error::CommandErrorKind,
+    ConfigFile, Key, Open, Repository, RusticResult,
 };
 
 pub(crate) fn apply_config<P, S: Open>(

@@ -4,9 +4,14 @@ use log::{debug, info, warn};
 use std::collections::HashMap;
 
 use crate::{
-    error::CommandErrorKind, DecryptReadBackend, DecryptWriteBackend, FileType, IndexFile,
-    IndexPack, Indexer, Open, PackHeader, PackHeaderRef, Progress, ProgressBars, ReadBackend,
-    Repository, RusticResult, WriteBackend,
+    backend::{
+        decrypt::{DecryptReadBackend, DecryptWriteBackend},
+        ReadBackend, WriteBackend,
+    },
+    error::CommandErrorKind,
+    index::indexer::Indexer,
+    FileType, IndexFile, IndexPack, Open, PackHeader, PackHeaderRef, Progress, ProgressBars,
+    Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

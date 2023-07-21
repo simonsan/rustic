@@ -32,6 +32,7 @@ use crate::{
         hotcold::HotColdBackend,
         FileType, ReadBackend,
     },
+    blob::tree::NodeStreamer,
     commands::{
         self,
         backup::BackupOpts,
@@ -46,14 +47,14 @@ use crate::{
     },
     crypto::aespoly1305::Key,
     error::{KeyFileErrorKind, RepositoryErrorKind, RusticErrorKind},
-    index::IndexEntry,
+    index::{IndexBackend, IndexEntry, IndexedBackend, ReadIndex},
     repofile::{
         configfile::ConfigFile, keyfile::find_key_in_backend, snapshotfile::SnapshotSummary,
         RepoFile,
     },
-    BlobType, Id, IndexBackend, IndexedBackend, LocalDestination, NoProgressBars, Node,
-    NodeStreamer, PathList, ProgressBars, PruneOpts, PrunePlan, ReadIndex, RusticResult,
-    SnapshotFile, SnapshotGroup, SnapshotGroupCriterion, Tree, TreeStreamerOptions,
+    BlobType, Id, LocalDestination, NoProgressBars, Node, PathList, ProgressBars, PruneOpts,
+    PrunePlan, RusticResult, SnapshotFile, SnapshotGroup, SnapshotGroupCriterion, Tree,
+    TreeStreamerOptions,
 };
 
 mod warm_up;
