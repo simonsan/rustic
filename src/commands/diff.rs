@@ -60,7 +60,7 @@ impl DiffCmd {
         _ = match (id1, id2) {
             (Some(id1), Some(id2)) => {
                 // diff between two snapshots
-                let snaps = repo.get_snapshots(&[id1.to_string(), id2.to_string()])?;
+                let snaps = repo.get_snapshots(&[id1, id2])?;
 
                 let snap1 = &snaps[0];
                 let snap2 = &snaps[1];

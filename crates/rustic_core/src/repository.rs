@@ -514,7 +514,7 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
         Ok(snap)
     }
 
-    pub fn get_snapshots(&self, ids: &[String]) -> RusticResult<Vec<SnapshotFile>> {
+    pub fn get_snapshots<T: AsRef<str>>(&self, ids: &[T]) -> RusticResult<Vec<SnapshotFile>> {
         let p = self.pb.progress_counter("getting snapshots...");
         SnapshotFile::from_ids(self.dbe(), ids, &p)
     }

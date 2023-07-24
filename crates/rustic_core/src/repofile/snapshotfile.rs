@@ -284,9 +284,9 @@ impl SnapshotFile {
     }
 
     /// Get a Vector of [`SnapshotFile`] from the backend by list of (parts of the) ids
-    pub fn from_ids<B: DecryptReadBackend>(
+    pub fn from_ids<B: DecryptReadBackend, T: AsRef<str>>(
         be: &B,
-        ids: &[String],
+        ids: &[T],
         p: &impl Progress,
     ) -> RusticResult<Vec<Self>> {
         let ids = be.find_ids(FileType::Snapshot, ids)?;
