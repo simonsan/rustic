@@ -10,7 +10,7 @@ use log::debug;
 
 use anyhow::Result;
 
-use rustic_core::{PruneOpts, PruneStats, Sum};
+use rustic_core::{PruneOptions, PruneStats, Sum};
 
 /// `prune` subcommand
 #[allow(clippy::struct_excessive_bools)]
@@ -18,7 +18,7 @@ use rustic_core::{PruneOpts, PruneStats, Sum};
 #[group(id = "prune_opts")]
 pub(crate) struct PruneCmd {
     #[clap(flatten)]
-    pub(crate) opts: PruneOpts,
+    pub(crate) opts: PruneOptions,
 }
 
 impl Runnable for PruneCmd {

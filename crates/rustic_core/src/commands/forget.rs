@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Datelike, Duration, Local, Timelike};
 use derivative::Derivative;
+use derive_setters::Setters;
 use serde::Deserialize;
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -13,22 +14,31 @@ use crate::{
 type CheckFunction = fn(&SnapshotFile, &SnapshotFile) -> bool;
 
 #[derive(Debug)]
+/// A newtype for `[Vec<ForgetGroup>]`
 pub struct ForgetGroups(pub Vec<ForgetGroup>);
 
 #[derive(Debug)]
+/// All snapshots of a group with group and forget information
 pub struct ForgetGroup {
+    /// The group
     pub group: SnapshotGroup,
+    /// The list of snapshots within this group
     pub snapshots: Vec<ForgetSnapshot>,
 }
 
 #[derive(Debug)]
+/// This struct enhances `[SnapshotFile]` with the attributes `keep` and `reasons` which indicates if the snapshot should be kept and why.
 pub struct ForgetSnapshot {
+    /// The snapshot
     pub snapshot: SnapshotFile,
+    /// Whether it should be kept
     pub keep: bool,
+    /// reason(s) for keeping / not keeping the snapshot
     pub reasons: Vec<String>,
 }
 
 impl ForgetGroups {
+    /// Turn `ForgetGroups` into the list of all snapshot IDs to remove.
     pub fn into_forget_ids(self) -> Vec<Id> {
         self.0
             .into_iter()
@@ -64,10 +74,12 @@ pub(crate) fn get_forget_snapshots<P: ProgressBars, S: Open>(
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[cfg_attr(feature = "merge", derive(merge::Merge))]
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Derivative, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Derivative, Deserialize, Setters)]
 #[derivative(Default)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
+#[setters(into)]
 #[non_exhaustive]
+/// Options which snapshots should be kept. Used by the `forget` command.
 pub struct KeepOptions {
     /// Keep snapshots with this taglist (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long, value_name = "TAG[,TAG,..]"))]
@@ -369,6 +381,7 @@ impl KeepOptions {
         reason
     }
 
+    /// Apply the `[KeepOptions]` to the given list of [`SnapshotFile`]s returning the corresponding list of [`ForgetSnapshot`]s
     pub fn apply(
         &self,
         mut snapshots: Vec<SnapshotFile>,

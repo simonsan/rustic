@@ -617,7 +617,7 @@ impl SnapshotGroup {
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// StringList is a rustic-internal list of Strings. It is used within [`SnapshotFile`]
-pub struct StringList(Vec<String>);
+pub struct StringList(pub(crate) Vec<String>);
 
 impl FromStr for StringList {
     type Err = RusticError;

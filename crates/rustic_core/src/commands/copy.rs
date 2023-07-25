@@ -14,10 +14,10 @@ use crate::{
 #[derive(Debug)]
 /// This struct enhances `[SnapshotFile]` with the attribute `relevant` which indicates if the snapshot is relevant for copying.
 pub struct CopySnapshot {
-    /// Shows if snapshot is relevant
-    pub relevant: bool,
     /// The snapshot
     pub sn: SnapshotFile,
+    /// Whether it is relevant
+    pub relevant: bool,
 }
 
 pub(crate) fn copy<'a, Q, R: IndexedFull, P: ProgressBars, S: IndexedIds>(

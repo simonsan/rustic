@@ -1,4 +1,5 @@
 //! `repair snapshots` subcommand
+use derive_setters::Setters;
 use log::{info, warn};
 
 use std::collections::{HashMap, HashSet};
@@ -13,25 +14,37 @@ use crate::{
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Default, Debug)]
+#[derive(Debug, Setters)]
+#[setters(into)]
+/// Options for the `repair snapshots` command
 pub struct RepairSnapshotsOptions {
     /// Also remove defect snapshots - WARNING: This can result in data loss!
     #[cfg_attr(feature = "clap", clap(long))]
-    delete: bool,
+    pub delete: bool,
 
     /// Append this suffix to repaired directory or file name
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "SUFFIX", default_value = ".repaired")
     )]
-    suffix: String,
+    pub suffix: String,
 
     /// Tag list to set on repaired snapshots (can be specified multiple times)
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "TAG[,TAG,..]", default_value = "repaired")
     )]
-    tag: Vec<StringList>,
+    pub tag: Vec<StringList>,
+}
+
+impl Default for RepairSnapshotsOptions {
+    fn default() -> Self {
+        Self {
+            delete: true,
+            suffix: ".repaired".to_string(),
+            tag: vec![StringList(vec!["repaired".to_string()])],
+        }
+    }
 }
 
 #[derive(Clone, Copy)]

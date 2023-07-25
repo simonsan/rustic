@@ -119,7 +119,7 @@ pub use crate::{
         copy::CopySnapshot,
         forget::{ForgetGroup, ForgetGroups, ForgetSnapshot, KeepOptions},
         key::KeyOptions,
-        prune::{PruneOpts, PrunePlan, PruneStats},
+        prune::{PruneOptions, PrunePlan, PruneStats},
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{BlobInfo, IndexInfos, PackInfo, RepoFileInfo, RepoFileInfos},
         restore::{FileDirStats, RestoreInfos, RestoreOpts, RestoreStats},

@@ -1,5 +1,6 @@
 //! `prune` subcommand
 
+use derive_setters::Setters;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use log::{info, warn};
@@ -40,12 +41,13 @@ pub(super) mod constants {
     pub(super) const MIN_INDEX_LEN: usize = 10_000;
 }
 
-/// `prune` subcommand
 #[allow(clippy::struct_excessive_bools)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Setters)]
 #[cfg_attr(feature = "clap", group(id = "prune_opts"))]
-pub struct PruneOpts {
+#[setters(into)]
+/// Options for the `prune` command
+pub struct PruneOptions {
     /// Define maximum data to repack in % of reposize or as size (e.g. '5b', '2 kB', '3M', '4TiB') or 'unlimited'
     #[cfg_attr(
         feature = "clap",
@@ -103,10 +105,14 @@ pub struct PruneOpts {
     pub no_resize: bool,
 
     #[cfg_attr(feature = "clap", clap(skip))]
+    /// Ignore these snapshots when looking for data-still-in-use.
+    ///
+    /// Warning: Use this option with care! If you specify snapshots which are not deleted, running the resulting `PrunePlan`
+    /// will remove data which is used within those snapshots!
     pub ignore_snaps: Vec<Id>,
 }
 
-impl Default for PruneOpts {
+impl Default for PruneOptions {
     fn default() -> Self {
         Self {
             max_repack: LimitOption::Unlimited,
@@ -124,7 +130,8 @@ impl Default for PruneOpts {
     }
 }
 
-impl PruneOpts {
+impl PruneOptions {
+    /// Get a `PrunePlan` from the given `PruneOptions`.
     pub fn get_plan<P: ProgressBars, S: Open>(
         &self,
         repo: &Repository<P, S>,
@@ -197,6 +204,7 @@ impl PruneOpts {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Enum to specify a size limit
 pub enum LimitOption {
     Size(ByteSize),
     Percentage(u64),
@@ -219,6 +227,7 @@ impl FromStr for LimitOption {
 }
 
 #[derive(Default, Debug, Clone, Copy)]
+/// Statistics about what is deleted or kept within `prune`
 pub struct DeleteStats {
     pub remove: u64,
     pub recover: u64,
@@ -231,14 +240,22 @@ impl DeleteStats {
     }
 }
 #[derive(Debug, Default, Clone, Copy)]
+/// Statistics about packs within `prune`
 pub struct PackStats {
+    /// # of used packs
     pub used: u64,
+    /// # of partly used packs
     pub partly_used: u64,
+    /// # of unused packs
     pub unused: u64, // this equals to packs-to-remove
+    /// # of packs-to-repack
     pub repack: u64,
+    /// # of packs-to-keep
     pub keep: u64,
 }
+
 #[derive(Debug, Default, Clone, Copy, Add)]
+/// Statistics about sizes within `prune`
 pub struct SizeStats {
     pub used: u64,
     pub unused: u64,
@@ -260,15 +277,25 @@ impl SizeStats {
 }
 
 #[derive(Default, Debug)]
+/// Statistics about a [`PrunePlan`]
 pub struct PruneStats {
+    /// statistics about pack count
     pub packs_to_delete: DeleteStats,
+    /// statistics about pack sizes
     pub size_to_delete: DeleteStats,
+    /// Statistics about current pack situation
     pub packs: PackStats,
+    /// Statistics about blobs in the repository
     pub blobs: BlobTypeMap<SizeStats>,
+    /// Statistics about total sizes of blobs in the repository
     pub size: BlobTypeMap<SizeStats>,
+    /// # of unreferenced pack files
     pub packs_unref: u64,
+    /// total size of unreferenced pack files
     pub size_unref: u64,
+    /// # of index files
     pub index_files: u64,
+    /// # of index files which will be rebuilt during the prune
     pub index_files_rebuild: u64,
 }
 
@@ -408,12 +435,14 @@ enum RepackReason {
 use RepackReason::{PartlyUsed, SizeMismatch, ToCompress};
 
 #[derive(Debug)]
+/// A plan what should be repacked or removed by a `prune` run
 pub struct PrunePlan {
     time: DateTime<Local>,
     used_ids: HashMap<Id, u8>,
     existing_packs: HashMap<Id, u32>,
     repack_candidates: Vec<(PackInfo, RepackReason, usize, usize)>,
     index_files: Vec<PruneIndex>,
+    /// `prune` statistics
     pub stats: PruneStats,
 }
 
@@ -748,6 +777,7 @@ impl PrunePlan {
         // repacks come at end
     }
 
+    /// Get the list of packs-to-repack from the [`PrunePlan`].
     pub fn repack_packs(&self) -> Vec<Id> {
         self.index_files
             .iter()
@@ -758,10 +788,11 @@ impl PrunePlan {
     }
 
     #[allow(clippy::significant_drop_tightening)]
+    /// Perform the pruning on the given repository.
     pub fn do_prune<P: ProgressBars, S: Open>(
         self,
         repo: &Repository<P, S>,
-        opts: &PruneOpts,
+        opts: &PruneOptions,
     ) -> RusticResult<()> {
         repo.warm_up_wait(self.repack_packs().into_iter())?;
         let be = repo.dbe();

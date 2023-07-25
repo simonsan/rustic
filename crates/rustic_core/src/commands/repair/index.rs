@@ -1,4 +1,5 @@
 //! `repair` index subcommand
+use derive_setters::Setters;
 use log::{debug, info, warn};
 
 use std::collections::HashMap;
@@ -15,11 +16,14 @@ use crate::{
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, Setters)]
+#[setters(into)]
+#[non_exhaustive]
+/// Options for the `repair index` command
 pub struct RepairIndexOptions {
     // Read all data packs, i.e. completely re-create the index
     #[cfg_attr(feature = "clap", clap(long))]
-    read_all: bool,
+    pub read_all: bool,
 }
 
 impl RepairIndexOptions {

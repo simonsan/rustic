@@ -52,7 +52,7 @@ use crate::{
         configfile::ConfigFile, keyfile::find_key_in_backend, snapshotfile::SnapshotSummary,
         RepoFile,
     },
-    BlobType, Id, LocalDestination, NoProgressBars, Node, PathList, ProgressBars, PruneOpts,
+    BlobType, Id, LocalDestination, NoProgressBars, Node, PathList, ProgressBars, PruneOptions,
     PrunePlan, RusticResult, SnapshotFile, SnapshotGroup, SnapshotGroupCriterion, Tree,
     TreeStreamerOptions,
 };
@@ -570,7 +570,7 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
         opts.run(self)
     }
 
-    pub fn prune_plan(&self, opts: &PruneOpts) -> RusticResult<PrunePlan> {
+    pub fn prune_plan(&self, opts: &PruneOptions) -> RusticResult<PrunePlan> {
         opts.get_plan(self)
     }
 
