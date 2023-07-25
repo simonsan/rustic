@@ -17,7 +17,7 @@ use merge::Merge;
 use serde::Deserialize;
 
 use rustic_core::{
-    BackupOpts, LocalSourceFilterOptions, LocalSourceSaveOptions, ParentOpts, PathList,
+    BackupOptions, LocalSourceFilterOptions, LocalSourceSaveOptions, ParentOptions, PathList,
     SnapshotOptions,
 };
 
@@ -58,7 +58,7 @@ pub struct BackupCmd {
 
     #[clap(flatten, next_help_heading = "Options for parent processing")]
     #[serde(flatten)]
-    parent_opts: ParentOpts,
+    parent_opts: ParentOptions,
 
     #[clap(flatten, next_help_heading = "Exclude options")]
     #[serde(flatten)]
@@ -170,15 +170,14 @@ impl BackupCmd {
             // merge "backup" section from config file, if given
             opts.merge(config.backup.clone());
 
-            let snap = SnapshotFile::from_options(&opts.snap_opts)?;
-            let backup_opts = BackupOpts {
-                stdin_filename: opts.stdin_filename,
-                as_path: opts.as_path,
-                parent_opts: opts.parent_opts,
-                ignore_save_opts: opts.ignore_save_opts,
-                ignore_filter_opts: opts.ignore_filter_opts,
-            };
-            let snap = repo.backup(&backup_opts, source.clone(), snap, config.global.dry_run)?;
+            let backup_opts = BackupOptions::default()
+                .stdin_filename(opts.stdin_filename)
+                .as_path(opts.as_path)
+                .parent_opts(opts.parent_opts)
+                .ignore_save_opts(opts.ignore_save_opts)
+                .ignore_filter_opts(opts.ignore_filter_opts)
+                .dry_run(config.global.dry_run);
+            let snap = repo.backup(&backup_opts, source.clone(), opts.snap_opts.to_snapshot()?)?;
 
             if opts.json {
                 let mut stdout = std::io::stdout();

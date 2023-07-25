@@ -1,5 +1,5 @@
 //! `backup` example
-use rustic_core::{BackupOpts, PathList, Repository, RepositoryOptions, SnapshotOptions};
+use rustic_core::{BackupOptions, PathList, Repository, RepositoryOptions, SnapshotOptions};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 use std::error::Error;
 
@@ -13,14 +13,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .password("test");
     let repo = Repository::new(&repo_opts)?.open()?.to_indexed_ids()?;
 
-    let backup_opts = BackupOpts::default();
-    let dry_run = false;
+    let backup_opts = BackupOptions::default();
     let source = PathList::from_string(".")?.sanitize()?;
     let snap = SnapshotOptions::default()
         .add_tags("tag1,tag2")?
         .to_snapshot()?;
 
-    let snap = repo.backup(&backup_opts, source, snap, dry_run)?;
+    let snap = repo.backup(&backup_opts, source, snap)?;
 
     println!("successfully created snapshot:\n{snap:#?}");
     Ok(())

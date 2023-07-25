@@ -35,7 +35,7 @@ use crate::{
     blob::tree::NodeStreamer,
     commands::{
         self,
-        backup::BackupOpts,
+        backup::BackupOptions,
         check::CheckOpts,
         config::ConfigOpts,
         copy::CopySnapshot,
@@ -763,12 +763,11 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
 impl<P: ProgressBars, S: IndexedIds> Repository<P, S> {
     pub fn backup(
         &self,
-        opts: &BackupOpts,
+        opts: &BackupOptions,
         source: PathList,
         snap: SnapshotFile,
-        dry_run: bool,
     ) -> RusticResult<SnapshotFile> {
-        commands::backup::backup(self, opts, source, snap, dry_run)
+        commands::backup::backup(self, opts, source, snap)
     }
 }
 

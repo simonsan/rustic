@@ -520,7 +520,8 @@ impl Ord for SnapshotFile {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(DeserializeFromStr, Clone, Debug, Copy)]
+#[derive(DeserializeFromStr, Clone, Debug, Copy, Setters)]
+#[setters(into)]
 #[non_exhaustive]
 /// [`SnapshotGroupCriterion`] determines how to group snapshots.
 pub struct SnapshotGroupCriterion {

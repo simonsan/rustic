@@ -6,18 +6,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde_with::{serde_as, DisplayFromStr};
-
 use bytesize::ByteSize;
 #[cfg(not(windows))]
 use cached::proc_macro::cached;
 #[cfg(not(windows))]
 use chrono::TimeZone;
 use chrono::{DateTime, Local, Utc};
+use derive_setters::Setters;
 use ignore::{overrides::OverrideBuilder, DirEntry, Walk, WalkBuilder};
 use log::warn;
 #[cfg(not(windows))]
 use nix::unistd::{Gid, Group, Uid, User};
+use serde_with::{serde_as, DisplayFromStr};
 
 #[cfg(not(any(windows, target_os = "openbsd")))]
 use crate::backend::node::ExtendedAttribute;
@@ -33,6 +33,7 @@ use crate::{
 
 // Walk doesn't implement Debug
 #[allow(missing_debug_implementations)]
+/// A [`LocalSource`] is a source from local paths which is used to read from (i.e. to backup it).
 pub struct LocalSource {
     builder: WalkBuilder,
     walker: Walk,
@@ -42,73 +43,78 @@ pub struct LocalSource {
 #[serde_as]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[cfg_attr(feature = "merge", derive(merge::Merge))]
-#[derive(serde::Deserialize, Default, Clone, Copy, Debug)]
+#[derive(serde::Deserialize, Default, Clone, Copy, Debug, Setters)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
+#[setters(into)]
+/// [`LocalSourceSaveOptions`] describes how entries from a local source will be saved in the repository.
 pub struct LocalSourceSaveOptions {
     /// Save access time for files and directories
     #[cfg_attr(feature = "clap", clap(long))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    with_atime: bool,
+    pub with_atime: bool,
 
     /// Don't save device ID for files and directories
     #[cfg_attr(feature = "clap", clap(long))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    ignore_devid: bool,
+    pub ignore_devid: bool,
 }
 
 #[serde_as]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[cfg_attr(feature = "merge", derive(merge::Merge))]
-#[derive(serde::Deserialize, Default, Clone, Debug)]
+#[derive(serde::Deserialize, Default, Clone, Debug, Setters)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
+#[setters(into)]
+/// [`LocalSourceFilterOptions`] allow to filter a local source by various criteria.
 pub struct LocalSourceFilterOptions {
     /// Glob pattern to exclude/include (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    glob: Vec<String>,
+    pub glob: Vec<String>,
 
     /// Same as --glob pattern but ignores the casing of filenames
     #[cfg_attr(feature = "clap", clap(long, value_name = "GLOB"))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    iglob: Vec<String>,
+    pub iglob: Vec<String>,
 
     /// Read glob patterns to exclude/include from this file (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long, value_name = "FILE"))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    glob_file: Vec<String>,
+    pub glob_file: Vec<String>,
 
     /// Same as --glob-file ignores the casing of filenames in patterns
     #[cfg_attr(feature = "clap", clap(long, value_name = "FILE"))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    iglob_file: Vec<String>,
+    pub iglob_file: Vec<String>,
 
     /// Ignore files based on .gitignore files
     #[cfg_attr(feature = "clap", clap(long))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    git_ignore: bool,
+    pub git_ignore: bool,
 
     /// Do not require a git repository to apply git-ignore rule
     #[cfg_attr(feature = "clap", clap(long))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    no_require_git: bool,
+    pub no_require_git: bool,
 
     /// Exclude contents of directories containing this filename (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long, value_name = "FILE"))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    exclude_if_present: Vec<String>,
+    pub exclude_if_present: Vec<String>,
 
     /// Exclude other file systems, don't cross filesystem boundaries and subvolumes
     #[cfg_attr(feature = "clap", clap(long, short = 'x'))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    one_file_system: bool,
+    pub one_file_system: bool,
 
     /// Maximum size of files to be backuped. Larger files will be excluded.
     #[cfg_attr(feature = "clap", clap(long, value_name = "SIZE"))]
     #[serde_as(as = "Option<DisplayFromStr>")]
-    exclude_larger_than: Option<ByteSize>,
+    pub exclude_larger_than: Option<ByteSize>,
 }
 
 impl LocalSource {
+    /// Create a local source from [`LocalSourceSaveOptions`], [`LocalSourceFilterOptions`] and backup path(s).
     pub fn new(
         save_opts: LocalSourceSaveOptions,
         filter_opts: &LocalSourceFilterOptions,
@@ -201,6 +207,7 @@ impl LocalSource {
 }
 
 #[derive(Debug)]
+/// Describes an open file from the local backend.
 pub struct OpenFile(PathBuf);
 
 impl ReadSourceOpen for OpenFile {

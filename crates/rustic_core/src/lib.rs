@@ -113,7 +113,7 @@ pub use crate::{
         BlobType, Sum,
     },
     commands::{
-        backup::{BackupOpts, ParentOpts},
+        backup::{BackupOptions, ParentOptions},
         check::CheckOpts,
         config::ConfigOpts,
         copy::CopySnapshot,
