@@ -36,7 +36,7 @@ use crate::{
     commands::{
         self,
         backup::BackupOptions,
-        check::CheckOpts,
+        check::CheckOptions,
         config::ConfigOpts,
         copy::CopySnapshot,
         forget::{ForgetGroups, KeepOptions},
@@ -566,7 +566,7 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
         Ok(())
     }
 
-    pub fn check(&self, opts: CheckOpts) -> RusticResult<()> {
+    pub fn check(&self, opts: CheckOptions) -> RusticResult<()> {
         opts.run(self)
     }
 

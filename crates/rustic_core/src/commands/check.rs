@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
+use derive_setters::Setters;
 use itertools::Itertools;
 use log::{debug, error, warn};
 use rayon::prelude::{IntoParallelIterator, ParallelBridge, ParallelIterator};
@@ -21,10 +22,11 @@ use crate::{
     PackHeaderRef, Progress, RusticResult, SnapshotFile,
 };
 
-/// `check` subcommand
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Clone, Copy, Debug, Default)]
-pub struct CheckOpts {
+#[derive(Clone, Copy, Debug, Default, Setters)]
+#[setters(into)]
+/// Options for the `check` command
+pub struct CheckOptions {
     /// Don't verify the data saved in the cache
     #[cfg_attr(feature = "clap", clap(long, conflicts_with = "no_cache"))]
     pub trust_cache: bool,
@@ -34,7 +36,7 @@ pub struct CheckOpts {
     pub read_data: bool,
 }
 
-impl CheckOpts {
+impl CheckOptions {
     pub(crate) fn run<P: ProgressBars, S: Open>(self, repo: &Repository<P, S>) -> RusticResult<()> {
         let be = repo.dbe();
         let cache = repo.cache();

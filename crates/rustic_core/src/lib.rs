@@ -114,7 +114,7 @@ pub use crate::{
     },
     commands::{
         backup::{BackupOptions, ParentOptions},
-        check::CheckOpts,
+        check::CheckOptions,
         config::ConfigOpts,
         copy::CopySnapshot,
         forget::{ForgetGroup, ForgetGroups, ForgetSnapshot, KeepOptions},
