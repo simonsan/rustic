@@ -122,7 +122,7 @@ pub use crate::{
         prune::{PruneOptions, PrunePlan, PruneStats},
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{BlobInfo, IndexInfos, PackInfo, RepoFileInfo, RepoFileInfos},
-        restore::{FileDirStats, RestoreInfos, RestoreOpts, RestoreStats},
+        restore::{FileDirStats, RestoreOptions, RestorePlan, RestoreStats},
     },
     error::{RusticError, RusticResult},
     id::Id,

@@ -1,6 +1,6 @@
 //! `restore` example
 use rustic_core::{
-    LocalDestination, Repository, RepositoryOptions, RestoreOpts, TreeStreamerOptions,
+    LocalDestination, Repository, RepositoryOptions, RestoreOptions, TreeStreamerOptions,
 };
 use simplelog::{Config, LevelFilter, SimpleLogger};
 use std::error::Error;
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let create = true; // create destination dir, if it doesn't exist
     let dest = LocalDestination::new(destination, create, !node.is_dir())?;
 
-    let opts = RestoreOpts::default();
+    let opts = RestoreOptions::default();
     let dry_run = false;
     // create restore infos. Note: this also already creates needed dirs in the destination
     let restore_infos = repo.prepare_restore(&opts, ls.clone(), &dest, dry_run)?;

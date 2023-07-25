@@ -43,7 +43,7 @@ use crate::{
         key::KeyOptions,
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{IndexInfos, RepoFileInfos},
-        restore::{RestoreInfos, RestoreOpts},
+        restore::{RestoreOptions, RestorePlan},
     },
     crypto::aespoly1305::Key,
     error::{KeyFileErrorKind, RepositoryErrorKind, RusticErrorKind},
@@ -733,8 +733,8 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
 
     pub fn restore(
         &self,
-        restore_infos: RestoreInfos,
-        opts: &RestoreOpts,
+        restore_infos: RestorePlan,
+        opts: &RestoreOptions,
         node_streamer: impl Iterator<Item = RusticResult<(PathBuf, Node)>>,
         dest: &LocalDestination,
     ) -> RusticResult<()> {
@@ -786,11 +786,11 @@ impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     /// - create all dirs for the restore
     pub fn prepare_restore(
         &self,
-        opts: &RestoreOpts,
+        opts: &RestoreOptions,
         node_streamer: impl Iterator<Item = RusticResult<(PathBuf, Node)>>,
         dest: &LocalDestination,
         dry_run: bool,
-    ) -> RusticResult<RestoreInfos> {
+    ) -> RusticResult<RestorePlan> {
         opts.collect_and_prepare(self, node_streamer, dest, dry_run)
     }
 

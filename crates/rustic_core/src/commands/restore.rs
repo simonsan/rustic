@@ -1,5 +1,6 @@
 //! `restore` subcommand
 
+use derive_setters::Setters;
 use log::{debug, error, info, trace, warn};
 
 use std::{
@@ -27,11 +28,12 @@ pub(crate) mod constants {
     pub(crate) const MAX_READER_THREADS_NUM: usize = 20;
 }
 
-/// `restore` subcommand
 #[allow(clippy::struct_excessive_bools)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Debug, Copy, Clone, Default)]
-pub struct RestoreOpts {
+#[derive(Debug, Copy, Clone, Default, Setters)]
+#[setters(into)]
+/// Options for the `restore` command
+pub struct RestoreOptions {
     /// Remove all files/dirs in destination which are not contained in snapshot.
     /// WARNING: Use with care, maybe first try this with --dry-run?
     #[cfg_attr(feature = "clap", clap(long))]
@@ -51,24 +53,33 @@ pub struct RestoreOpts {
 }
 
 #[derive(Default, Debug, Clone, Copy)]
+/// Statisticts for files or dirs
 pub struct FileDirStats {
+    /// # to restore
     pub restore: u64,
+    /// # which are unchanged (determined by date, but not verified)
     pub unchanged: u64,
+    /// # which are verified and unchanged
     pub verified: u64,
+    /// # which are modified
     pub modify: u64,
+    /// # of additional entries
     pub additional: u64,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
+/// Restore statistics
 pub struct RestoreStats {
+    /// file statistics
     pub files: FileDirStats,
+    /// dir statistics
     pub dirs: FileDirStats,
 }
 
-impl RestoreOpts {
+impl RestoreOptions {
     pub(crate) fn restore<P: ProgressBars, S: IndexedTree>(
         self,
-        file_infos: RestoreInfos,
+        file_infos: RestorePlan,
         repo: &Repository<P, S>,
         node_streamer: impl Iterator<Item = RusticResult<(PathBuf, Node)>>,
         dest: &LocalDestination,
@@ -90,12 +101,12 @@ impl RestoreOpts {
         mut node_streamer: impl Iterator<Item = RusticResult<(PathBuf, Node)>>,
         dest: &LocalDestination,
         dry_run: bool,
-    ) -> RusticResult<RestoreInfos> {
+    ) -> RusticResult<RestorePlan> {
         let p = repo.pb.progress_spinner("collecting file information...");
         let dest_path = dest.path("");
 
         let mut stats = RestoreStats::default();
-        let mut restore_infos = RestoreInfos::default();
+        let mut restore_infos = RestorePlan::default();
         let mut additional_existing = false;
         let mut removed_dir = None;
 
@@ -316,9 +327,9 @@ impl RestoreOpts {
 fn restore_contents<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
     dest: &LocalDestination,
-    file_infos: RestoreInfos,
+    file_infos: RestorePlan,
 ) -> RusticResult<()> {
-    let RestoreInfos {
+    let RestorePlan {
         names: filenames,
         file_lengths,
         r: restore_info,
@@ -441,17 +452,23 @@ fn restore_contents<P: ProgressBars, S: Open>(
     Ok(())
 }
 
-/// struct that contains information of file contents grouped by
+#[derive(Debug, Default)]
+/// Information about what will be restored.
+///
+/// Struct that contains information of file contents grouped by
 /// 1) pack ID,
 /// 2) blob within this pack
 /// 3) the actual files and position of this blob within those
-#[derive(Debug, Default)]
-pub struct RestoreInfos {
+/// 4) Statistical information
+pub struct RestorePlan {
     names: Filenames,
     file_lengths: Vec<u64>,
     r: RestoreInfo,
+    /// The total restore size
     pub restore_size: u64,
+    /// The total size of matched content, i.e. content with needs no restore.
     pub matched_size: u64,
+    /// Statistics about the restore.
     pub stats: RestoreStats,
 }
 
@@ -489,7 +506,7 @@ enum AddFileResult {
     Modify,
 }
 
-impl RestoreInfos {
+impl RestorePlan {
     /// Add the file to [`FileInfos`] using `index` to get blob information.
     fn add_file<P, S: IndexedFull>(
         &mut self,

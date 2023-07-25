@@ -10,7 +10,7 @@ use abscissa_core::{Command, Runnable, Shutdown};
 use anyhow::Result;
 use log::info;
 
-use rustic_core::{LocalDestination, RestoreOpts, TreeStreamerOptions};
+use rustic_core::{LocalDestination, RestoreOptions, TreeStreamerOptions};
 
 use crate::filtering::SnapshotFilter;
 
@@ -27,7 +27,7 @@ pub(crate) struct RestoreCmd {
     dest: String,
 
     #[clap(flatten)]
-    opts: RestoreOpts,
+    opts: RestoreOptions,
 
     #[clap(flatten)]
     streamer_opts: TreeStreamerOptions,
