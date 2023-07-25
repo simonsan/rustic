@@ -115,10 +115,10 @@ pub use crate::{
     commands::{
         backup::{BackupOptions, ParentOptions},
         check::CheckOptions,
-        config::ConfigOpts,
+        config::ConfigOptions,
         copy::CopySnapshot,
         forget::{ForgetGroup, ForgetGroups, ForgetSnapshot, KeepOptions},
-        key::KeyOpts,
+        key::KeyOptions,
         prune::{PruneOpts, PrunePlan, PruneStats},
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{BlobInfo, IndexInfos, PackInfo, RepoFileInfo, RepoFileInfos},

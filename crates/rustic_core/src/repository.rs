@@ -37,10 +37,10 @@ use crate::{
         self,
         backup::BackupOptions,
         check::CheckOptions,
-        config::ConfigOpts,
+        config::ConfigOptions,
         copy::CopySnapshot,
         forget::{ForgetGroups, KeepOptions},
-        key::KeyOpts,
+        key::KeyOptions,
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{IndexInfos, RepoFileInfos},
         restore::{RestoreInfos, RestoreOpts},
@@ -345,8 +345,8 @@ impl<P, S> Repository<P, S> {
 
     pub fn init(
         self,
-        key_opts: &KeyOpts,
-        config_opts: &ConfigOpts,
+        key_opts: &KeyOptions,
+        config_opts: &ConfigOptions,
     ) -> RusticResult<Repository<P, OpenStatus>> {
         let password = self
             .password()?
@@ -357,8 +357,8 @@ impl<P, S> Repository<P, S> {
     pub fn init_with_password(
         self,
         pass: &str,
-        key_opts: &KeyOpts,
-        config_opts: &ConfigOpts,
+        key_opts: &KeyOptions,
+        config_opts: &ConfigOptions,
     ) -> RusticResult<Repository<P, OpenStatus>> {
         if self.config_id()?.is_some() {
             return Err(RepositoryErrorKind::ConfigFileExists.into());
@@ -370,7 +370,7 @@ impl<P, S> Repository<P, S> {
     pub fn init_with_config(
         self,
         pass: &str,
-        key_opts: &KeyOpts,
+        key_opts: &KeyOptions,
         config: ConfigFile,
     ) -> RusticResult<Repository<P, OpenStatus>> {
         let key = commands::init::init_with_config(&self, pass, key_opts, &config)?;
@@ -485,11 +485,11 @@ impl<P, S: Open> Repository<P, S> {
         commands::cat::cat_file(self, tpe, id)
     }
 
-    pub fn add_key(&self, pass: &str, opts: &KeyOpts) -> RusticResult<Id> {
+    pub fn add_key(&self, pass: &str, opts: &KeyOptions) -> RusticResult<Id> {
         opts.add_key(self, pass)
     }
 
-    pub fn apply_config(&self, opts: &ConfigOpts) -> RusticResult<bool> {
+    pub fn apply_config(&self, opts: &ConfigOptions) -> RusticResult<bool> {
         commands::config::apply_config(self, opts)
     }
 }

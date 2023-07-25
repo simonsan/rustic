@@ -1,5 +1,6 @@
 //! `config` subcommand
 use bytesize::ByteSize;
+use derive_setters::Setters;
 
 use crate::{
     backend::decrypt::{DecryptBackend, DecryptWriteBackend},
@@ -9,7 +10,7 @@ use crate::{
 
 pub(crate) fn apply_config<P, S: Open>(
     repo: &Repository<P, S>,
-    opts: &ConfigOpts,
+    opts: &ConfigOptions,
 ) -> RusticResult<bool> {
     let mut new_config = repo.config().clone();
     opts.apply(&mut new_config)?;
@@ -45,8 +46,10 @@ pub(crate) fn save_config<P, S>(
 }
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ConfigOpts {
+#[derive(Debug, Clone, Copy, Default, Setters)]
+#[setters(into)]
+/// Options for the `config` command, used to set repository-wide  options
+pub struct ConfigOptions {
     /// Set compression level. Allowed levels are 1 to 22 and -1 to -7, see <https://facebook.github.io/zstd/>.
     /// Note that 0 equals to no compression
     #[cfg_attr(feature = "clap", clap(long, value_name = "LEVEL"))]
@@ -106,7 +109,8 @@ pub struct ConfigOpts {
     pub set_max_packsize_tolerate_percent: Option<u32>,
 }
 
-impl ConfigOpts {
+impl ConfigOptions {
+    /// Apply the [`ConfigOptions`] to a given [`ConfigFile`]
     pub fn apply(&self, config: &mut ConfigFile) -> RusticResult<()> {
         if let Some(version) = self.set_version {
             let range = 1..=2;

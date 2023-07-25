@@ -1,12 +1,16 @@
 //! `key` subcommand
+use derive_setters::Setters;
+
 use crate::{
     backend::WriteBackend, crypto::hasher::hash, error::CommandErrorKind, FileType, Id, Key,
     KeyFile, Open, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Debug, Clone, Default)]
-pub struct KeyOpts {
+#[derive(Debug, Clone, Default, Setters)]
+#[setters(into)]
+/// Options for the `key` command. These are used when creating a new key.
+pub struct KeyOptions {
     /// Set 'hostname' in public key information
     #[cfg_attr(feature = "clap", clap(long))]
     pub hostname: Option<String>,
@@ -20,7 +24,7 @@ pub struct KeyOpts {
     pub with_created: bool,
 }
 
-impl KeyOpts {
+impl KeyOptions {
     pub(crate) fn add_key<P, S: Open>(
         &self,
         repo: &Repository<P, S>,

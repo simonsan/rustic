@@ -4,14 +4,14 @@ use log::info;
 
 use crate::{
     backend::WriteBackend, chunker::random_poly, commands::config::save_config, ConfigFile,
-    ConfigOpts, Id, Key, KeyOpts, Repository, RusticResult,
+    ConfigOptions, Id, Key, KeyOptions, Repository, RusticResult,
 };
 
 pub(crate) fn init<P, S>(
     repo: &Repository<P, S>,
     pass: &str,
-    key_opts: &KeyOpts,
-    config_opts: &ConfigOpts,
+    key_opts: &KeyOptions,
+    config_opts: &ConfigOptions,
 ) -> RusticResult<(Key, ConfigFile)> {
     // Create config first to allow catching errors from here without writing anything
     let repo_id = Id::random();
@@ -28,7 +28,7 @@ pub(crate) fn init<P, S>(
 pub(crate) fn init_with_config<P, S>(
     repo: &Repository<P, S>,
     pass: &str,
-    key_opts: &KeyOpts,
+    key_opts: &KeyOptions,
     config: &ConfigFile,
 ) -> RusticResult<Key> {
     repo.be.create()?;
