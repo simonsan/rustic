@@ -67,7 +67,7 @@ impl ParentOpts {
             (true, _, _) | (false, true, _) => None,
             (false, false, None) => {
                 // get suitable snapshot group from snapshot and opts.group_by. This is used to filter snapshots for the parent detection
-                let group = SnapshotGroup::from_sn(snap, self.group_by.unwrap_or_default());
+                let group = SnapshotGroup::from_snapshot(snap, self.group_by.unwrap_or_default());
                 SnapshotFile::latest(
                     repo.dbe(),
                     |snap| snap.has_group(&group),
@@ -131,7 +131,7 @@ pub(crate) fn backup<P: ProgressBars, S: IndexedIds>(
 ) -> RusticResult<SnapshotFile> {
     let index = repo.index();
 
-    let backup_stdin = source == PathList::from_string("-", false)?;
+    let backup_stdin = source == PathList::from_string("-")?;
     let backup_path = if backup_stdin {
         vec![PathBuf::from(&opts.stdin_filename)]
     } else {

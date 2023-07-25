@@ -1,12 +1,13 @@
 use std::{
     cmp::Ordering,
     fmt::{self, Display},
-    path::PathBuf,
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
 use chrono::{DateTime, Duration, Local};
 use derivative::Derivative;
+use derive_setters::Setters;
 use dunce::canonicalize;
 use gethostname::gethostname;
 use itertools::Itertools;
@@ -30,49 +31,78 @@ use crate::{
 #[serde_as]
 #[cfg_attr(feature = "merge", derive(merge::Merge))]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Deserialize, Clone, Default, Debug)]
+#[derive(Deserialize, Clone, Default, Debug, Setters)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
+#[setters(into)]
+#[non_exhaustive]
+/// Options for creating a new [`SnapshotFile`] structure for a new backup snapshot.
+///
+/// Note that the preferred way is to use [`SnapshotFile::from_options`] to create a SnapshotFile for a new backup.
+/// This struct derives [`serde::Deserialize`] allowing to use it in config files.
+/// With the feature `merge` enabled, this also derives [`merge::Merge`] to allow merging [`SnapshotOptions`] from multiple sources.
+/// With the feature `clap` enabled, this also derives [`clap::Parser`] allowing it to be used as CLI options.
 pub struct SnapshotOptions {
     /// Label snapshot with given label
     #[cfg_attr(feature = "clap", clap(long, value_name = "LABEL"))]
-    label: Option<String>,
+    pub label: Option<String>,
 
     /// Tags to add to snapshot (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long, value_name = "TAG[,TAG,..]"))]
     #[serde_as(as = "Vec<DisplayFromStr>")]
     #[cfg_attr(feature = "merge", merge(strategy = merge::vec::overwrite_empty))]
-    tag: Vec<StringList>,
+    pub tag: Vec<StringList>,
 
     /// Add description to snapshot
     #[cfg_attr(feature = "clap", clap(long, value_name = "DESCRIPTION"))]
-    description: Option<String>,
+    pub description: Option<String>,
 
     /// Add description to snapshot from file
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "FILE", conflicts_with = "description")
     )]
-    description_from: Option<PathBuf>,
+    pub description_from: Option<PathBuf>,
+
+    /// Set the backup time manually
+    #[cfg_attr(feature = "clap", clap(long))]
+    pub time: Option<DateTime<Local>>,
 
     /// Mark snapshot as uneraseable
     #[cfg_attr(feature = "clap", clap(long, conflicts_with = "delete_after"))]
     #[cfg_attr(feature = "merge", merge(strategy = merge::bool::overwrite_false))]
-    delete_never: bool,
+    pub delete_never: bool,
 
     /// Mark snapshot to be deleted after given duration (e.g. 10d)
     #[cfg_attr(feature = "clap", clap(long, value_name = "DURATION"))]
     #[serde_as(as = "Option<DisplayFromStr>")]
-    delete_after: Option<humantime::Duration>,
+    pub delete_after: Option<humantime::Duration>,
 
     /// Set the host name manually
     #[cfg_attr(feature = "clap", clap(long, value_name = "NAME"))]
-    host: Option<String>,
+    pub host: Option<String>,
+
+    /// Set the backup command manually
+    #[cfg_attr(feature = "clap", clap(long))]
+    pub command: Option<String>,
+}
+
+impl SnapshotOptions {
+    // Add tags to this [`SnapshotOption`]s
+    pub fn add_tags(mut self, tag: &str) -> RusticResult<Self> {
+        self.tag.push(StringList::from_str(tag)?);
+        Ok(self)
+    }
+
+    pub fn to_snapshot(&self) -> RusticResult<SnapshotFile> {
+        SnapshotFile::from_options(self)
+    }
 }
 
 /// This is an extended version of the summaryOutput structure of restic in
 /// restic/internal/ui/backup$/json.go
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative)]
 #[derivative(Default)]
+#[non_exhaustive]
 pub struct SnapshotSummary {
     pub files_new: u64,
     pub files_changed: u64,
@@ -103,7 +133,7 @@ pub struct SnapshotSummary {
 }
 
 impl SnapshotSummary {
-    pub fn finalize(&mut self, snap_time: DateTime<Local>) -> RusticResult<()> {
+    pub(crate) fn finalize(&mut self, snap_time: DateTime<Local>) -> RusticResult<()> {
         let end_time = Local::now();
         self.backup_duration = (end_time - self.backup_start)
             .to_std()
@@ -136,6 +166,10 @@ impl DeleteOption {
 #[serde_with::apply(Option => #[serde(default, skip_serializing_if = "Option::is_none")])]
 #[derive(Debug, Clone, Serialize, Deserialize, Derivative)]
 #[derivative(Default)]
+/// A [`SnapshotFile`] is the repository representation of the snapshot metadata saved in a repository.
+///
+/// [`SnapshotFile`] implements [`Eq`], [`PartialEq`], [`Ord`], [`PartialOrd`] by comparing only the `time` field.
+/// If you need another ordering, you have to implement that yourself.
 pub struct SnapshotFile {
     #[derivative(Default(value = "Local::now()"))]
     pub time: DateTime<Local>,
@@ -175,12 +209,10 @@ impl RepoFile for SnapshotFile {
 }
 
 impl SnapshotFile {
-    pub fn new_from_options(
-        opts: &SnapshotOptions,
-        time: DateTime<Local>,
-        command: String,
-    ) -> RusticResult<Self> {
-        let hostname = if let Some(ref host) = opts.host {
+    /// Create a [`SnapshotFile`] from [`SnapshotOptions`].
+    /// Note that this is the preferred way to create a new [`SnapshotFile`] to be used within [`crate::Repository::backup`]
+    pub fn from_options(opts: &SnapshotOptions) -> RusticResult<Self> {
+        let hostname = if let Some(host) = &opts.host {
             host.clone()
         } else {
             let hostname = gethostname();
@@ -190,6 +222,8 @@ impl SnapshotFile {
                 .to_string()
         };
 
+        let time = opts.time.unwrap_or(Local::now());
+
         let delete = match (opts.delete_never, opts.delete_after) {
             (true, _) => DeleteOption::Never,
             (_, Some(d)) => DeleteOption::After(
@@ -198,13 +232,22 @@ impl SnapshotFile {
             (false, None) => DeleteOption::NotSet,
         };
 
+        let command: String = if let Some(command) = &opts.command {
+            command.clone()
+        } else {
+            std::env::args_os()
+                .map(|s| s.to_string_lossy().to_string())
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+
         let mut snap = Self {
             time,
             hostname,
             label: opts.label.clone().unwrap_or_default(),
             delete,
             summary: Some(SnapshotSummary {
-                command,
+                command: command.into(),
                 ..Default::default()
             }),
             description: opts.description.clone(),
@@ -236,7 +279,7 @@ impl SnapshotFile {
         Ok(Self::set_id((*id, be.get_file(id)?)))
     }
 
-    pub fn from_str<B: DecryptReadBackend>(
+    pub(crate) fn from_str<B: DecryptReadBackend>(
         be: &B,
         string: &str,
         predicate: impl FnMut(&Self) -> bool + Send + Sync,
@@ -249,7 +292,7 @@ impl SnapshotFile {
     }
 
     /// Get the latest [`SnapshotFile`] from the backend
-    pub fn latest<B: DecryptReadBackend>(
+    pub(crate) fn latest<B: DecryptReadBackend>(
         be: &B,
         predicate: impl FnMut(&Self) -> bool + Send + Sync,
         p: &impl Progress,
@@ -277,14 +320,14 @@ impl SnapshotFile {
     }
 
     /// Get a [`SnapshotFile`] from the backend by (part of the) id
-    pub fn from_id<B: DecryptReadBackend>(be: &B, id: &str) -> RusticResult<Self> {
+    pub(crate) fn from_id<B: DecryptReadBackend>(be: &B, id: &str) -> RusticResult<Self> {
         info!("getting snapshot...");
         let id = be.find_id(FileType::Snapshot, id)?;
         Self::from_backend(be, &id)
     }
 
-    /// Get a Vector of [`SnapshotFile`] from the backend by list of (parts of the) ids
-    pub fn from_ids<B: DecryptReadBackend, T: AsRef<str>>(
+    /// Get a Vec of [`SnapshotFile`] from the backend by list of (parts of the) ids
+    pub(crate) fn from_ids<B: DecryptReadBackend, T: AsRef<str>>(
         be: &B,
         ids: &[T],
         p: &impl Progress,
@@ -326,6 +369,7 @@ impl SnapshotFile {
     }
 
     #[must_use]
+    /// Check if the [`SnapshotFile`] is in the given [`SnapshotGroup`].
     pub fn has_group(&self, group: &SnapshotGroup) -> bool {
         group
             .hostname
@@ -338,7 +382,7 @@ impl SnapshotFile {
 
     /// Get [`SnapshotFile`]s which match the filter grouped by the group criterion
     /// from the backend
-    pub fn group_from_backend<B, F>(
+    pub(crate) fn group_from_backend<B, F>(
         be: &B,
         filter: F,
         crit: SnapshotGroupCriterion,
@@ -354,7 +398,7 @@ impl SnapshotFile {
         let mut result = Vec::new();
         for (group, snaps) in &snaps
             .into_iter()
-            .group_by(|sn| SnapshotGroup::from_sn(sn, crit))
+            .group_by(|sn| SnapshotGroup::from_snapshot(sn, crit))
         {
             result.push((group, snaps.collect()));
         }
@@ -362,7 +406,11 @@ impl SnapshotFile {
         Ok(result)
     }
 
-    pub fn all_from_backend<B, F>(be: &B, filter: F, p: &impl Progress) -> RusticResult<Vec<Self>>
+    pub(crate) fn all_from_backend<B, F>(
+        be: &B,
+        filter: F,
+        p: &impl Progress,
+    ) -> RusticResult<Vec<Self>>
     where
         B: DecryptReadBackend,
         F: FnMut(&Self) -> bool,
@@ -374,7 +422,7 @@ impl SnapshotFile {
             .try_collect()
     }
 
-    /// Add tag lists to snapshot. return whether snapshot was changed
+    /// Add tag lists to snapshot. Returns whether snapshot was changed.
     pub fn add_tags(&mut self, tag_lists: Vec<StringList>) -> bool {
         let old_tags = self.tags.clone();
         self.tags.add_all(tag_lists);
@@ -383,7 +431,7 @@ impl SnapshotFile {
         old_tags != self.tags
     }
 
-    /// Set tag lists to snapshot. return whether snapshot was changed
+    /// Set tag lists to snapshot. Returns whether snapshot was changed.
     pub fn set_tags(&mut self, tag_lists: Vec<StringList>) -> bool {
         let old_tags = std::mem::take(&mut self.tags);
         self.tags.add_all(tag_lists);
@@ -392,7 +440,7 @@ impl SnapshotFile {
         old_tags != self.tags
     }
 
-    /// Remove tag lists from snapshot. return whether snapshot was changed
+    /// Remove tag lists from snapshot. Returns whether snapshot was changed.
     pub fn remove_tags(&mut self, tag_lists: &[StringList]) -> bool {
         let old_tags = self.tags.clone();
         self.tags.remove_all(tag_lists);
@@ -416,6 +464,9 @@ impl SnapshotFile {
         }
     }
 
+    /// Modifies the snapshot setting/adding/removing tag(s) and modifying [`DeleteOption`]s.
+    /// Returns None if the snapshot was not changed and
+    /// Some(snap) with a copy of the changed snapshot if it was changed.
     pub fn modify_sn(
         &mut self,
         set: Vec<StringList>,
@@ -443,7 +494,7 @@ impl SnapshotFile {
 
     // clear ids which are not saved by the copy command (and not compared when checking if snapshots already exist in the copy target)
     #[must_use]
-    pub fn clear_ids(mut sn: Self) -> Self {
+    pub(crate) fn clear_ids(mut sn: Self) -> Self {
         sn.id = Id::default();
         sn.parent = None;
         sn
@@ -470,6 +521,8 @@ impl Ord for SnapshotFile {
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(DeserializeFromStr, Clone, Debug, Copy)]
+#[non_exhaustive]
+/// [`SnapshotGroupCriterion`] determines how to group snapshots.
 pub struct SnapshotGroupCriterion {
     pub hostname: bool,
     pub label: bool,
@@ -508,11 +561,17 @@ impl FromStr for SnapshotGroupCriterion {
 
 #[serde_with::apply(Option => #[serde(default, skip_serializing_if = "Option::is_none")])]
 #[derive(Serialize, Default, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// [`SnapshotGroup`] specifies the group after a grouping using [`SnapshotGroupCriterion`].
 pub struct SnapshotGroup {
-    hostname: Option<String>,
-    label: Option<String>,
-    paths: Option<StringList>,
-    tags: Option<StringList>,
+    /// group hostname, if grouped by hostname
+    pub hostname: Option<String>,
+    /// group label, if grouped by label
+    pub label: Option<String>,
+    /// group paths, if grouped by paths
+    pub paths: Option<StringList>,
+    /// group tags, if grouped by tags
+    pub tags: Option<StringList>,
 }
 
 impl Display for SnapshotGroup {
@@ -538,8 +597,8 @@ impl Display for SnapshotGroup {
 }
 
 impl SnapshotGroup {
-    #[must_use]
-    pub fn from_sn(sn: &SnapshotFile, crit: SnapshotGroupCriterion) -> Self {
+    /// Extracts the suitable [`SnapshotGroup`] from a [`SnapshotFile`] using a given [`SnapshotGroupCriterion`].
+    pub fn from_snapshot(sn: &SnapshotFile, crit: SnapshotGroupCriterion) -> Self {
         Self {
             hostname: crit.hostname.then(|| sn.hostname.clone()),
             label: crit.label.then(|| sn.label.clone()),
@@ -549,12 +608,14 @@ impl SnapshotGroup {
     }
 
     #[must_use]
+    /// Returns whether this is an empty group, i.e. no grouping information is contained.
     pub fn is_empty(&self) -> bool {
         self == &Self::default()
     }
 }
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+/// StringList is a rustic-internal list of Strings. It is used within [`SnapshotFile`]
 pub struct StringList(Vec<String>);
 
 impl FromStr for StringList {
@@ -574,59 +635,70 @@ impl Display for StringList {
 }
 
 impl StringList {
-    fn contains(&self, s: &String) -> bool {
-        self.0.contains(s)
+    /// Returns whether a [`StringList`] contains a given String.
+    pub fn contains(&self, s: &str) -> bool {
+        self.0.iter().any(|m| m == s)
     }
 
-    fn contains_all(&self, sl: &Self) -> bool {
+    /// Returns whether a [`StringList`] contains all Strings of another [`StringList`].
+    pub fn contains_all(&self, sl: &Self) -> bool {
         sl.0.iter().all(|s| self.contains(s))
     }
 
-    #[must_use]
+    /// Returns whether a [`StringList`] matches a list of [`StringList`]s, i.e. whether it contains all Strings of one
+    /// the given [`StringList`]s.
     pub fn matches(&self, sls: &[Self]) -> bool {
         sls.is_empty() || sls.iter().any(|sl| self.contains_all(sl))
     }
 
-    fn add(&mut self, s: String) {
+    /// Add a String to a [`StringList`].
+    pub fn add(&mut self, s: String) {
         if !self.contains(&s) {
             self.0.push(s);
         }
     }
 
-    fn add_list(&mut self, sl: Self) {
+    /// Add all Strings from another [`StringList`] to this [`StringList`].
+    pub fn add_list(&mut self, sl: Self) {
         for s in sl.0 {
             self.add(s);
         }
     }
 
-    fn add_all(&mut self, string_lists: Vec<Self>) {
+    /// Add all Strings from all given [`StringList`]s to this [`StringList`].
+    pub fn add_all(&mut self, string_lists: Vec<Self>) {
         for sl in string_lists {
             self.add_list(sl);
         }
     }
 
-    pub fn set_paths(&mut self, paths: &[PathBuf]) -> RusticResult<()> {
+    /// Adds the given Paths as Strings to this [`StringList`].
+    pub(crate) fn set_paths<T: AsRef<Path>>(&mut self, paths: &[T]) -> RusticResult<()> {
         self.0 = paths
             .iter()
             .map(|p| {
-                Ok(p.to_str()
-                    .ok_or_else(|| SnapshotFileErrorKind::NonUnicodePath(p.into()))?
+                Ok(p.as_ref()
+                    .to_str()
+                    .ok_or_else(|| SnapshotFileErrorKind::NonUnicodePath(p.as_ref().to_path_buf()))?
                     .to_string())
             })
             .collect::<RusticResult<Vec<_>>>()?;
         Ok(())
     }
 
-    fn remove_all(&mut self, string_lists: &[Self]) {
+    /// Remove all Strings from all given [`StringList`]s from this [`StringList`].
+    pub fn remove_all(&mut self, string_lists: &[Self]) {
         self.0
             .retain(|s| !string_lists.iter().any(|sl| sl.contains(s)));
     }
 
-    fn sort(&mut self) {
+    /// Sort the Strings in the [`StringList`]
+    pub fn sort(&mut self) {
         self.0.sort_unstable();
     }
 
     #[must_use]
+    /// format this [`StringList`] using newlines
     pub fn formatln(&self) -> String {
         self.0.join("\n")
     }
@@ -637,6 +709,7 @@ impl StringList {
 }
 
 #[derive(Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+/// PathList is a rustic-internal list of PathBufs. It is used in the [`crate::Repository::backup`] command.
 pub struct PathList(Vec<PathBuf>);
 
 impl Display for PathList {
@@ -652,49 +725,47 @@ impl Display for PathList {
 }
 
 impl PathList {
-    pub fn from_strings<I>(source: I, sanitize: bool) -> RusticResult<Self>
+    /// Create a PathList from Strings.
+    pub fn from_strings<I>(source: I) -> Self
     where
         I: IntoIterator,
         I::Item: AsRef<str>,
     {
-        let mut paths = Self(
+        Self(
             source
                 .into_iter()
                 .map(|source| PathBuf::from(source.as_ref()))
                 .collect(),
-        );
+        )
+    }
 
-        if sanitize {
-            paths.sanitize()?;
-        }
-        paths.merge_paths();
-        Ok(paths)
+    /// Create a PathList by parsing a Strings containing paths separated by whitspaces.
+    pub fn from_string(sources: &str) -> RusticResult<Self> {
+        let sources = parse_command::<()>(sources)
+            .map_err(SnapshotFileErrorKind::FromNomError)?
+            .1;
+        Ok(Self::from_strings(sources))
     }
 
     #[must_use]
+    /// Number of paths in the PathList.
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     #[must_use]
+    /// Returns whether the PathList is empty.
     pub fn is_empty(&self) -> bool {
         self.0.len() == 0
     }
 
-    pub fn from_string(sources: &str, sanitize: bool) -> RusticResult<Self> {
-        let sources = parse_command::<()>(sources)
-            .map_err(SnapshotFileErrorKind::FromNomError)?
-            .1;
-        Self::from_strings(sources, sanitize)
-    }
-
     #[must_use]
-    pub fn paths(&self) -> Vec<PathBuf> {
+    pub(crate) fn paths(&self) -> Vec<PathBuf> {
         self.0.clone()
     }
 
-    // sanitize paths: parse dots and absolutize if needed
-    fn sanitize(&mut self) -> RusticResult<()> {
+    /// Sanitize paths: Parse dots, absolutize if needed and merge paths.
+    pub fn sanitize(mut self) -> RusticResult<Self> {
         for path in &mut self.0 {
             *path = path
                 .parse_dot()
@@ -707,23 +778,26 @@ impl PathList {
                     canonicalize(&path).map_err(SnapshotFileErrorKind::CanonicalizingPathFailed)?;
             }
         }
-        Ok(())
+        Ok(self.merge())
     }
 
-    // sort paths and filters out subpaths of already existing paths
-    fn merge_paths(&mut self) {
+    /// Sort paths and filters out subpaths of already existing paths.
+    pub fn merge(self) -> Self {
+        let mut paths = self.0;
         // sort paths
-        self.0.sort_unstable();
+        paths.sort_unstable();
 
         let mut root_path = None;
 
         // filter out subpaths
-        self.0.retain(|path| match &root_path {
+        paths.retain(|path| match &root_path {
             Some(root_path) if path.starts_with(root_path) => false,
             _ => {
                 root_path = Some(path.clone());
                 true
             }
         });
+
+        Self(paths)
     }
 }
