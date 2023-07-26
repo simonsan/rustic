@@ -5,14 +5,17 @@ use std::cmp::Ordering;
 use chrono::Local;
 
 use crate::{
-    backend::decrypt::DecryptWriteBackend,
-    blob::{packer::Packer, tree},
+    backend::{decrypt::DecryptWriteBackend, node::Node},
+    blob::{
+        packer::Packer,
+        tree::{self, Tree},
+        BlobType,
+    },
     error::CommandErrorKind,
     index::{indexer::Indexer, ReadIndex},
-    repofile::snapshotfile::SnapshotSummary,
+    repofile::{SnapshotFile, SnapshotSummary},
     repository::IndexedTree,
-    BlobType, Id, Node, Open, PathList, Progress, ProgressBars, Repository, RusticResult,
-    SnapshotFile, Tree,
+    Id, Open, PathList, Progress, ProgressBars, Repository, RusticResult,
 };
 
 pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(

@@ -30,8 +30,12 @@ pub(super) mod constants {
 pub(crate) type TreeStreamItem = RusticResult<(PathBuf, Tree)>;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
+/// A [`Tree`] is a list of [`Node`]s
 pub struct Tree {
     #[serde(deserialize_with = "deserialize_null_default")]
+    /// The nodes contained in the tree.
+    ///
+    /// This is usually sorted by `Node.name()`, i.e. by the node name as `OsString`
     pub nodes: Vec<Node>,
 }
 
@@ -46,22 +50,22 @@ where
 
 impl Tree {
     #[must_use]
-    pub const fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add(&mut self, node: Node) {
+    pub(crate) fn add(&mut self, node: Node) {
         self.nodes.push(node);
     }
 
-    pub fn serialize(&self) -> RusticResult<(Vec<u8>, Id)> {
+    pub(crate) fn serialize(&self) -> RusticResult<(Vec<u8>, Id)> {
         let mut chunk = serde_json::to_vec(&self).map_err(TreeErrorKind::SerializingTreeFailed)?;
         chunk.push(b'\n'); // for whatever reason, restic adds a newline, so to be compatible...
         let id = hash(&chunk);
         Ok((chunk, id))
     }
 
-    pub fn from_backend(be: &impl IndexedBackend, id: Id) -> RusticResult<Self> {
+    pub(crate) fn from_backend(be: &impl IndexedBackend, id: Id) -> RusticResult<Self> {
         let data = be
             .get_tree(&id)
             .ok_or_else(|| TreeErrorKind::BlobIdNotFound(id))?
@@ -70,7 +74,11 @@ impl Tree {
         Ok(serde_json::from_slice(&data).map_err(TreeErrorKind::DeserializingTreeFailed)?)
     }
 
-    pub fn node_from_path(be: &impl IndexedBackend, id: Id, path: &Path) -> RusticResult<Node> {
+    pub(crate) fn node_from_path(
+        be: &impl IndexedBackend,
+        id: Id,
+        path: &Path,
+    ) -> RusticResult<Node> {
         let mut node = Node::new_node(OsStr::new(""), NodeType::Dir, Metadata::default());
         node.subtree = Some(id);
 
@@ -165,10 +173,6 @@ impl<BE> NodeStreamer<BE>
 where
     BE: IndexedBackend,
 {
-    fn new(be: BE, node: &Node) -> RusticResult<Self> {
-        Self::new_streamer(be, node, None, true)
-    }
-
     fn new_streamer(
         be: BE,
         node: &Node,

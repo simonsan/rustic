@@ -1,8 +1,8 @@
 //! `smapshot` subcommand
 
 use crate::{
-    repository::Open, ProgressBars, Repository, RusticResult, SnapshotFile, SnapshotGroup,
-    SnapshotGroupCriterion,
+    repofile::SnapshotFile, repository::Open, ProgressBars, Repository, RusticResult,
+    SnapshotGroup, SnapshotGroupCriterion,
 };
 
 pub(crate) fn get_snapshot_group<P: ProgressBars, S: Open>(

@@ -22,19 +22,23 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use crate::{
     backend::{
         decrypt::{DecryptReadBackend, DecryptWriteBackend},
-        ReadBackend,
+        node::NodeType,
+        FileType, ReadBackend,
     },
-    blob::packer::{PackSizer, Repacker},
-    blob::{tree::TreeStreamerOnce, BlobTypeMap, Initialize},
+    blob::{
+        packer::{PackSizer, Repacker},
+        tree::TreeStreamerOnce,
+        BlobType, BlobTypeMap, Initialize,
+    },
     error::CommandErrorKind,
     index::{
         binarysorted::{IndexCollector, IndexType},
         indexer::Indexer,
         IndexBackend, IndexedBackend, ReadIndex,
     },
+    repofile::{HeaderEntry, IndexBlob, IndexFile, IndexPack, SnapshotFile},
     repository::Open,
-    BlobType, FileType, HeaderEntry, Id, IndexBlob, IndexFile, IndexPack, NodeType, Progress,
-    ProgressBars, Repository, RusticResult, SnapshotFile, Sum,
+    Id, Progress, ProgressBars, Repository, RusticResult, Sum,
 };
 
 pub(super) mod constants {

@@ -22,7 +22,7 @@ use chrono::OutOfRangeError;
 use displaydoc::Display;
 use thiserror::Error;
 
-use crate::{id::Id, repofile::indexfile::IndexPack, NodeType};
+use crate::{backend::node::NodeType, id::Id, repofile::indexfile::IndexPack};
 
 /// Result type often returned from methods that can have rustic `Error`s.
 pub type RusticResult<T> = Result<T, RusticError>;

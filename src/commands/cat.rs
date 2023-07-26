@@ -8,7 +8,7 @@ use abscissa_core::{Command, Runnable, Shutdown};
 
 use anyhow::Result;
 
-use rustic_core::{BlobType, FileType};
+use rustic_core::repofile::{BlobType, FileType};
 
 /// `cat` subcommand
 #[derive(clap::Parser, Command, Debug)]

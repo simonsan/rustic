@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    backend::{decrypt::DecryptReadBackend, ReadBackend},
-    blob::BlobTypeMap,
+    backend::{decrypt::DecryptReadBackend, FileType, ReadBackend, ALL_FILE_TYPES},
+    blob::{BlobType, BlobTypeMap},
     index::IndexEntry,
     repofile::indexfile::{IndexFile, IndexPack},
     repository::Open,
-    BlobType, FileType, Progress, ProgressBars, Repository, RusticResult, ALL_FILE_TYPES,
+    Progress, ProgressBars, Repository, RusticResult,
 };
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]

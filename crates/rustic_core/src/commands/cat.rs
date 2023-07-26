@@ -3,11 +3,13 @@ use std::path::Path;
 use bytes::Bytes;
 
 use crate::{
-    backend::{decrypt::DecryptReadBackend, ReadBackend},
+    backend::{decrypt::DecryptReadBackend, FileType, ReadBackend},
+    blob::{tree::Tree, BlobType},
     error::CommandErrorKind,
     index::IndexedBackend,
+    repofile::SnapshotFile,
     repository::{IndexedFull, IndexedTree, Open, Repository},
-    BlobType, FileType, Id, ProgressBars, RusticResult, SnapshotFile, Tree,
+    Id, ProgressBars, RusticResult,
 };
 
 pub(crate) fn cat_file<P, S: Open>(

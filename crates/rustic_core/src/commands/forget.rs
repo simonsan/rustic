@@ -7,8 +7,8 @@ use serde::Deserialize;
 use serde_with::{serde_as, DisplayFromStr};
 
 use crate::{
-    repository::Open, Id, ProgressBars, Repository, RusticResult, SnapshotFile, SnapshotGroup,
-    SnapshotGroupCriterion, StringList,
+    repofile::SnapshotFile, repository::Open, Id, ProgressBars, Repository, RusticResult,
+    SnapshotGroup, SnapshotGroupCriterion, StringList,
 };
 
 type CheckFunction = fn(&SnapshotFile, &SnapshotFile) -> bool;

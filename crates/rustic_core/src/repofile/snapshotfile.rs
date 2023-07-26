@@ -87,49 +87,77 @@ pub struct SnapshotOptions {
 }
 
 impl SnapshotOptions {
-    // Add tags to this [`SnapshotOption`]s
+    /// Add tags to this [`SnapshotOptions`]
     pub fn add_tags(mut self, tag: &str) -> RusticResult<Self> {
         self.tag.push(StringList::from_str(tag)?);
         Ok(self)
     }
 
+    /// Create a new [`SnapshotFile`]  using this `SnapshotOption`s
     pub fn to_snapshot(&self) -> RusticResult<SnapshotFile> {
         SnapshotFile::from_options(self)
     }
 }
 
+/// Summary information about a snapshot.
+///
 /// This is an extended version of the summaryOutput structure of restic in
 /// restic/internal/ui/backup$/json.go
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative)]
 #[derivative(Default)]
 #[non_exhaustive]
 pub struct SnapshotSummary {
+    /// new files compared to the last (i.e. parent) snapshot
     pub files_new: u64,
+    /// changed files compared to the last (i.e. parent) snapshot
     pub files_changed: u64,
+    /// unchanged files compared to the last (i.e. parent) snapshot
     pub files_unmodified: u64,
-    pub dirs_new: u64,
-    pub dirs_changed: u64,
-    pub dirs_unmodified: u64,
-    pub data_blobs: u64,
-    pub tree_blobs: u64,
-    pub data_added: u64,
-    pub data_added_packed: u64,
-    pub data_added_files: u64,
-    pub data_added_files_packed: u64,
-    pub data_added_trees: u64,
-    pub data_added_trees_packed: u64,
+    /// Total processed files
     pub total_files_processed: u64,
-    pub total_dirs_processed: u64,
+    /// Total size of all processed files
     pub total_bytes_processed: u64,
+    /// new dirs compared to the last (i.e. parent) snapshot
+    pub dirs_new: u64,
+    /// changed dirs compared to the last (i.e. parent) snapshot
+    pub dirs_changed: u64,
+    /// unchanged dirs compared to the last (i.e. parent) snapshot
+    pub dirs_unmodified: u64,
+    /// Total processed dirs
+    pub total_dirs_processed: u64,
+    /// total # data blobs added by this snapshots
     pub total_dirsize_processed: u64,
-    pub total_duration: f64, // in seconds
+    /// Total size of all processed dirs
+    pub data_blobs: u64,
+    /// total # tree blobs added by this snapshots
+    pub tree_blobs: u64,
+    /// total bytes (uncompressed) added by this snapshots
+    pub data_added: u64,
+    /// total bytes added to the repository by this snapshots
+    pub data_added_packed: u64,
+    /// total bytes (uncompressed) for new/changed files added by this snapshots
+    pub data_added_files: u64,
+    /// total bytes for new/changed files added to the repositor by this snapshots
+    pub data_added_files_packed: u64,
+    /// total bytes (uncompressed) for new/changed dirs added by this snapshots
+    pub data_added_trees: u64,
+    /// total bytes for new/changed dirs added to the repositor by this snapshots
+    pub data_added_trees_packed: u64,
 
+    /// The command used to make this backup
     pub command: String,
     #[derivative(Default(value = "Local::now()"))]
+    /// Start time of the backup.
+    ///
+    /// Note that this may differ to the snapshot `time`.
     pub backup_start: DateTime<Local>,
     #[derivative(Default(value = "Local::now()"))]
+    /// End time of the backup.
     pub backup_end: DateTime<Local>,
+    /// Total duration of the backup in seconds, i.e. the time between `backup_start` and `backup_end`
     pub backup_duration: f64, // in seconds
+    /// Total duration of the rustic command run in seconds
+    pub total_duration: f64, // in seconds
 }
 
 impl SnapshotSummary {
@@ -150,10 +178,14 @@ impl SnapshotSummary {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Derivative, Copy)]
 #[derivative(Default)]
+/// Options wich describe if and when a snapshots should or must not be deleted.
 pub enum DeleteOption {
     #[derivative(Default)]
+    /// No delete option set.
     NotSet,
+    /// This snapshot should be never deleted (remove-protection).
     Never,
+    /// Remove this snapshot after the given timestamp, but prevent removing it before.
     After(DateTime<Local>),
 }
 
@@ -168,39 +200,57 @@ impl DeleteOption {
 #[derivative(Default)]
 /// A [`SnapshotFile`] is the repository representation of the snapshot metadata saved in a repository.
 ///
+/// It is usually saved in the repository under `snapshot/<ID>`
+///
 /// [`SnapshotFile`] implements [`Eq`], [`PartialEq`], [`Ord`], [`PartialOrd`] by comparing only the `time` field.
 /// If you need another ordering, you have to implement that yourself.
 pub struct SnapshotFile {
     #[derivative(Default(value = "Local::now()"))]
+    /// Timestamp of this snapshot
     pub time: DateTime<Local>,
     #[derivative(Default(
         value = "\"rustic \".to_string() + option_env!(\"PROJECT_VERSION\").unwrap_or(env!(\"CARGO_PKG_VERSION\"))"
     ))]
     #[serde(default, skip_serializing_if = "String::is_empty")]
+    /// Programm and version used to create this snapshot
     pub program_version: String,
+    /// (optional) The parent snapshot used to generate this snapshot
     pub parent: Option<Id>,
+    /// The tree blob id where the contents of this snapshot are stored
     pub tree: Id,
     #[serde(default, skip_serializing_if = "String::is_empty")]
+    /// (optional) Label fot the snapshot
     pub label: String,
+    /// The list of paths contained in this snapshot
     pub paths: StringList,
     #[serde(default)]
+    /// The hostname the snapshot was made
     pub hostname: String,
     #[serde(default)]
+    /// The user who started the backup run
     pub username: String,
     #[serde(default)]
+    /// The uid of the user who started the backup run
     pub uid: u32,
     #[serde(default)]
+    /// The gid of the user who started the backup run
     pub gid: u32,
     #[serde(default)]
+    /// (optional) a list if tags for this snapshot
     pub tags: StringList,
+    /// (optional) the original Id of this snapshot. This is stored when the snapshot is modified.
     pub original: Option<Id>,
     #[serde(default, skip_serializing_if = "DeleteOption::is_not_set")]
+    /// Options if the snapshot
     pub delete: DeleteOption,
 
+    /// (optional) Summary information about the backup run
     pub summary: Option<SnapshotSummary>,
+    /// (optional) A description about what's contained in this snapshot
     pub description: Option<String>,
 
     #[serde(default, skip_serializing_if = "Id::is_null")]
+    /// The snapshot Id (not stored within the JSON)
     pub id: Id,
 }
 
@@ -524,10 +574,16 @@ impl Ord for SnapshotFile {
 #[setters(into)]
 #[non_exhaustive]
 /// [`SnapshotGroupCriterion`] determines how to group snapshots.
+///
+/// Defaut grouping is by hostname, label and paths.
 pub struct SnapshotGroupCriterion {
+    /// Whether to group by hostnames
     pub hostname: bool,
+    /// Whether to group by labels
     pub label: bool,
+    /// Whether to group by paths
     pub paths: bool,
+    /// Whether to group by tags
     pub tags: bool,
 }
 

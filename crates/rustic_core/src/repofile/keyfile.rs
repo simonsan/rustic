@@ -21,19 +21,31 @@ pub(super) mod constants {
 #[serde_as]
 #[serde_with::apply(Option => #[serde(default, skip_serializing_if = "Option::is_none")])]
 #[derive(Serialize, Deserialize, Debug)]
+/// Key files describe information about repository access keys.
+///
+/// They are usually stored in the repository under `/keys/<ID>`
 pub struct KeyFile {
+    /// Hostname where the key was created
     hostname: Option<String>,
+    /// User which created the key
     username: Option<String>,
+    /// Creation time of the key
     created: Option<DateTime<Local>>,
+    /// The used key derivation function (currently only `scrypt`)
     kdf: String,
     #[serde(rename = "N")]
+    /// Parameter N for `scrypt`
     n: u32,
+    /// Parameter r for `scrypt`
     r: u32,
+    /// Parameter p for `scrypt`
     p: u32,
     #[serde_as(as = "Base64")]
-    data: Vec<u8>,
-    #[serde_as(as = "Base64")]
+    /// The salt used with `scrypt`
     salt: Vec<u8>,
+    #[serde_as(as = "Base64")]
+    /// The key data encrypted by `scrypt`
+    data: Vec<u8>,
 }
 
 impl KeyFile {

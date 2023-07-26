@@ -29,6 +29,7 @@ pub(super) mod constants {
     Display,
 )]
 #[display(fmt = "{}", "&self.to_hex()[0..8]")]
+/// `Id` is the hash id of an object. It is used to identify blobs or files saved in the repository
 pub struct Id(
     #[serde(serialize_with = "hex::serde::serialize")]
     #[serde(deserialize_with = "hex::serde::deserialize")]
@@ -36,6 +37,7 @@ pub struct Id(
 );
 
 impl Id {
+    /// Parse an `Id` from an hexadecimal string
     pub fn from_hex(s: &str) -> RusticResult<Self> {
         let mut id = Self::default();
 
@@ -45,6 +47,7 @@ impl Id {
     }
 
     #[must_use]
+    /// Generate a random `Id`
     pub fn random() -> Self {
         let mut id = Self::default();
         thread_rng().fill_bytes(&mut id.0);
@@ -52,6 +55,7 @@ impl Id {
     }
 
     #[must_use]
+    /// Convert to [`HexId`]
     pub fn to_hex(self) -> HexId {
         let mut hex_id = HexId::EMPTY;
         // HexId's len is LEN * 2
@@ -60,10 +64,12 @@ impl Id {
     }
 
     #[must_use]
+    /// Checks if the Id is zero
     pub fn is_null(&self) -> bool {
         self == &Self::default()
     }
 
+    /// Checks if this Id matches the content of a Reader
     pub fn blob_matches_reader(&self, length: usize, r: &mut impl Read) -> bool {
         // check if SHA256 matches
         let mut vec = vec![0; length];
@@ -78,11 +84,12 @@ impl fmt::Debug for Id {
 }
 
 #[derive(Copy, Clone, Debug)]
+/// An [`Id`] in hexadecimal format
 pub struct HexId([u8; constants::HEX_LEN]);
 
 impl HexId {
     const EMPTY: Self = Self([b'0'; constants::HEX_LEN]);
-
+    /// Get the string representation of a `HexId`
     pub fn as_str(&self) -> &str {
         // This is only ever filled with hex chars, which are ascii
         std::str::from_utf8(&self.0).unwrap()

@@ -9,17 +9,17 @@ use rayon::prelude::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use zstd::stream::decode_all;
 
 use crate::{
-    backend::{cache::Cache, decrypt::DecryptReadBackend, ReadBackend},
-    blob::tree::TreeStreamerOnce,
+    backend::{cache::Cache, decrypt::DecryptReadBackend, node::NodeType, FileType, ReadBackend},
+    blob::{tree::TreeStreamerOnce, BlobType},
     crypto::hasher::hash,
     index::{
         binarysorted::{IndexCollector, IndexType},
         IndexBackend, IndexedBackend,
     },
     progress::ProgressBars,
+    repofile::{IndexFile, IndexPack, PackHeader, PackHeaderLength, PackHeaderRef, SnapshotFile},
     repository::{Open, Repository},
-    BlobType, FileType, Id, IndexFile, IndexPack, NodeType, PackHeader, PackHeaderLength,
-    PackHeaderRef, Progress, RusticResult, SnapshotFile,
+    Id, Progress, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

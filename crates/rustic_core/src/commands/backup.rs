@@ -10,9 +10,10 @@ use serde::Deserialize;
 use crate::{
     archiver::{parent::Parent, Archiver},
     backend::{dry_run::DryRunBackend, stdin::StdinSource},
+    repofile::SnapshotFile,
     repository::{IndexedIds, IndexedTree},
     Id, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions, Open, PathList,
-    ProgressBars, Repository, RusticResult, SnapshotFile, SnapshotGroup, SnapshotGroupCriterion,
+    ProgressBars, Repository, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -52,7 +53,7 @@ pub struct ParentOptions {
 }
 
 impl ParentOptions {
-    pub fn get_parent<P: ProgressBars, S: IndexedTree>(
+    pub(crate) fn get_parent<P: ProgressBars, S: IndexedTree>(
         &self,
         repo: &Repository<P, S>,
         snap: &SnapshotFile,

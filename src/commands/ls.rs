@@ -9,7 +9,10 @@ use crate::{commands::open_repository, status_err, Application, RUSTIC_APP};
 use abscissa_core::{Command, Runnable, Shutdown};
 use anyhow::Result;
 
-use rustic_core::{Node, NodeType, TreeStreamerOptions};
+use rustic_core::{
+    repofile::{Node, NodeType},
+    TreeStreamerOptions,
+};
 
 mod constants {
     // constants from man page inode(7)

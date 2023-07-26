@@ -11,9 +11,9 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 
 use rustic_core::{
-    BlobType, IndexedFull, LocalDestination, LocalSource, LocalSourceFilterOptions,
-    LocalSourceSaveOptions, Node, NodeType, ReadSourceEntry, Repository, RusticResult,
-    TreeStreamerOptions,
+    repofile::{BlobType, Node, NodeType},
+    IndexedFull, LocalDestination, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions,
+    ReadSourceEntry, Repository, RusticResult, TreeStreamerOptions,
 };
 
 /// `diff` subcommand

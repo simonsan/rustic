@@ -5,7 +5,8 @@ use derive_setters::Setters;
 use crate::{
     backend::decrypt::{DecryptBackend, DecryptWriteBackend},
     error::CommandErrorKind,
-    ConfigFile, Key, Open, Repository, RusticResult,
+    repofile::ConfigFile,
+    Key, Open, Repository, RusticResult,
 };
 
 pub(crate) fn apply_config<P, S: Open>(

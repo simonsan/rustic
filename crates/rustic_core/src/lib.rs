@@ -35,7 +35,7 @@ This crate exposes a few features for controlling dependency usage.
 #![warn(
     // unreachable_pub, // frequently check
     // TODO: Activate and create better docs
-    // missing_docs,
+    missing_docs,
     rust_2018_idioms,
     trivial_casts,
     unused_lifetimes,
@@ -96,7 +96,8 @@ pub(crate) mod error;
 pub(crate) mod id;
 pub(crate) mod index;
 pub(crate) mod progress;
-pub(crate) mod repofile;
+/// Structs which are saved in JSON or binary format in the repository
+pub mod repofile;
 pub(crate) mod repository;
 
 pub(crate) use crate::crypto::aespoly1305::Key;
@@ -105,13 +106,10 @@ pub use crate::{
     backend::{
         ignore::{LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions},
         local::LocalDestination,
-        node::{latest_node, Node, NodeType},
-        FileType, ReadSourceEntry, ALL_FILE_TYPES,
+        node::last_modified,
+        ReadSourceEntry,
     },
-    blob::{
-        tree::{Tree, TreeStreamerOptions},
-        BlobType, Sum,
-    },
+    blob::{tree::TreeStreamerOptions, Sum},
     commands::{
         backup::{BackupOptions, ParentOptions},
         check::CheckOptions,
@@ -125,17 +123,10 @@ pub use crate::{
         restore::{FileDirStats, RestoreOptions, RestorePlan, RestoreStats},
     },
     error::{RusticError, RusticResult},
-    id::Id,
+    id::{HexId, Id},
     progress::{NoProgress, NoProgressBars, Progress, ProgressBars},
-    repofile::{
-        configfile::ConfigFile,
-        indexfile::{IndexBlob, IndexFile, IndexPack},
-        keyfile::KeyFile,
-        packfile::{HeaderEntry, PackHeader, PackHeaderLength, PackHeaderRef},
-        snapshotfile::{
-            DeleteOption, PathList, SnapshotFile, SnapshotGroup, SnapshotGroupCriterion,
-            SnapshotOptions, StringList,
-        },
+    repofile::snapshotfile::{
+        PathList, SnapshotGroup, SnapshotGroupCriterion, SnapshotOptions, StringList,
     },
     repository::{IndexedFull, Open, OpenStatus, Repository, RepositoryOptions},
 };

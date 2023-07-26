@@ -9,7 +9,10 @@ use log::info;
 
 use chrono::Local;
 
-use rustic_core::{Node, SnapshotFile, SnapshotOptions};
+use rustic_core::{
+    repofile::{Node, SnapshotFile},
+    SnapshotOptions,
+};
 
 /// `merge` subcommand
 #[derive(clap::Parser, Default, Command, Debug)]

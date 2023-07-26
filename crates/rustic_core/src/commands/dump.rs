@@ -1,10 +1,12 @@
 use std::io::Write;
 
 use crate::{
+    backend::node::{Node, NodeType},
+    blob::BlobType,
     error::CommandErrorKind,
     index::IndexedBackend,
     repository::{IndexedFull, IndexedTree, Repository},
-    BlobType, Node, NodeType, RusticResult,
+    RusticResult,
 };
 
 pub(crate) fn dump<P, S: IndexedFull>(

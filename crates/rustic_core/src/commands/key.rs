@@ -2,8 +2,11 @@
 use derive_setters::Setters;
 
 use crate::{
-    backend::WriteBackend, crypto::hasher::hash, error::CommandErrorKind, FileType, Id, Key,
-    KeyFile, Open, Repository, RusticResult,
+    backend::{FileType, WriteBackend},
+    crypto::hasher::hash,
+    error::CommandErrorKind,
+    repofile::KeyFile,
+    Id, Key, Open, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

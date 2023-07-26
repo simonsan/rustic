@@ -377,7 +377,7 @@ impl LocalDestination {
 
     #[cfg(not(windows))]
     pub fn set_permission(&self, item: impl AsRef<Path>, node: &Node) -> RusticResult<()> {
-        if node.node_type.is_symlink() {
+        if node.is_symlink() {
             return Ok(());
         }
 

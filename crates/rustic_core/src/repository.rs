@@ -30,9 +30,10 @@ use crate::{
         choose::ChooseBackend,
         decrypt::{DecryptBackend, DecryptFullBackend, DecryptReadBackend, DecryptWriteBackend},
         hotcold::HotColdBackend,
+        node::Node,
         FileType, ReadBackend,
     },
-    blob::tree::NodeStreamer,
+    blob::{tree::NodeStreamer, BlobType},
     commands::{
         self,
         backup::BackupOptions,
@@ -49,12 +50,10 @@ use crate::{
     error::{KeyFileErrorKind, RepositoryErrorKind, RusticErrorKind},
     index::{IndexBackend, IndexEntry, IndexedBackend, ReadIndex},
     repofile::{
-        configfile::ConfigFile, keyfile::find_key_in_backend, snapshotfile::SnapshotSummary,
-        RepoFile,
+        keyfile::find_key_in_backend, ConfigFile, RepoFile, SnapshotFile, SnapshotSummary, Tree,
     },
-    BlobType, Id, LocalDestination, NoProgressBars, Node, PathList, ProgressBars, PruneOptions,
-    PrunePlan, RusticResult, SnapshotFile, SnapshotGroup, SnapshotGroupCriterion, Tree,
-    TreeStreamerOptions,
+    Id, LocalDestination, NoProgressBars, PathList, ProgressBars, PruneOptions, PrunePlan,
+    RusticResult, SnapshotGroup, SnapshotGroupCriterion, TreeStreamerOptions,
 };
 
 mod warm_up;

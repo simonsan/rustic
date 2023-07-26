@@ -17,11 +17,15 @@ use itertools::Itertools;
 use rayon::ThreadPoolBuilder;
 
 use crate::{
-    backend::{decrypt::DecryptReadBackend, ReadBackend},
+    backend::{
+        decrypt::DecryptReadBackend,
+        node::{Node, NodeType},
+        FileType, ReadBackend,
+    },
+    blob::BlobType,
     error::CommandErrorKind,
     repository::{IndexedFull, IndexedTree},
-    BlobType, FileType, Id, LocalDestination, Node, NodeType, Open, Progress, ProgressBars,
-    Repository, RusticResult,
+    Id, LocalDestination, Open, Progress, ProgressBars, Repository, RusticResult,
 };
 
 pub(crate) mod constants {

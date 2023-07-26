@@ -4,11 +4,12 @@ use log::trace;
 use rayon::prelude::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::{
-    backend::decrypt::DecryptWriteBackend,
-    blob::{packer::Packer, tree::TreeStreamerOnce},
+    backend::{decrypt::DecryptWriteBackend, node::NodeType},
+    blob::{packer::Packer, tree::TreeStreamerOnce, BlobType},
     index::{indexer::Indexer, IndexedBackend, ReadIndex},
+    repofile::SnapshotFile,
     repository::{IndexedFull, IndexedIds, IndexedTree},
-    BlobType, NodeType, Open, ProgressBars, Repository, RusticResult, SnapshotFile,
+    Open, ProgressBars, Repository, RusticResult,
 };
 
 #[derive(Debug)]

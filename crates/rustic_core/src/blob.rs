@@ -9,19 +9,25 @@ use serde::{Deserialize, Serialize};
 
 use crate::id::Id;
 
+/// All [`BlobType`]s which are supported by the repository
+pub const ALL_BLOB_TYPES: [BlobType; 2] = [BlobType::Tree, BlobType::Data];
+
 #[derive(
     Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum,
 )]
+/// The type a `blob` or a `packfile` can have
 pub enum BlobType {
     #[serde(rename = "tree")]
+    /// This is a tree blob
     Tree,
     #[serde(rename = "data")]
+    /// This is a data blob
     Data,
 }
 
 impl BlobType {
     #[must_use]
-    pub const fn is_cacheable(self) -> bool {
+    pub(crate) const fn is_cacheable(self) -> bool {
         match self {
             Self::Tree => true,
             Self::Data => false,
@@ -48,7 +54,7 @@ impl<T: Default> Initialize<T> for BlobTypeMap<T> {
     }
 }
 
-/// Sum is a new trait to define the method sum() for a [`BlobTypeMap`]
+/// Sum is a new trait to define the method sum() for a `BlobTypeMap`
 pub trait Sum<T> {
     fn sum(&self) -> T;
 }

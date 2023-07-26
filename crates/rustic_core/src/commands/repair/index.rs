@@ -7,12 +7,12 @@ use std::collections::HashMap;
 use crate::{
     backend::{
         decrypt::{DecryptReadBackend, DecryptWriteBackend},
-        ReadBackend, WriteBackend,
+        FileType, ReadBackend, WriteBackend,
     },
     error::CommandErrorKind,
     index::indexer::Indexer,
-    FileType, IndexFile, IndexPack, Open, PackHeader, PackHeaderRef, Progress, ProgressBars,
-    Repository, RusticResult,
+    repofile::{IndexFile, IndexPack, PackHeader, PackHeaderRef},
+    Open, Progress, ProgressBars, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
