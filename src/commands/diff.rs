@@ -13,7 +13,7 @@ use anyhow::{bail, Context, Result};
 use rustic_core::{
     repofile::{BlobType, Node, NodeType},
     IndexedFull, LocalDestination, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions,
-    ReadSourceEntry, Repository, RusticResult, TreeStreamerOptions,
+    LsOptions, ReadSourceEntry, Repository, RusticResult,
 };
 
 /// `diff` subcommand
@@ -69,8 +69,8 @@ impl DiffCmd {
                 let node2 = repo.node_from_snapshot_and_path(snap2, path2)?;
 
                 diff(
-                    repo.ls(&node1, &TreeStreamerOptions::default(), true)?,
-                    repo.ls(&node2, &TreeStreamerOptions::default(), true)?,
+                    repo.ls(&node1, &LsOptions::default())?,
+                    repo.ls(&node2, &LsOptions::default())?,
                     self.no_content,
                     |_path, node1, node2| Ok(node1.content == node2.content),
                     self.metadata,
@@ -106,7 +106,7 @@ impl DiffCmd {
                 });
 
                 diff(
-                    repo.ls(&node1, &TreeStreamerOptions::default(), true)?,
+                    repo.ls(&node1, &LsOptions::default())?,
                     src,
                     self.no_content,
                     |path, node1, _node2| identical_content_local(&local, &repo, path, node1),

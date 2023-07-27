@@ -109,7 +109,7 @@ pub use crate::{
         node::last_modified,
         ReadSourceEntry,
     },
-    blob::{tree::TreeStreamerOptions, Sum},
+    blob::{tree::TreeStreamerOptions as LsOptions, Sum},
     commands::{
         backup::{BackupOptions, ParentOptions},
         check::CheckOptions,

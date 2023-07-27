@@ -52,8 +52,8 @@ use crate::{
     repofile::{
         keyfile::find_key_in_backend, ConfigFile, RepoFile, SnapshotFile, SnapshotSummary, Tree,
     },
-    Id, LocalDestination, NoProgressBars, PathList, ProgressBars, PruneOptions, PrunePlan,
-    RusticResult, SnapshotGroup, SnapshotGroupCriterion, TreeStreamerOptions,
+    Id, LocalDestination, LsOptions, NoProgressBars, PathList, ProgressBars, PruneOptions,
+    PrunePlan, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
 };
 
 mod warm_up;
@@ -724,10 +724,9 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     pub fn ls(
         &self,
         node: &Node,
-        streamer_opts: &TreeStreamerOptions,
-        recursive: bool,
+        ls_opts: &LsOptions,
     ) -> RusticResult<impl Iterator<Item = RusticResult<(PathBuf, Node)>> + Clone> {
-        NodeStreamer::new_with_glob(self.index().clone(), node, streamer_opts, recursive)
+        NodeStreamer::new_with_glob(self.index().clone(), node, ls_opts)
     }
 
     pub fn restore(

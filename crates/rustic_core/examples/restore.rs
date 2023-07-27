@@ -1,7 +1,5 @@
 //! `restore` example
-use rustic_core::{
-    LocalDestination, Repository, RepositoryOptions, RestoreOptions, TreeStreamerOptions,
-};
+use rustic_core::{LocalDestination, LsOptions, Repository, RepositoryOptions, RestoreOptions};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 use std::error::Error;
 
@@ -19,9 +17,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let node = repo.node_from_snapshot_path("latest", |_| true)?;
 
     // use list of the snapshot contents using no additional filtering
-    let recursive = true;
-    let streamer_opts = TreeStreamerOptions::default();
-    let ls = repo.ls(&node, &streamer_opts, recursive)?;
+    let streamer_opts = LsOptions::default();
+    let ls = repo.ls(&node, &streamer_opts)?;
 
     let destination = "./restore/"; // restore to this destination dir
     let create = true; // create destination dir, if it doesn't exist

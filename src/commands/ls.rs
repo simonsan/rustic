@@ -11,7 +11,7 @@ use anyhow::Result;
 
 use rustic_core::{
     repofile::{Node, NodeType},
-    TreeStreamerOptions,
+    LsOptions,
 };
 
 mod constants {
@@ -37,10 +37,6 @@ pub(crate) struct LsCmd {
     #[clap(value_name = "SNAPSHOT[:PATH]")]
     snap: String,
 
-    /// recursively list the dir (default when no PATH is given)
-    #[clap(long)]
-    recursive: bool,
-
     /// show summary
     #[clap(long, short = 's')]
     summary: bool,
@@ -50,7 +46,7 @@ pub(crate) struct LsCmd {
     long: bool,
 
     #[clap(flatten)]
-    streamer_opts: TreeStreamerOptions,
+    ls_opts: LsOptions,
 }
 
 impl Runnable for LsCmd {
@@ -91,11 +87,12 @@ impl LsCmd {
             repo.node_from_snapshot_path(&self.snap, |sn| config.snapshot_filter.matches(sn))?;
 
         // recursive if standard if we specify a snapshot without dirs. In other cases, use the parameter `recursive`
-        let recursive = !self.snap.contains(':') || self.recursive;
+        let mut ls_opts = self.ls_opts.clone();
+        ls_opts.recursive = !self.snap.contains(':') || ls_opts.recursive;
 
         let mut summary = Summary::default();
 
-        for item in repo.ls(&node, &self.streamer_opts, recursive)? {
+        for item in repo.ls(&node, &ls_opts)? {
             let (path, node) = item?;
             summary.update(&node);
             if self.long {

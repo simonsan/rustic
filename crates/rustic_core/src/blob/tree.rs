@@ -8,6 +8,8 @@ use std::{
 };
 
 use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
+use derivative::Derivative;
+use derive_setters::Setters;
 use ignore::overrides::{Override, OverrideBuilder};
 use ignore::Match;
 
@@ -127,32 +129,40 @@ impl IntoIterator for Tree {
 }
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
-#[derive(Default, Clone, Debug)]
+#[derive(Derivative, Clone, Debug, Setters)]
+#[derivative(Default)]
+#[setters(into)]
+/// Options for listing the `Nodes` of a `Tree`
 pub struct TreeStreamerOptions {
     /// Glob pattern to exclude/include (can be specified multiple times)
     #[cfg_attr(feature = "clap", clap(long, help_heading = "Exclude options"))]
-    glob: Vec<String>,
+    pub glob: Vec<String>,
 
     /// Same as --glob pattern but ignores the casing of filenames
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "GLOB", help_heading = "Exclude options")
     )]
-    iglob: Vec<String>,
+    pub iglob: Vec<String>,
 
     /// Read glob patterns to exclude/include from this file (can be specified multiple times)
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "FILE", help_heading = "Exclude options")
     )]
-    glob_file: Vec<String>,
+    pub glob_file: Vec<String>,
 
     /// Same as --glob-file ignores the casing of filenames in patterns
     #[cfg_attr(
         feature = "clap",
         clap(long, value_name = "FILE", help_heading = "Exclude options")
     )]
-    iglob_file: Vec<String>,
+    pub iglob_file: Vec<String>,
+
+    /// recursively list the dir
+    #[cfg_attr(feature = "clap", clap(long))]
+    #[derivative(Default(value = "true"))]
+    pub recursive: bool,
 }
 
 /// [`NodeStreamer`] recursively streams all nodes of a given tree including all subtrees in-order
@@ -196,12 +206,7 @@ where
         })
     }
 
-    pub fn new_with_glob(
-        be: BE,
-        node: &Node,
-        opts: &TreeStreamerOptions,
-        recursive: bool,
-    ) -> RusticResult<Self> {
+    pub fn new_with_glob(be: BE, node: &Node, opts: &TreeStreamerOptions) -> RusticResult<Self> {
         let mut override_builder = OverrideBuilder::new("/");
 
         for g in &opts.glob {
@@ -244,7 +249,7 @@ where
             .build()
             .map_err(TreeErrorKind::BuildingNodeStreamerFailed)?;
 
-        Self::new_streamer(be, node, Some(overrides), recursive)
+        Self::new_streamer(be, node, Some(overrides), opts.recursive)
     }
 }
 
