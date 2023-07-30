@@ -12,7 +12,8 @@ use crate::{
     error::CommandErrorKind,
     index::indexer::Indexer,
     repofile::{IndexFile, IndexPack, PackHeader, PackHeaderRef},
-    Open, Progress, ProgressBars, Repository, RusticResult,
+    repository::Open,
+    Progress, ProgressBars, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

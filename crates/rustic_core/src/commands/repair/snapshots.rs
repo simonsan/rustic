@@ -10,7 +10,7 @@ use crate::{
     index::{indexer::Indexer, IndexedBackend, ReadIndex},
     repofile::SnapshotFile,
     repository::{IndexedFull, IndexedTree},
-    Id, Open, ProgressBars, Repository, RusticResult, StringList,
+    Id, ProgressBars, Repository, RusticResult, StringList,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

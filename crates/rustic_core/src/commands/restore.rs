@@ -24,8 +24,8 @@ use crate::{
     },
     blob::BlobType,
     error::CommandErrorKind,
-    repository::{IndexedFull, IndexedTree},
-    Id, LocalDestination, Open, Progress, ProgressBars, Repository, RusticResult,
+    repository::{IndexedFull, IndexedTree, Open},
+    Id, LocalDestination, Progress, ProgressBars, Repository, RusticResult,
 };
 
 pub(crate) mod constants {

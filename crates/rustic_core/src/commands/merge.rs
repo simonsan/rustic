@@ -15,7 +15,7 @@ use crate::{
     index::{indexer::Indexer, ReadIndex},
     repofile::{SnapshotFile, SnapshotSummary},
     repository::IndexedTree,
-    Id, Open, PathList, Progress, ProgressBars, Repository, RusticResult,
+    Id, PathList, Progress, ProgressBars, Repository, RusticResult,
 };
 
 pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(

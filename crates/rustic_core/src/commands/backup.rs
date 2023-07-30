@@ -12,8 +12,8 @@ use crate::{
     backend::{dry_run::DryRunBackend, stdin::StdinSource},
     repofile::SnapshotFile,
     repository::{IndexedIds, IndexedTree},
-    Id, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions, Open, PathList,
-    ProgressBars, Repository, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
+    Id, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions, PathList, ProgressBars,
+    Repository, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

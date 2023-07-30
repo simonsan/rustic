@@ -8,8 +8,8 @@ use crate::{
     blob::{packer::Packer, tree::TreeStreamerOnce, BlobType},
     index::{indexer::Indexer, IndexedBackend, ReadIndex},
     repofile::SnapshotFile,
-    repository::{IndexedFull, IndexedIds, IndexedTree},
-    Open, ProgressBars, Repository, RusticResult,
+    repository::{IndexedFull, IndexedIds, IndexedTree, Open},
+    ProgressBars, Repository, RusticResult,
 };
 
 #[derive(Debug)]

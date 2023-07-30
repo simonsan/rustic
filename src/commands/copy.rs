@@ -12,7 +12,7 @@ use log::{error, info};
 use merge::Merge;
 use serde::Deserialize;
 
-use rustic_core::{CopySnapshot, Id, KeyOptions, Open, Repository, RepositoryOptions};
+use rustic_core::{CopySnapshot, Id, KeyOptions, Repository, RepositoryOptions};
 
 /// `copy` subcommand
 #[derive(clap::Parser, Command, Debug)]

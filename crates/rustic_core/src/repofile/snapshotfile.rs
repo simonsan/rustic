@@ -272,7 +272,7 @@ impl SnapshotFile {
                 .to_string()
         };
 
-        let time = opts.time.unwrap_or(Local::now());
+        let time = opts.time.unwrap_or_else(Local::now);
 
         let delete = match (opts.delete_never, opts.delete_after) {
             (true, _) => DeleteOption::Never,
@@ -282,14 +282,15 @@ impl SnapshotFile {
             (false, None) => DeleteOption::NotSet,
         };
 
-        let command: String = if let Some(command) = &opts.command {
-            command.clone()
-        } else {
-            std::env::args_os()
-                .map(|s| s.to_string_lossy().to_string())
-                .collect::<Vec<_>>()
-                .join(" ")
-        };
+        let command: String = opts.command.as_ref().map_or_else(
+            || {
+                std::env::args_os()
+                    .map(|s| s.to_string_lossy().to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            },
+            |command| command.clone(),
+        );
 
         let mut snap = Self {
             time,
@@ -297,7 +298,7 @@ impl SnapshotFile {
             label: opts.label.clone().unwrap_or_default(),
             delete,
             summary: Some(SnapshotSummary {
-                command: command.into(),
+                command,
                 ..Default::default()
             }),
             description: opts.description.clone(),
@@ -672,7 +673,7 @@ impl SnapshotGroup {
 }
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-/// StringList is a rustic-internal list of Strings. It is used within [`SnapshotFile`]
+/// `StringList` is a rustic-internal list of Strings. It is used within [`SnapshotFile`]
 pub struct StringList(pub(crate) Vec<String>);
 
 impl FromStr for StringList {
@@ -760,13 +761,14 @@ impl StringList {
         self.0.join("\n")
     }
 
+    /// Turn this [`StringList`] into an Iterator
     pub fn iter(&self) -> std::slice::Iter<'_, String> {
         self.0.iter()
     }
 }
 
 #[derive(Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-/// PathList is a rustic-internal list of PathBufs. It is used in the [`crate::Repository::backup`] command.
+/// `PathList` is a rustic-internal list of `PathBuf`s. It is used in the [`crate::Repository::backup`] command.
 pub struct PathList(Vec<PathBuf>);
 
 impl Display for PathList {
@@ -782,7 +784,7 @@ impl Display for PathList {
 }
 
 impl PathList {
-    /// Create a PathList from Strings.
+    /// Create a `PathList` from `String`s.
     pub fn from_strings<I>(source: I) -> Self
     where
         I: IntoIterator,
@@ -796,7 +798,7 @@ impl PathList {
         )
     }
 
-    /// Create a PathList by parsing a Strings containing paths separated by whitspaces.
+    /// Create a `PathList` by parsing a Strings containing paths separated by whitspaces.
     pub fn from_string(sources: &str) -> RusticResult<Self> {
         let sources = parse_command::<()>(sources)
             .map_err(SnapshotFileErrorKind::FromNomError)?
@@ -805,13 +807,13 @@ impl PathList {
     }
 
     #[must_use]
-    /// Number of paths in the PathList.
+    /// Number of paths in the `PathList`.
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     #[must_use]
-    /// Returns whether the PathList is empty.
+    /// Returns whether the `PathList` is empty.
     pub fn is_empty(&self) -> bool {
         self.0.len() == 0
     }

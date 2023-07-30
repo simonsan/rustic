@@ -6,7 +6,8 @@ use crate::{
     crypto::hasher::hash,
     error::CommandErrorKind,
     repofile::KeyFile,
-    Id, Key, Open, Repository, RusticResult,
+    repository::Open,
+    Id, Key, Repository, RusticResult,
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]

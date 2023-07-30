@@ -6,7 +6,8 @@ use crate::{
     backend::decrypt::{DecryptBackend, DecryptWriteBackend},
     error::CommandErrorKind,
     repofile::ConfigFile,
-    Key, Open, Repository, RusticResult,
+    repository::Open,
+    Key, Repository, RusticResult,
 };
 
 pub(crate) fn apply_config<P, S: Open>(
