@@ -153,9 +153,13 @@ pub trait WriteBackend: ReadBackend {
 }
 
 #[derive(Debug, Clone)]
+/// Information about an entry to be able to open it.
 pub struct ReadSourceEntry<O> {
+    /// The path of the entry.
     pub path: PathBuf,
+    /// The node information of the entry.
     pub node: Node,
+    /// Information about how to open the entry.
     pub open: Option<O>,
 }
 

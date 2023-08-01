@@ -56,6 +56,7 @@ impl<T: Default> Initialize<T> for BlobTypeMap<T> {
 
 /// Sum is a new trait to define the method sum() for a `BlobTypeMap`
 pub trait Sum<T> {
+    /// compute the sum
     fn sum(&self) -> T;
 }
 

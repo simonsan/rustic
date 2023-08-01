@@ -22,7 +22,7 @@ use crate::{
 #[non_exhaustive]
 /// Options for the `repair index` command
 pub struct RepairIndexOptions {
-    // Read all data packs, i.e. completely re-create the index
+    /// Read all data packs, i.e. completely re-create the index
     #[cfg_attr(feature = "clap", clap(long))]
     pub read_all: bool,
 }

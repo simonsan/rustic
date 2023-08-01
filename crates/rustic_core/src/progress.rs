@@ -20,6 +20,7 @@ pub trait Progress: Send + Sync + Clone {
 /// Trait to start progress information report progress information for any rustic action which supports that.
 /// Implement this trait when you want to display this progress to your users.
 pub trait ProgressBars {
+    /// The actual type which is able to show the progress
     type P: Progress;
     /// Start a new progress, which is hidden
     fn progress_hidden(&self) -> Self::P;
@@ -32,6 +33,7 @@ pub trait ProgressBars {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// A dummy struct which shows no progress but only logs titles and end of a progress.
 pub struct NoProgress;
 impl Progress for NoProgress {
     fn is_hidden(&self) -> bool {
@@ -48,6 +50,7 @@ impl Progress for NoProgress {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Don't show progress bars, only log rudimentary progress information.
 pub struct NoProgressBars;
 impl ProgressBars for NoProgressBars {
     type P = NoProgress;

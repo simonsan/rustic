@@ -24,17 +24,18 @@ use thiserror::Error;
 
 use crate::{backend::node::NodeType, id::Id, repofile::indexfile::IndexPack};
 
-/// Result type often returned from methods that can have rustic `Error`s.
+/// Result type often returned from methods that can have `RusticError`s.
 pub type RusticResult<T> = Result<T, RusticError>;
 
 // [`Error`] is public, but opaque and easy to keep compatible.
 #[derive(Error, Debug)]
 #[error(transparent)]
+/// Errors that can result from rustic.
 pub struct RusticError(#[from] RusticErrorKind);
 
 // Accessors for anything we do want to expose publicly.
 impl RusticError {
-    pub fn into_inner(self) -> RusticErrorKind {
+    pub(crate) fn into_inner(self) -> RusticErrorKind {
         self.0
     }
 }

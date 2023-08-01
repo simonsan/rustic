@@ -34,7 +34,6 @@ This crate exposes a few features for controlling dependency usage.
 #![forbid(unsafe_code)]
 #![warn(
     // unreachable_pub, // frequently check
-    // TODO: Activate and create better docs
     missing_docs,
     rust_2018_idioms,
     trivial_casts,
