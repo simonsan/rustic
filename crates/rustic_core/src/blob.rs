@@ -1,8 +1,6 @@
 pub(crate) mod packer;
 pub(crate) mod tree;
 
-use std::ops::Add;
-
 use derive_more::Constructor;
 use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
@@ -51,18 +49,6 @@ impl<T: Default> Initialize<T> for BlobTypeMap<T> {
             btm[bt] = init(bt);
         }
         btm
-    }
-}
-
-/// Sum is a new trait to define the method sum() for a `BlobTypeMap`
-pub trait Sum<T> {
-    /// compute the sum
-    fn sum(&self) -> T;
-}
-
-impl<T: Default + Copy + Add<Output = T>> Sum<T> for BlobTypeMap<T> {
-    fn sum(&self) -> T {
-        self.values().fold(T::default(), |acc, x| acc + *x)
     }
 }
 

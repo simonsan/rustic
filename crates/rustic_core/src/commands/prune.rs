@@ -38,7 +38,7 @@ use crate::{
     },
     repofile::{HeaderEntry, IndexBlob, IndexFile, IndexPack, SnapshotFile},
     repository::Open,
-    Id, Progress, ProgressBars, Repository, RusticResult, Sum,
+    Id, Progress, ProgressBars, Repository, RusticResult,
 };
 
 pub(super) mod constants {
@@ -300,6 +300,22 @@ pub struct PruneStats {
     pub index_files: u64,
     /// # of index files which will be rebuilt during the prune
     pub index_files_rebuild: u64,
+}
+
+impl PruneStats {
+    /// Compute statistics about blobs of all types
+    pub fn blobs_sum(&self) -> SizeStats {
+        self.blobs
+            .values()
+            .fold(SizeStats::default(), |acc, x| acc + *x)
+    }
+
+    /// Compute statistics about total size of blobs of all types
+    pub fn size_sum(&self) -> SizeStats {
+        self.size
+            .values()
+            .fold(SizeStats::default(), |acc, x| acc + *x)
+    }
 }
 
 #[derive(Debug)]
@@ -653,13 +669,13 @@ impl PrunePlan {
             // if percentag is given, we want to have
             // unused <= p/100 * size_after = p/100 * (size_used + unused)
             // which equals (1 - p/100) * unused <= p/100 * size_used
-            (false, LimitOption::Percentage(p)) => (p * self.stats.size.sum().used) / (100 - p),
+            (false, LimitOption::Percentage(p)) => (p * self.stats.size_sum().used) / (100 - p),
         };
 
         let max_repack = match max_repack {
             LimitOption::Unlimited => u64::MAX,
             LimitOption::Size(size) => size.as_u64(),
-            LimitOption::Percentage(p) => (p * self.stats.size.sum().total()) / 100,
+            LimitOption::Percentage(p) => (p * self.stats.size_sum().total()) / 100,
         };
 
         self.repack_candidates.sort_unstable_by_key(|rc| rc.0);
@@ -674,7 +690,7 @@ impl PrunePlan {
 
             let total_repack_size: u64 = repack_size.into_values().sum();
             if total_repack_size + u64::from(pi.used_size) >= max_repack
-                || (self.stats.size.sum().unused_after_prune() < max_unused
+                || (self.stats.size_sum().unused_after_prune() < max_unused
                     && repack_reason == PartlyUsed
                     && blob_type == BlobType::Data)
                 || (repack_reason == SizeMismatch && no_resize)
@@ -870,7 +886,7 @@ impl PrunePlan {
             (false, false) => pb.progress_spinner("rebuilding index..."),
         };
 
-        p.set_length(self.stats.size.sum().repack - self.stats.size.sum().repackrm);
+        p.set_length(self.stats.size_sum().repack - self.stats.size_sum().repackrm);
 
         let mut indexes_remove = Vec::new();
         let tree_packs_remove = Arc::new(Mutex::new(Vec::new()));
