@@ -48,7 +48,6 @@ pub(super) mod constants {
 #[allow(clippy::struct_excessive_bools)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[derive(Debug, Clone, Setters)]
-#[cfg_attr(feature = "clap", group(id = "prune_opts"))]
 #[setters(into)]
 /// Options for the `prune` command
 pub struct PruneOptions {

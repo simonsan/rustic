@@ -15,7 +15,6 @@ use rustic_core::{PruneOptions, PruneStats, Sum};
 /// `prune` subcommand
 #[allow(clippy::struct_excessive_bools)]
 #[derive(clap::Parser, Command, Debug, Clone)]
-#[group(id = "prune_opts")]
 pub(crate) struct PruneCmd {
     #[clap(flatten)]
     pub(crate) opts: PruneOptions,

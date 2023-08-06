@@ -148,15 +148,16 @@ pub struct RepositoryOptions {
     pub options: HashMap<String, String>,
 }
 
+#[cfg(feature = "merge")]
+pub(crate) fn overwrite<T>(left: &mut T, right: T) {
+    *left = right;
+}
+
 impl RepositoryOptions {
     /// Create a [`Repository`] using the given repository options
     pub fn to_repository(&self) -> RusticResult<Repository<NoProgressBars, ()>> {
         Repository::new(self)
     }
-}
-
-pub(crate) fn overwrite<T>(left: &mut T, right: T) {
-    *left = right;
 }
 
 // parse a command
