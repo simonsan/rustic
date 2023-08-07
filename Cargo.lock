@@ -2442,6 +2442,7 @@ dependencies = [
  "serde_with",
  "sha2",
  "simplelog",
+ "tempfile",
  "thiserror",
  "url",
  "walkdir",

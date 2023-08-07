@@ -1,5 +1,5 @@
 /*!
-A library for deduplicated and encrypted backups, inspired by [`restic`](https://restic.net/).
+A library for deduplicated and encrypted backups, using repositories as specified in the [`restic repository design`](https://github.com/restic/restic/blob/master/doc/design.rst).
 
 # Overview
 
@@ -7,13 +7,51 @@ This section gives a brief overview of the primary types in this crate:
 
 TODO
 
-# Examples
+# Example - initialize a repository, backup to it and get snapshots
 
-TODO
+```
+    use rustic_core::{BackupOptions, ConfigOptions, KeyOptions, PathList, Repository, RepositoryOptions, SnapshotOptions};
 
-# Lower level APIs
+    // Initialize the repository in a temporary dir
+    let repo_dir = tempfile::tempdir().unwrap();
+    let repo_opts = RepositoryOptions::default()
+        .repository(repo_dir.path().to_str().unwrap())
+        .password("test");
+    let key_opts = KeyOptions::default();
+    let config_opts = ConfigOptions::default();
+    let _repo = Repository::new(&repo_opts).unwrap().init(&key_opts, &config_opts).unwrap();
 
-TODO
+    // We could have used _repo directly, but open the repository again to show how to open it...
+    let repo = Repository::new(&repo_opts).unwrap().open().unwrap();
+
+    // Get all snapshots from the repository
+    let snaps = repo.get_all_snapshots().unwrap();
+    // Should be zero, as the repository has just been initialized
+    assert_eq!(snaps.len(), 0);
+
+    // Turn repository state to indexed (for backup):
+    let repo = repo.to_indexed_ids().unwrap();
+
+    // Pre-define the snapshot-to-backup
+    let snap = SnapshotOptions::default()
+        .add_tags("tag1,tag2").unwrap()
+        .to_snapshot().unwrap();
+
+    // Specify backup options and source
+    let backup_opts = BackupOptions::default();
+    let source = PathList::from_string("src").unwrap().sanitize().unwrap();
+
+    // run the backup and return the snapshot pointing to the backup'ed data.
+    let snap = repo.backup(&backup_opts, source, snap).unwrap();
+    // assert_eq!(&snap.paths, ["src"]);
+
+    // Get all snapshots from the repository
+    let snaps = repo.get_all_snapshots().unwrap();
+    // Should now be 1, we just created a snapshot
+    assert_eq!(snaps.len(), 1);
+
+    assert_eq!(snaps[0], snap);
+```
 
 # Crate features
 
