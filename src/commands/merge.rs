@@ -9,10 +9,7 @@ use log::info;
 
 use chrono::Local;
 
-use rustic_core::{
-    repofile::{Node, SnapshotFile},
-    SnapshotOptions,
-};
+use rustic_core::{last_modified_node, repofile::SnapshotFile, SnapshotOptions};
 
 /// `merge` subcommand
 #[derive(clap::Parser, Default, Command, Debug)]
@@ -55,9 +52,7 @@ impl MergeCmd {
 
         let snap = SnapshotFile::from_options(&self.snap_opts)?;
 
-        let cmp = |n1: &Node, n2: &Node| n1.meta.mtime.cmp(&n2.meta.mtime);
-
-        let snap = repo.merge_snapshots(&snapshots, &cmp, snap)?;
+        let snap = repo.merge_snapshots(&snapshots, &last_modified_node, snap)?;
 
         if self.json {
             let mut stdout = std::io::stdout();

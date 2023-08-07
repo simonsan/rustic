@@ -33,7 +33,7 @@ use crate::{
 
 // Walk doesn't implement Debug
 #[allow(missing_debug_implementations)]
-/// A [`LocalSource`] is a source from local paths which is used to read from (i.e. to backup it).
+/// A [`LocalSource`] is a source from local paths which is used to be read from (i.e. to backup it).
 pub struct LocalSource {
     builder: WalkBuilder,
     walker: Walk,

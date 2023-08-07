@@ -267,10 +267,11 @@ pub struct LocalDestination {
 impl LocalDestination {
     /// Create a new [`LocalDestination`]
     ///
-    /// Arguments:
-    /// - `path`: The base path of the destination
-    /// - `create`: If `create` is true, create the base path if it doesn't exist.
-    /// - `expect_file`: Whether we expect a single file as destination.
+    /// # Arguments
+    ///
+    /// * `path` - The base path of the destination
+    /// * `create` - If `create` is true, create the base path if it doesn't exist.
+    /// * `expect_file` - Whether we expect a single file as destination.
     pub fn new(path: &str, create: bool, expect_file: bool) -> RusticResult<Self> {
         let is_dir = path.ends_with('/');
         let path: PathBuf = path.into();
@@ -573,9 +574,9 @@ impl LocalDestination {
         Ok(vec.into())
     }
 
-    /// Check if amatching file exists.
+    /// Check if a matching file exists.
     /// If a file exists and size matches, this returns a `File` open for reading.
-    /// In all other cases, retruns `None`
+    /// In all other cases, returns `None`
     pub fn get_matching_file(&self, item: impl AsRef<Path>, size: u64) -> Option<File> {
         let filename = self.path(item);
         fs::symlink_metadata(&filename).map_or_else(
@@ -590,7 +591,7 @@ impl LocalDestination {
         )
     }
 
-    /// Write `data`to given item (relative to the base path) at `offset`
+    /// Write `data` to given item (relative to the base path) at `offset`
     pub fn write_at(&self, item: impl AsRef<Path>, offset: u64, data: &[u8]) -> RusticResult<()> {
         let filename = self.path(item);
         let mut file = fs::OpenOptions::new()

@@ -34,8 +34,10 @@ use crate::id::Id;
 pub struct Node {
     /// Name of the node: filename or dirname.
     ///
-    ///Warning: This contains an escaped variant of the name in order to handle non-unicode filenames.
-    /// Dont't access this field directly, use the [`Node::name()`] method instead!
+    /// # Warning
+    ///
+    /// This contains an escaped variant of the name in order to handle non-unicode filenames.
+    /// Don't access this field directly, use the [`Node::name()`] method instead!
     pub name: String,
     #[serde(flatten)]
     /// Information about node type
@@ -44,7 +46,9 @@ pub struct Node {
     /// Node Metadata
     pub meta: Metadata,
     #[serde(default, deserialize_with = "deserialize_default_from_null")]
-    /// Contents of the Node. This should be only set for regular files
+    /// Contents of the Node
+    ///
+    /// This should be only set for regular files.
     pub content: Option<Vec<Id>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Subtree of the Node. This should be only
@@ -64,7 +68,9 @@ pub enum NodeType {
     Symlink {
         /// The target of the symlink
         ///
-        /// Warning: This contains the target only if it is a valid unicode target.
+        /// # Warning
+        ///
+        /// This contains the target only if it is a valid unicode target.
         /// Dont't access this field directly, use the [`NodeType::to_link()`] method instead!
         linktarget: String,
         #[serde_as(as = "Option<Base64>")]
@@ -214,25 +220,25 @@ impl Node {
         }
     }
     #[must_use]
-    /// Is this node a dir?
+    /// Evaluates if this node is a directory
     pub const fn is_dir(&self) -> bool {
         matches!(self.node_type, NodeType::Dir)
     }
 
     #[must_use]
-    /// Is this node a symlink?
+    /// Evaluates if this node is a symlink
     pub const fn is_symlink(&self) -> bool {
         matches!(self.node_type, NodeType::Symlink { .. })
     }
 
     #[must_use]
-    /// Is this node a regular file?
+    /// Evaluates if this node is a regular file
     pub const fn is_file(&self) -> bool {
         matches!(self.node_type, NodeType::File)
     }
 
     #[must_use]
-    /// Is this node a special file?
+    /// Evaluates if this node is a special file
     pub const fn is_special(&self) -> bool {
         matches!(
             self.node_type,
@@ -251,8 +257,8 @@ impl Node {
     }
 }
 
-///  `latest_node` is an ordering function returning the latest node by mtime
-pub fn last_modified(n1: &Node, n2: &Node) -> Ordering {
+///  `last_modified_node` is an ordering function returning the latest node by mtime
+pub fn last_modified_node(n1: &Node, n2: &Node) -> Ordering {
     n1.meta.mtime.cmp(&n2.meta.mtime)
 }
 

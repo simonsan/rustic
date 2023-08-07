@@ -105,7 +105,7 @@ pub use crate::{
     backend::{
         ignore::{LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions},
         local::LocalDestination,
-        node::last_modified,
+        node::last_modified_node,
         ReadSourceEntry,
     },
     blob::{tree::TreeStreamerOptions as LsOptions, Sum},

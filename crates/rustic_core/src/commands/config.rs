@@ -50,7 +50,7 @@ pub(crate) fn save_config<P, S>(
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[derive(Debug, Clone, Copy, Default, Setters)]
 #[setters(into)]
-/// Options for the `config` command, used to set repository-wide  options
+/// Options for the `config` command, used to set repository-wide options
 pub struct ConfigOptions {
     /// Set compression level. Allowed levels are 1 to 22 and -1 to -7, see <https://facebook.github.io/zstd/>.
     /// Note that 0 equals to no compression
