@@ -103,6 +103,7 @@ pub(crate) use crate::crypto::aespoly1305::Key;
 // rustic_core Public API
 pub use crate::{
     backend::{
+        decrypt::{compression_level_range, max_compression_level},
         ignore::{LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions},
         local::LocalDestination,
         node::last_modified_node,

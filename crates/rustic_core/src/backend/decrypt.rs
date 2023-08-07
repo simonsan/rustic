@@ -5,6 +5,13 @@ use crossbeam_channel::{unbounded, Receiver};
 use rayon::prelude::*;
 use zstd::stream::{copy_encode, decode_all};
 
+pub use zstd::compression_level_range;
+
+/// The maximum compression level allowed by zstd
+pub fn max_compression_level() -> i32 {
+    *compression_level_range().end()
+}
+
 use crate::{
     backend::FileType,
     backend::ReadBackend,
