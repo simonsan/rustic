@@ -30,10 +30,14 @@ use crate::{
         choose::ChooseBackend,
         decrypt::{DecryptBackend, DecryptFullBackend, DecryptReadBackend, DecryptWriteBackend},
         hotcold::HotColdBackend,
+        local::LocalDestination,
         node::Node,
         FileType, ReadBackend,
     },
-    blob::{tree::NodeStreamer, BlobType},
+    blob::{
+        tree::{NodeStreamer, TreeStreamerOptions as LsOptions},
+        BlobType,
+    },
     commands::{
         self,
         backup::BackupOptions,
@@ -42,18 +46,22 @@ use crate::{
         copy::CopySnapshot,
         forget::{ForgetGroups, KeepOptions},
         key::KeyOptions,
+        prune::{PruneOptions, PrunePlan},
         repair::{index::RepairIndexOptions, snapshots::RepairSnapshotsOptions},
         repoinfo::{IndexInfos, RepoFileInfos},
         restore::{RestoreOptions, RestorePlan},
     },
     crypto::aespoly1305::Key,
+    error::RusticResult,
     error::{KeyFileErrorKind, RepositoryErrorKind, RusticErrorKind},
+    id::Id,
     index::{IndexBackend, IndexEntry, IndexedBackend, ReadIndex},
+    progress::{NoProgressBars, ProgressBars},
     repofile::{
-        keyfile::find_key_in_backend, ConfigFile, RepoFile, SnapshotFile, SnapshotSummary, Tree,
+        keyfile::find_key_in_backend,
+        snapshotfile::{SnapshotGroup, SnapshotGroupCriterion},
+        ConfigFile, PathList, RepoFile, SnapshotFile, SnapshotSummary, Tree,
     },
-    Id, LocalDestination, LsOptions, NoProgressBars, PathList, ProgressBars, PruneOptions,
-    PrunePlan, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
 };
 
 mod warm_up;
@@ -160,7 +168,7 @@ impl RepositoryOptions {
     }
 }
 
-// parse a command
+/// 
 pub fn parse_command<'a, E: ParseError<&'a str>>(
     input: &'a str,
 ) -> IResult<&'a str, Vec<&'a str>, E> {

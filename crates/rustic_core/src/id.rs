@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use crate::{crypto::hasher::hash, error::IdErrorKind, RusticResult};
 
 pub(super) mod constants {
+    /// The length of the hash in bytes
     pub(super) const LEN: usize = 32;
+    /// The length of the hash in hexadecimal characters
     pub(super) const HEX_LEN: usize = LEN * 2;
 }
 
@@ -137,6 +139,7 @@ impl fmt::Debug for Id {
 pub struct HexId([u8; constants::HEX_LEN]);
 
 impl HexId {
+    /// An empty [`HexId`]
     const EMPTY: Self = Self([b'0'; constants::HEX_LEN]);
 
     /// Get the string representation of a `HexId`

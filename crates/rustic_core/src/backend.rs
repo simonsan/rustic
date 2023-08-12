@@ -201,12 +201,28 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
             .collect()
     }
 
-    // ! TODO
+    /// Finds the id of the file starting with the given string.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The string to search for.
+    ///
+    /// # Errors
+    // TODO add errors!
     fn find_id(&self, tpe: FileType, id: &str) -> RusticResult<Id> {
         Ok(self.find_ids(tpe, &[id.to_string()])?.remove(0))
     }
 
-    // ! TODO
+    /// Finds the ids of the files starting with the given strings.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `ids` - The strings to search for.
+    ///
+    /// # Errors
+    // TODO add errors!
     fn find_ids<T: AsRef<str>>(&self, tpe: FileType, ids: &[T]) -> RusticResult<Vec<Id>> {
         ids.iter()
             .map(|id| Id::from_hex(id.as_ref()))

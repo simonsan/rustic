@@ -66,12 +66,11 @@ impl<T: Default> Initialize<T> for BlobTypeMap<T> {
     }
 }
 
-/// A blob is a file that is stored in the backend.
+/// A `Blob` is a file that is stored in the backend.
 ///
 /// It can be a `tree` or a `data` blob.
 ///
 /// A `tree` blob is a file that contains a list of other blobs.
-///
 /// A `data` blob is a file that contains the actual data.
 #[derive(Debug, PartialEq, Eq, Clone, Constructor)]
 pub(crate) struct Blob {

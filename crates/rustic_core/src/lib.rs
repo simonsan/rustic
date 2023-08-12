@@ -138,7 +138,6 @@ pub(crate) mod progress;
 pub mod repofile;
 pub(crate) mod repository;
 
-pub(crate) use crate::crypto::aespoly1305::Key;
 // rustic_core Public API
 pub use crate::{
     backend::{
