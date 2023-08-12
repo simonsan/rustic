@@ -89,7 +89,11 @@ pub struct RepositoryOptions {
     )]
     pub repo_hot: Option<String>,
 
-    /// Password of the repository - WARNING: Using --password can reveal the password in the process list!
+    /// Password of the repository
+    ///
+    /// # Warning
+    ///
+    /// Using --password can reveal the password in the process list!
     #[cfg_attr(feature = "clap", clap(long, global = true, env = "RUSTIC_PASSWORD"))]
     // TODO: use `secrecy` library
     pub password: Option<String>,
@@ -156,6 +160,14 @@ pub struct RepositoryOptions {
     pub options: HashMap<String, String>,
 }
 
+/// Overwrite the left value with the right value
+///
+/// This is used for merging [`RepositoryOptions`] and [`ConfigOptions`]
+///
+/// # Arguments
+///
+/// * `left` - The left value
+/// * `right` - The right value
 #[cfg(feature = "merge")]
 pub(crate) fn overwrite<T>(left: &mut T, right: T) {
     *left = right;
@@ -168,7 +180,11 @@ impl RepositoryOptions {
     }
 }
 
-/// 
+/// Parse a command line command
+///
+/// # Arguments
+///
+/// * `input` - The command line command to parse
 pub fn parse_command<'a, E: ParseError<&'a str>>(
     input: &'a str,
 ) -> IResult<&'a str, Vec<&'a str>, E> {
@@ -184,6 +200,15 @@ pub fn parse_command<'a, E: ParseError<&'a str>>(
     )(input)
 }
 
+/// Read a password from a reader
+///
+/// # Arguments
+///
+/// * `file` - The reader to read the password from
+///
+/// # Errors
+///
+/// * [`RepositoryErrorKind::ReadingPasswordFromReaderFailed`] if reading the password failed
 pub fn read_password_from_reader(file: &mut impl BufRead) -> RusticResult<String> {
     let mut password = String::new();
     _ = file
@@ -206,14 +231,21 @@ pub fn read_password_from_reader(file: &mut impl BufRead) -> RusticResult<String
 #[derive(Debug, Clone)]
 /// A `Repository` allows all kind of actions to be performed.
 ///
-/// Note that a reposiotry can be in different states and allows some actions only when in certain state(s).
+/// # Notes
+///
+/// A reposiotry can be in different states and allows some actions only when in certain state(s).
 pub struct Repository<P, S> {
     /// The name of the repository
     pub name: String,
+    /// The HotColdBackend to use for this repository
     pub(crate) be: HotColdBackend<ChooseBackend>,
+    /// The Backende to use for hot files
     pub(crate) be_hot: Option<ChooseBackend>,
+    /// The options used for this repository
     opts: RepositoryOptions,
+    /// The progress bar to use
     pub(crate) pb: P,
+    /// The status
     status: S,
 }
 
@@ -226,6 +258,16 @@ impl Repository<NoProgressBars, ()> {
 
 impl<P> Repository<P, ()> {
     /// Create a new repository from the given [`RepositoryOptions`] with given progress bars
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use for the repository
+    /// * `pb` - The progress bars to use
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::NoRepositoryGiven`] if no repository is given
+    /// * [`RepositoryErrorKind::NoIDSpecified`] if the warm-up command does not contain `%id`
     pub fn new_with_progress(opts: &RepositoryOptions, pb: P) -> RusticResult<Self> {
         let be = match &opts.repository {
             Some(repo) => ChooseBackend::from_url(repo)?,
@@ -265,6 +307,7 @@ impl<P> Repository<P, ()> {
         })
     }
 }
+
 impl<P, S> Repository<P, S> {
     /// Evaluates the password given by the repository options
     pub fn password(&self) -> RusticResult<Option<String>> {
@@ -315,6 +358,11 @@ impl<P, S> Repository<P, S> {
     }
 
     /// Gives the id of the config file
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::ListingRepositoryConfigFileFailed`] if listing the repository config file failed
+    /// * [`RepositoryErrorKind::MoreThanOneRepositoryConfig`] if there is more than one repository config file
     pub fn config_id(&self) -> RusticResult<Option<Id>> {
         let config_ids = self
             .be
@@ -331,6 +379,10 @@ impl<P, S> Repository<P, S> {
     /// Open the repository.
     ///
     /// This gets the decryption key and reads the config file
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::NoPasswordGiven`] if no password is given
     pub fn open(self) -> RusticResult<Repository<P, OpenStatus>> {
         let password = self
             .password()?
@@ -341,6 +393,17 @@ impl<P, S> Repository<P, S> {
     /// Open the repository with a given password.
     ///
     /// This gets the decryption key and reads the config file
+    ///
+    /// # Arguments
+    ///
+    /// * `password` - The password to use
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::NoRepositoryConfigFound`] if no repository config file is found
+    /// * [`RepositoryErrorKind::KeysDontMatchForRepositories`] if the keys of the hot and cold backend don't match
+    /// * [`RepositoryErrorKind::IncorrectPassword`] if the password is incorrect
+    /// * [`RepositoryErrorKind::NoSuitableKeyFound`] if no suitable key is found
     pub fn open_with_password(self, password: &str) -> RusticResult<Repository<P, OpenStatus>> {
         let config_id = self
             .config_id()?
@@ -375,6 +438,15 @@ impl<P, S> Repository<P, S> {
     /// Initialize a new repository with given options using the password defined in `RepositoryOptions`
     ///
     /// This returns an open repository which can be directly used.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_opts` - The options to use for the key
+    /// * `config_opts` - The options to use for the config
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::NoPasswordGiven`] if no password is given
     pub fn init(
         self,
         key_opts: &KeyOptions,
@@ -389,6 +461,16 @@ impl<P, S> Repository<P, S> {
     /// Initialize a new repository with given password and options.
     ///
     /// This returns an open repository which can be directly used.
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password to use
+    /// * `key_opts` - The options to use for the key
+    /// * `config_opts` - The options to use for the config
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::ConfigFileExists`] if a config file already exists
     pub fn init_with_password(
         self,
         pass: &str,
@@ -405,6 +487,12 @@ impl<P, S> Repository<P, S> {
     /// Initialize a new repository with given password and a ready [`ConfigFile`].
     ///
     /// This returns an open repository which can be directly used.
+    ///
+    /// # Arguments
+    ///
+    /// * `password` - The password to use
+    /// * `key_opts` - The options to use for the key
+    /// * `config` - The config file to use
     pub fn init_with_config(
         self,
         password: &str,
@@ -416,6 +504,17 @@ impl<P, S> Repository<P, S> {
         self.open_raw(key, config)
     }
 
+    /// Open the repository with given [`Key`] and [`ConfigFile`].
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to use
+    /// * `config` - The config file to use
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::HotRepositoryFlagMissing`] if the config file has `is_hot` set to `true` but the repository is not hot
+    /// * [`RepositoryErrorKind::IsNotHotRepository`] if the config file has `is_hot` set to `false` but the repository is hot
     fn open_raw(self, key: Key, config: ConfigFile) -> RusticResult<Repository<P, OpenStatus>> {
         match (config.is_hot == Some(true), self.be_hot.is_some()) {
             (true, false) => return Err(RepositoryErrorKind::HotRepositoryFlagMissing.into()),
@@ -452,6 +551,10 @@ impl<P, S> Repository<P, S> {
     }
 
     /// List all file [`Id`]s of the given [`FileType`] which are present in the repository
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list
     pub fn list(&self, tpe: FileType) -> RusticResult<impl Iterator<Item = Id>> {
         Ok(self.be.list(tpe)?.into_iter())
     }
@@ -464,35 +567,62 @@ impl<P: ProgressBars, S> Repository<P, S> {
     }
 
     /// Warm up the given pack files without waiting.
+    ///
+    /// # Arguments
+    ///
+    /// * `packs` - The pack files to warm up
     pub fn warm_up(&self, packs: impl ExactSizeIterator<Item = Id>) -> RusticResult<()> {
         warm_up(self, packs)
     }
 
     /// Warm up the given pack files and wait the configured waiting time.
+    ///
+    /// # Arguments
+    ///
+    /// * `packs` - The pack files to warm up
     pub fn warm_up_wait(&self, packs: impl ExactSizeIterator<Item = Id>) -> RusticResult<()> {
         warm_up_wait(self, packs)
     }
 }
 
+/// A repository which is open, i.e. the password has been checked and the decryption key is available.
 pub trait Open {
+    /// The [`DecryptBackend`] used by this repository
     type DBE: DecryptFullBackend;
+
+    /// Get the decryption key
     fn key(&self) -> &Key;
+
+    /// Get the cache
     fn cache(&self) -> Option<&Cache>;
+
+    /// Get the [`DecryptBackend`]
     fn dbe(&self) -> &Self::DBE;
+
+    /// Get the [`ConfigFile`]
     fn config(&self) -> &ConfigFile;
 }
 
 impl<P, S: Open> Open for Repository<P, S> {
+    /// The [`DecryptBackend`] used by this repository
     type DBE = S::DBE;
+
+    /// Get the decryption key
     fn key(&self) -> &Key {
         self.status.key()
     }
+
+    /// Get the cache
     fn cache(&self) -> Option<&Cache> {
         self.status.cache()
     }
+
+    /// Get the [`DecryptBackend`]
     fn dbe(&self) -> &Self::DBE {
         self.status.dbe()
     }
+
+    /// Get the [`ConfigFile`]
     fn config(&self) -> &ConfigFile {
         self.status.config()
     }
@@ -501,24 +631,36 @@ impl<P, S: Open> Open for Repository<P, S> {
 #[derive(Debug)]
 /// Open Status: This repository is open, i.e. the password has been checked and the decryption key is available.
 pub struct OpenStatus {
+    /// The decryption key
     key: Key,
+    /// The cache
     cache: Option<Cache>,
+    /// The [`DecryptBackend`]
     dbe: DecryptBackend<CachedBackend<HotColdBackend<ChooseBackend>>, Key>,
+    /// The [`ConfigFile`]
     config: ConfigFile,
 }
 
 impl Open for OpenStatus {
+    /// The [`DecryptBackend`] used by this repository
     type DBE = DecryptBackend<CachedBackend<HotColdBackend<ChooseBackend>>, Key>;
 
+    /// Get the decryption key
     fn key(&self) -> &Key {
         &self.key
     }
+
+    /// Get the cache
     fn cache(&self) -> Option<&Cache> {
         self.cache.as_ref()
     }
+
+    /// Get the [`DecryptBackend`]
     fn dbe(&self) -> &Self::DBE {
         &self.dbe
     }
+
+    /// Get the [`ConfigFile`]
     fn config(&self) -> &ConfigFile {
         &self.config
     }
@@ -526,16 +668,30 @@ impl Open for OpenStatus {
 
 impl<P, S: Open> Repository<P, S> {
     /// Get the content of the decrypted repository file given by id and [`FileType`]
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file to get
+    /// * `id` - The id of the file to get
     pub fn cat_file(&self, tpe: FileType, id: &str) -> RusticResult<Bytes> {
         commands::cat::cat_file(self, tpe, id)
     }
 
     /// Add a new key to the repository
+    ///
+    /// # Arguments
+    ///
+    /// * `pass` - The password to use for the new key
+    /// * `opts` - The options to use for the new key
     pub fn add_key(&self, pass: &str, opts: &KeyOptions) -> RusticResult<Id> {
         opts.add_key(self, pass)
     }
 
     /// Update the repository config by applying the given [`ConfigOptions`]
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to apply
     pub fn apply_config(&self, opts: &ConfigOptions) -> RusticResult<bool> {
         commands::config::apply_config(self, opts)
     }
@@ -553,6 +709,14 @@ impl<P, S: Open> Repository<P, S> {
 impl<P: ProgressBars, S: Open> Repository<P, S> {
     /// Get grouped snapshots.
     ///
+    /// # Arguments
+    ///
+    /// * `ids` - The ids of the snapshots to group. If empty, all snapshots are grouped.
+    /// * `group_by` - The criterion to group by
+    /// * `filter` - The filter to use
+    ///
+    /// # Returns
+    ///
     /// If `ids` are given, this will try to resolve the ids (or `latest` with respect to the given filter) and return a single group
     /// If `ids` is empty, return and group all snapshots respecting the filter.
     pub fn get_snapshot_group(
@@ -565,6 +729,13 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 
     /// Get a single snapshot
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The id of the snapshot to get
+    /// * `filter` - The filter to use
+    ///
+    /// # Returns
     ///
     /// If `id` is (part of) an `Id`, return this snapshot.
     /// If `id` is "latest", return the latest snapshot respecting the giving filter.
@@ -580,6 +751,12 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
 
     /// Get the given snapshots.
     ///
+    /// # Arguments
+    ///
+    /// * `ids` - The ids of the snapshots to get
+    ///
+    /// # Notes
+    ///
     /// `ids` may contain part of snapshots id which will be resolved. However, "latest" is not supported in
     /// this function.
     pub fn get_snapshots<T: AsRef<str>>(&self, ids: &[T]) -> RusticResult<Vec<SnapshotFile>> {
@@ -593,6 +770,10 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 
     /// Get all snapshots from the repository respecting the given `filter`
+    ///
+    /// # Arguments
+    ///
+    /// * `filter` - The filter to use
     pub fn get_matching_snapshots(
         &self,
         filter: impl FnMut(&SnapshotFile) -> bool,
@@ -602,6 +783,16 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 
     /// Get snapshots to forget depending on the given [`KeepOptions`]
+    ///
+    /// # Arguments
+    ///
+    /// * `keep` - The keep options to use
+    /// * `group_by` - The criterion to group by
+    /// * `filter` - The filter to use
+    ///
+    /// # Returns
+    ///
+    ///
     pub fn get_forget_snapshots(
         &self,
         keep: &KeepOptions,
@@ -613,7 +804,14 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
 
     /// Get snapshots which are not already present and should be present.
     ///
-    /// Note: This method should be called on the *destination repository*
+    /// # Arguments
+    ///
+    /// * `filter` - The filter to use
+    /// * `snaps` - The snapshots to check
+    ///
+    /// # Note
+    ///
+    /// This method should be called on the *destination repository*
     pub fn relevant_copy_snapshots(
         &self,
         filter: impl FnMut(&SnapshotFile) -> bool,
@@ -625,6 +823,10 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     // TODO: Maybe only offer a method to remove &[Snapshotfile] and check if they must be kept.
     // See e.g. the merge command of the CLI
     /// Remove the given snapshots from the repository
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - The ids of the snapshots to remove
     pub fn delete_snapshots(&self, ids: &[Id]) -> RusticResult<()> {
         let p = self.pb.progress_counter("removing snapshots...");
         self.dbe()
@@ -633,6 +835,10 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 
     /// Save the given snapshots to the repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `snaps` - The snapshots to save
     pub fn save_snapshots(&self, mut snaps: Vec<SnapshotFile>) -> RusticResult<()> {
         for snap in &mut snaps {
             snap.id = Id::default();
@@ -643,16 +849,26 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 
     /// Check the repository for errors or inconsistencies
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
     pub fn check(&self, opts: CheckOptions) -> RusticResult<()> {
         opts.run(self)
     }
 
     /// Get the plan about what should be pruned and/or repacked.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
     pub fn prune_plan(&self, opts: &PruneOptions) -> RusticResult<PrunePlan> {
         opts.get_plan(self)
     }
 
     /// Turn the repository into the `IndexedFull` state by reading and storing the index
+    ///
+    /// # Note
     ///
     /// This saves the full index in memory which can be quite memory-consuming!
     pub fn to_indexed(self) -> RusticResult<Repository<P, IndexedStatus<FullIndex, S>>> {
@@ -714,19 +930,26 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     ///
     /// This compares the index with existing pack files and reads packfile headers to ensure the index
     /// correctly represents the pack files.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
+    /// * `dry_run` - If true, only print what would be done
     pub fn repair_index(&self, opts: &RepairIndexOptions, dry_run: bool) -> RusticResult<()> {
         opts.repair(self, dry_run)
     }
 }
 
+// TODO: add documenation!
 pub trait IndexedTree: Open {
     type I: IndexedBackend;
     fn index(&self) -> &Self::I;
 }
 
-/// Repository is fully indexed
+// TODO: Repository is fully indexed
 pub trait IndexedIds: IndexedTree {}
-/// Repository is fully indexed
+
+// TODO: Repository is fully indexed
 pub trait IndexedFull: IndexedIds {}
 
 impl<P, S: IndexedTree> IndexedTree for Repository<P, S> {
@@ -736,15 +959,20 @@ impl<P, S: IndexedTree> IndexedTree for Repository<P, S> {
     }
 }
 
+/// The indexed status of a repository
 #[derive(Debug)]
 pub struct IndexedStatus<T, S: Open> {
+    /// The open status
     open: S,
+    /// The index backend
     index: IndexBackend<S::DBE>,
+    /// The marker for the type of index
     marker: std::marker::PhantomData<T>,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct IdIndex {}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FullIndex {}
 
@@ -778,7 +1006,16 @@ impl<T, S: Open> Open for IndexedStatus<T, S> {
 }
 
 impl<P, S: IndexedFull> Repository<P, S> {
-    /// Get the index entry of the given blob
+    /// Get the [`IndexEntry`] of the given blob
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the blob
+    /// * `id` - The id of the blob
+    ///
+    /// # Errors
+    ///
+    /// * [`RepositoryErrorKind::IdNotFound`] if the id is not found in the index
     pub fn get_index_entry(&self, tpe: BlobType, id: &Id) -> RusticResult<IndexEntry> {
         let ie = self
             .index()
@@ -792,6 +1029,11 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     /// Get a [`Node`] from a "SNAP\[:PATH\]" syntax
     ///
     /// This parses for a snapshot (using the filter when "latest" is used) and then traverses into the path to get the node.
+    ///
+    /// # Arguments
+    ///
+    /// * `snap_path` - The path to the snapshot
+    /// * `filter` - The filter to use
     pub fn node_from_snapshot_path(
         &self,
         snap_path: &str,
@@ -808,6 +1050,11 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     /// Get a [`Node`] from a [`SnapshotFile`] and a `path`
     ///
     /// This traverses into the path to get the node.
+    ///
+    /// # Arguments
+    ///
+    /// * `snap` - The snapshot to use
+    /// * `path` - The path to the node
     pub fn node_from_snapshot_and_path(
         &self,
         snap: &SnapshotFile,
@@ -818,7 +1065,12 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
 
     /// Reads a raw tree from a "SNAP\[:PATH\]" syntax
     ///
-    /// This parses for a snapshot (using the filter when "latest" is used) and then traverses into the path to get the tree.
+    /// This parses a snapshot (using the filter when "latest" is used) and then traverses into the path to get the tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `snap` - The snapshot to use
+    /// * `sn_filter` - The filter to use
     pub fn cat_tree(
         &self,
         snap: &str,
@@ -829,9 +1081,19 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
 
     /// List the contents of a given [`Node`]
     ///
+    /// # Arguments
+    ///
+    /// * `node` - The node to list
+    /// * `ls_opts` - The options to use
+    ///
+    /// # Returns
+    ///
     /// If `node` is a tree node, this will list the content of that tree.
     /// If `node` is a file node, this will only return one element.
-    /// Note that the `PathBuf` returned will be relative to the given `node`.
+    ///
+    /// # Note
+    ///
+    /// The `PathBuf` returned will be relative to the given `node`.
     pub fn ls(
         &self,
         node: &Node,
@@ -841,6 +1103,13 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     }
 
     /// Restore a given [`RestorePlan`] to a local destination
+    ///
+    /// # Arguments
+    ///
+    /// * `restore_infos` - The restore plan to use
+    /// * `opts` - The options to use
+    /// * `node_streamer` - The node streamer to use
+    /// * `dest` - The destination to use
     pub fn restore(
         &self,
         restore_infos: RestorePlan,
@@ -855,6 +1124,15 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     ///
     /// This method creates needed tree blobs within the repository.
     /// Merge conflicts (identical filenames which do not match) will be resolved using the ordering given by `cmp`.
+    ///
+    /// # Arguments
+    ///
+    /// * `trees` - The trees to merge
+    /// * `cmp` - The comparison function to use for merge conflicts
+    /// * `summary` - The summary to use
+    ///
+    /// # Returns
+    ///
     /// This method returns the blob [`Id`] of the merged tree.
     pub fn merge_trees(
         &self,
@@ -869,6 +1147,15 @@ impl<P: ProgressBars, S: IndexedTree> Repository<P, S> {
     ///
     /// This method will create needed tree blobs within the repository.
     /// Merge conflicts (identical filenames which do not match) will be resolved using the ordering given by `cmp`.
+    ///
+    /// # Arguments
+    ///
+    /// * `snaps` - The snapshots to merge
+    /// * `cmp` - The comparison function to use for merge conflicts
+    /// * `snap` - The snapshot to save
+    ///
+    /// # Returns
+    ///
     /// This method returns the modified and already saved [`SnapshotFile`].
     pub fn merge_snapshots(
         &self,
@@ -884,7 +1171,16 @@ impl<P: ProgressBars, S: IndexedIds> Repository<P, S> {
     /// Run a backup of `source` using the given options.
     ///
     /// You have to give a preflled [`SnapshotFile`] which is modified and saved.
-    /// Returns the saved snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
+    /// * `source` - The source to backup
+    /// * `snap` - The snapshot to modify and save
+    ///
+    /// # Returns
+    ///  
+    /// The saved snapshot.
     pub fn backup(
         &self,
         opts: &BackupOptions,
@@ -897,11 +1193,23 @@ impl<P: ProgressBars, S: IndexedIds> Repository<P, S> {
 
 impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     /// Read a raw blob
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the blob
+    /// * `id` - The id of the blob
     pub fn cat_blob(&self, tpe: BlobType, id: &str) -> RusticResult<Bytes> {
         commands::cat::cat_blob(self, tpe, id)
     }
 
     /// Dump a [`Node`] using the given writer.
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The node to dump
+    /// * `w` - The writer to use
+    ///  
+    /// # Note
     ///
     /// Currently, only regular file nodes are supported.
     pub fn dump(&self, node: &Node, w: &mut impl Write) -> RusticResult<()> {
@@ -909,9 +1217,17 @@ impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     }
 
     /// Prepare the restore.
+    ///
     /// If `dry_run` is set to false, it will also:
     /// - remove existing files from the destination, if `opts.delete` is set to true
     /// - create all dirs for the restore
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
+    /// * `node_streamer` - The node streamer to use
+    /// * `dest` - The destination to use
+    /// * `dry_run` - If true, only print what would be done
     pub fn prepare_restore(
         &self,
         opts: &RestoreOptions,
@@ -923,8 +1239,17 @@ impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     }
 
     /// Copy the given `snapshots` to `repo_dest`.
-    /// Note: This command copies snapshots even if they already exist. For already existing snapshots, a
+    ///
+    /// # Arguments
+    ///
+    /// * `repo_dest` - The destination repository
+    /// * `snapshots` - The snapshots to copy
+    ///
+    /// # Note
+    ///
+    /// This command copies snapshots even if they already exist. For already existing snapshots, a
     /// copy will be created in the destination repository.
+    ///
     /// To omit already existing snapshots, use `relevante_copy_snapshots` and filter out the non-relevant ones.
     pub fn copy<'a, Q: ProgressBars, R: IndexedIds>(
         &self,
@@ -937,7 +1262,16 @@ impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     /// Repair snapshots.
     ///
     /// This traverses all trees of all snapshots and repairs defect trees.
-    /// WARNING: If you remove the original snapshots, you may loose data!
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The options to use
+    /// * `snapshots` - The snapshots to repair
+    /// * `dry_run` - If true, only print what would be done
+    ///  
+    /// # Warning
+    ///
+    /// If you remove the original snapshots, you may loose data!
     pub fn repair_snapshots(
         &self,
         opts: &RepairSnapshotsOptions,

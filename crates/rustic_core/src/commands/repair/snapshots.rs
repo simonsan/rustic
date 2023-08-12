@@ -20,7 +20,11 @@ use crate::{
 #[setters(into)]
 /// Options for the `repair snapshots` command
 pub struct RepairSnapshotsOptions {
-    /// Also remove defect snapshots - WARNING: This can result in data loss!
+    /// Also remove defect snapshots
+    ///
+    /// # Warning
+    ///
+    /// This can result in data loss!
     #[cfg_attr(feature = "clap", clap(long))]
     pub delete: bool,
 

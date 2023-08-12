@@ -46,7 +46,10 @@ type Filenames = Vec<PathBuf>;
 /// Options for the `restore` command
 pub struct RestoreOptions {
     /// Remove all files/dirs in destination which are not contained in snapshot.
-    /// WARNING: Use with care, maybe first try this with --dry-run?
+    ///
+    /// # Warning
+    ///
+    /// Use with care, maybe first try this with --dry-run?
     #[cfg_attr(feature = "clap", clap(long))]
     pub delete: bool,
 

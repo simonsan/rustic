@@ -85,7 +85,10 @@ pub struct PruneOptions {
     pub keep_delete: humantime::Duration,
 
     /// Delete files immediately instead of marking them. This also removes all files already marked for deletion.
-    /// WARNING: Only use if you are sure the repository is not accessed by parallel processes!
+    ///
+    /// # Warning
+    ///
+    /// Only use if you are sure the repository is not accessed by parallel processes!
     #[cfg_attr(feature = "clap", clap(long))]
     pub instant_delete: bool,
 
