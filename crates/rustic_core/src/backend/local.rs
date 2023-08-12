@@ -64,8 +64,11 @@ use crate::{
 /// All other directories will contain the pack files.
 #[derive(Clone, Debug)]
 pub struct LocalBackend {
+    /// The base path of the backend.
     path: PathBuf,
+    /// The command to call after a file was created.
     post_create_command: Option<String>,
+    /// The command to call after a file was deleted.
     post_delete_command: Option<String>,
 }
 
@@ -525,6 +528,15 @@ impl LocalDestination {
     #[cfg(windows)]
     // TODO: Windows support
     /// Set user/group for `item` (relative to the base path) from `meta`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the user/group for
+    /// * `meta` - The metadata to get the user/group from
+    ///
+    /// # Errors
+    ///
+    /// If the user/group could not be set.
     pub fn set_user_group(&self, _item: impl AsRef<Path>, _meta: &Metadata) -> RusticResult<()> {
         // https://learn.microsoft.com/en-us/windows/win32/fileio/file-security-and-access-rights
         // https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Security/struct.SECURITY_ATTRIBUTES.html
@@ -534,6 +546,15 @@ impl LocalDestination {
 
     #[cfg(not(windows))]
     /// Set user/group for `item` (relative to the base path) from `meta`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the user/group for
+    /// * `meta` - The metadata to get the user/group from
+    ///
+    /// # Errors
+    ///
+    /// If the user/group could not be set.
     pub fn set_user_group(&self, item: impl AsRef<Path>, meta: &Metadata) -> RusticResult<()> {
         let filename = self.path(item);
 
@@ -559,12 +580,30 @@ impl LocalDestination {
     #[cfg(windows)]
     // TODO: Windows support
     /// Set uid/gid for `item` (relative to the base path) from `meta`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the uid/gid for
+    /// * `meta` - The metadata to get the uid/gid from
+    ///
+    /// # Errors
+    ///
+    /// If the uid/gid could not be set.
     pub fn set_uid_gid(&self, _item: impl AsRef<Path>, _meta: &Metadata) -> RusticResult<()> {
         Ok(())
     }
 
     #[cfg(not(windows))]
     /// Set uid/gid for `item` (relative to the base path) from `meta`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the uid/gid for
+    /// * `meta` - The metadata to get the uid/gid from
+    ///
+    /// # Errors
+    ///
+    /// If the uid/gid could not be set.
     pub fn set_uid_gid(&self, item: impl AsRef<Path>, meta: &Metadata) -> RusticResult<()> {
         let filename = self.path(item);
 
@@ -578,13 +617,31 @@ impl LocalDestination {
 
     #[cfg(windows)]
     // TODO: Windows support
-    /// Set permissions for `item` (relative to the base path) from `meta`
+    /// Set permissions for `item` (relative to the base path) from `node`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the permissions for
+    /// * `node` - The node to get the permissions from
+    ///
+    /// # Errors        
+    ///
+    /// If the permissions could not be set.
     pub fn set_permission(&self, _item: impl AsRef<Path>, _node: &Node) -> RusticResult<()> {
         Ok(())
     }
 
     #[cfg(not(windows))]
-    /// Set permissions for `item` (relative to the base path) from `meta`
+    /// Set permissions for `item` (relative to the base path) from `node`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the permissions for
+    /// * `node` - The node to get the permissions from
+    ///
+    /// # Errors        
+    ///
+    /// If the permissions could not be set.
     pub fn set_permission(&self, item: impl AsRef<Path>, node: &Node) -> RusticResult<()> {
         if node.is_symlink() {
             return Ok(());
@@ -604,6 +661,15 @@ impl LocalDestination {
     // TODO: Windows support
     // TODO: openbsd support
     /// Set extended attributes for `item` (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the extended attributes for
+    /// * `extended_attributes` - The extended attributes to set
+    ///
+    /// # Errors
+    ///
+    /// If the extended attributes could not be set.
     pub fn set_extended_attributes(
         &self,
         _item: impl AsRef<Path>,
@@ -614,6 +680,15 @@ impl LocalDestination {
 
     #[cfg(not(any(windows, target_os = "openbsd")))]
     /// Set extended attributes for `item` (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the extended attributes for
+    /// * `extended_attributes` - The extended attributes to set
+    ///
+    /// # Errors
+    ///
+    /// If the extended attributes could not be set.
     pub fn set_extended_attributes(
         &self,
         item: impl AsRef<Path>,
@@ -672,7 +747,19 @@ impl LocalDestination {
 
     /// Set length of `item` (relative to the base path)
     ///
-    // If it doesn't exist, create a new (empty) one with given length
+    /// # Arguments
+    ///
+    /// * `item` - The item to set the length for
+    /// * `size` - The size to set the length to
+    ///
+    /// # Errors
+    ///
+    /// If the length could not be set.
+    ///
+    /// # Notes
+    ///
+    /// If the file exists, truncate it to the given length. (TODO: check if this is correct)
+    /// If it doesn't exist, create a new (empty) one with given length.
     pub fn set_length(&self, item: impl AsRef<Path>, size: u64) -> RusticResult<()> {
         let filename = self.path(item);
         let dir = filename
@@ -753,6 +840,16 @@ impl LocalDestination {
     }
 
     /// Read the given item (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to read
+    /// * `offset` - The offset to read from
+    /// * `length` - The length to read
+    ///
+    /// # Errors
+    ///
+    /// If the item could not be read.
     pub fn read_at(&self, item: impl AsRef<Path>, offset: u64, length: u64) -> RusticResult<Bytes> {
         let filename = self.path(item);
         let mut file = File::open(filename).map_err(LocalErrorKind::OpeningFileFailed)?;
@@ -766,6 +863,14 @@ impl LocalDestination {
     }
 
     /// Check if a matching file exists.
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to check
+    /// * `size` - The size to check
+    ///
+    /// # Returns
+    ///
     /// If a file exists and size matches, this returns a `File` open for reading.
     /// In all other cases, returns `None`
     pub fn get_matching_file(&self, item: impl AsRef<Path>, size: u64) -> Option<File> {
@@ -783,6 +888,20 @@ impl LocalDestination {
     }
 
     /// Write `data` to given item (relative to the base path) at `offset`
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to write to
+    /// * `offset` - The offset to write at
+    /// * `data` - The data to write
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be written.
+    ///
+    /// # Notes
+    ///
+    /// This will create the file if it doesn't exist.
     pub fn write_at(&self, item: impl AsRef<Path>, offset: u64, data: &[u8]) -> RusticResult<()> {
         let filename = self.path(item);
         let mut file = fs::OpenOptions::new()

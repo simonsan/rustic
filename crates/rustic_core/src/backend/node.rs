@@ -48,10 +48,16 @@ pub struct Node {
     #[serde(default, deserialize_with = "deserialize_default_from_null")]
     /// Contents of the Node
     ///
+    /// # Note
+    ///
     /// This should be only set for regular files.
     pub content: Option<Vec<Id>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    /// Subtree of the Node. This should be only
+    /// Subtree of the Node.
+    ///
+    /// # Note
+    ///
+    /// This should be only set for directories. (TODO: Check if this is correct)
     pub subtree: Option<Id>,
 }
 
@@ -162,29 +168,58 @@ impl Default for NodeType {
     }
 }
 
+/// Metadata of a [`Node`]
 #[serde_with::apply(
     Option => #[serde(default, skip_serializing_if = "Option::is_none")],
     u64 => #[serde(default, skip_serializing_if = "is_default")],
 )]
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metadata {
+    /// Unix file mode
     pub mode: Option<u32>,
+    /// Unix mtime (last modification time)
     pub mtime: Option<DateTime<Local>>,
+    /// Unix atime (last access time)
     pub atime: Option<DateTime<Local>>,
+    /// Unix ctime (last status change time)
     pub ctime: Option<DateTime<Local>>,
+    /// Unix uid (user id)
     pub uid: Option<u32>,
+    /// Unix gid (group id)
     pub gid: Option<u32>,
+    /// Unix user name
     pub user: Option<String>,
+    /// Unix group name
     pub group: Option<String>,
+    /// Unix inode number
     pub inode: u64,
+    /// Unix device id
     pub device_id: u64,
+    /// Size of the node
     pub size: u64,
+    /// Number of hardlinks to this node
     pub links: u64,
+    /// Extended attributes of the node
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub extended_attributes: Vec<ExtendedAttribute>,
 }
 
 // Deserialize a Base64-encoded value into Vec<u8>.
+//
+// # Arguments
+//
+// * `deserializer` - The deserializer to use.
+//
+// # Errors
+//
+// If the value is not a valid Base64-encoded value.
+//
+// # Returns
+//
+// The deserialized value.
+//
+// # Note
+//
 // Handles '"value" = null' by first deserializing into a Option.
 fn deserialize_value<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 where
@@ -194,9 +229,12 @@ where
     Ok(value.unwrap_or_default())
 }
 
+/// Extended attribute of a [`Node`]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExtendedAttribute {
+    /// Name of the extended attribute
     pub(crate) name: String,
+    /// Value of the extended attribute
     #[serde(
         serialize_with = "Base64::<Standard,Padded>::serialize_as",
         deserialize_with = "deserialize_value"
@@ -209,6 +247,17 @@ pub(crate) fn is_default<T: Default + PartialEq>(t: &T) -> bool {
 }
 
 impl Node {
+    /// Create a new [`Node`] with the given name, type and metadata
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the node
+    /// * `node_type` - Type of the node
+    /// * `meta` - Metadata of the node
+    ///
+    /// # Returns
+    ///
+    /// The created [`Node`]
     #[must_use]
     pub(crate) fn new_node(name: &OsStr, node_type: NodeType, meta: Metadata) -> Self {
         Self {
@@ -257,23 +306,44 @@ impl Node {
     }
 }
 
-///  `last_modified_node` is an ordering function returning the latest node by mtime
+/// An ordering function returning the latest node by mtime
+///
+/// # Arguments
+///
+/// * `n1` - First node
+/// * `n2` - Second node
+///
+/// # Returns
+///
+/// The ordering of the two nodes
 pub fn last_modified_node(n1: &Node, n2: &Node) -> Ordering {
     n1.meta.mtime.cmp(&n2.meta.mtime)
 }
 
+// TODO: Should be probably called `_lossy`
 // TODO(Windows): This is not able to handle non-unicode filenames and
 // doesn't treat filenames which need and escape (like `\`, `"`, ...) correctly
 #[cfg(windows)]
 fn escape_filename(name: &OsStr) -> String {
     name.to_string_lossy().to_string()
 }
+
+/// Unescape a filename
+///
+/// # Arguments
+///
+/// * `s` - The escaped filename
 #[cfg(windows)]
 fn unescape_filename(s: &str) -> Result<OsString, core::convert::Infallible> {
     OsString::from_str(s)
 }
 
 #[cfg(not(windows))]
+/// Escape a filename
+///
+/// # Arguments
+///
+/// * `name` - The filename to escape
 // This escapes the filename in a way that *should* be compatible to golangs
 // stconv.Quote, see https://pkg.go.dev/strconv#Quote
 // However, so far there was no specification what Quote really does, so this
@@ -327,6 +397,11 @@ fn escape_filename(name: &OsStr) -> String {
 }
 
 #[cfg(not(windows))]
+/// Unescape a filename
+///
+/// # Arguments
+///
+/// * `s` - The escaped filename
 // inspired by the enquote crate
 fn unescape_filename(s: &str) -> RusticResult<OsString> {
     let mut chars = s.chars();

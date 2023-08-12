@@ -53,7 +53,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> Archiver<BE, I> {
     /// * `index` - The index to read from.
     /// * `config` - The config file.
     /// * `parent` - The parent snapshot to use.
-    /// * `snap` - The SnapshotFile to write to.
+    /// * `snap` - The `SnapshotFile` to write to.
     ///
     /// # Errors
     ///

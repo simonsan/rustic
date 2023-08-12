@@ -13,8 +13,11 @@ use crate::{
 /// Backend helper that chooses the correct backend based on the url.
 #[derive(Clone, Debug)]
 pub enum ChooseBackend {
+    /// Local backend.
     Local(LocalBackend),
+    /// REST backend.
     Rest(RestBackend),
+    /// Rclone backend.
     Rclone(RcloneBackend),
 }
 
@@ -59,6 +62,10 @@ impl ReadBackend for ChooseBackend {
     ///
     /// * `option` - The option to set.
     /// * `value` - The value to set the option to.
+    ///
+    /// # Errors
+    ///
+    /// If the option is not supported.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.set_option(option, value),
@@ -72,6 +79,14 @@ impl ReadBackend for ChooseBackend {
     /// # Arguments
     ///
     /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the backend does not support listing files.
+    ///
+    /// # Returns
+    ///
+    /// A vector of tuples containing the id and size of the files.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         match self {
             Self::Local(local) => local.list_with_size(tpe),
@@ -86,6 +101,14 @@ impl ReadBackend for ChooseBackend {
     ///
     /// * `tpe` - The type of the file.
     /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file does not exist.
+    ///
+    /// # Returns
+    ///
+    /// The data read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         match self {
             Self::Local(local) => local.read_full(tpe, id),
@@ -103,6 +126,10 @@ impl ReadBackend for ChooseBackend {
     /// * `cacheable` - Whether the file is cacheable.
     /// * `offset` - The offset to read from.
     /// * `length` - The length to read.
+    ///
+    /// # Returns
+    ///
+    /// The data read.
     fn read_partial(
         &self,
         tpe: FileType,

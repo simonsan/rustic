@@ -57,6 +57,14 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
     /// # Arguments
     ///
     /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the backend does not support listing files.
+    ///
+    /// # Returns
+    ///
+    /// A vector of tuples containing the id and size of the files.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         let list = self.be.list_with_size(tpe)?;
 
@@ -75,6 +83,14 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
     ///
     /// * `tpe` - The type of the file.
     /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file does not exist.
+    ///
+    /// # Returns
+    ///
+    /// The data read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         match (&self.cache, tpe.is_cacheable()) {
             (None, _) | (Some(_), false) => self.be.read_full(tpe, id),
@@ -101,6 +117,14 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
     /// * `cacheable` - Whether the file is cacheable.
     /// * `offset` - The offset to read from.
     /// * `length` - The length to read.
+    ///
+    /// # Errors
+    ///
+    /// If the file does not exist.
+    ///
+    /// # Returns
+    ///
+    /// The data read.
     fn read_partial(
         &self,
         tpe: FileType,

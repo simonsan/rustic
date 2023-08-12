@@ -16,11 +16,19 @@ use crate::{
 
 pub(crate) type TreeItem = TreeType<(ParentResult<()>, u64), ParentResult<Id>>;
 
+/// The `TreeArchiver` is responsible for archiving trees.
+///
+// TODO: Add documentation
 pub(crate) struct TreeArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
+    /// The current tree.
     tree: Tree,
+    /// The stack of trees.
     stack: Vec<(PathBuf, Node, ParentResult<Id>, Tree)>,
+    /// The index to read from.
     index: I,
+    /// The packer to write to.
     tree_packer: Packer<BE>,
+    /// The summary of the snapshot.
     summary: SnapshotSummary,
 }
 

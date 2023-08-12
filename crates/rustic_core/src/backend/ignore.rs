@@ -35,8 +35,11 @@ use crate::{
 #[allow(missing_debug_implementations)]
 /// A [`LocalSource`] is a source from local paths which is used to be read from (i.e. to backup it).
 pub struct LocalSource {
+    /// The walk builder.
     builder: WalkBuilder,
+    /// The walk iterator.
     walker: Walk,
+    /// The save options to use.
     save_opts: LocalSourceSaveOptions,
 }
 
@@ -115,6 +118,20 @@ pub struct LocalSourceFilterOptions {
 
 impl LocalSource {
     /// Create a local source from [`LocalSourceSaveOptions`], [`LocalSourceFilterOptions`] and backup path(s).
+    ///
+    /// # Arguments
+    ///
+    /// * `save_opts` - The [`LocalSourceSaveOptions`] to use.
+    /// * `filter_opts` - The [`LocalSourceFilterOptions`] to use.
+    /// * `backup_paths` - The backup path(s) to use.
+    ///
+    /// # Returns
+    ///
+    /// The created local source.
+    ///
+    /// # Errors
+    ///
+    /// If the local source could not be created.
     pub fn new(
         save_opts: LocalSourceSaveOptions,
         filter_opts: &LocalSourceFilterOptions,
@@ -213,6 +230,15 @@ pub struct OpenFile(PathBuf);
 impl ReadSourceOpen for OpenFile {
     type Reader = File;
 
+    /// Open the file from the local backend.
+    ///
+    /// # Returns
+    ///
+    /// The read handle to the file from the local backend.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be opened.
     fn open(self) -> RusticResult<Self::Reader> {
         let path = self.0;
         File::open(path).map_err(|err| IgnoreErrorKind::UnableToOpenFile(err).into())
@@ -223,6 +249,15 @@ impl ReadSource for LocalSource {
     type Open = OpenFile;
     type Iter = Self;
 
+    /// Get the size of the local source.
+    ///
+    /// # Returns
+    ///
+    /// The size of the local source or `None` if the size could not be determined.
+    ///
+    /// # Errors
+    ///
+    /// If the size could not be determined.
     fn size(&self) -> RusticResult<Option<u64>> {
         let mut size = 0;
         for entry in self.builder.build() {
@@ -235,6 +270,11 @@ impl ReadSource for LocalSource {
         Ok(Some(size))
     }
 
+    /// Iterate over the entries of the local source.
+    ///
+    /// # Returns
+    ///
+    /// An iterator over the entries of the local source.
     fn entries(self) -> Self::Iter {
         self
     }

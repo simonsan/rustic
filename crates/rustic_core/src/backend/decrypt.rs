@@ -172,17 +172,57 @@ pub trait DecryptReadBackend: ReadBackend {
 }
 
 pub trait DecryptWriteBackend: WriteBackend {
+    /// The type of the key.
     type Key: CryptoKey;
 
+    /// Gets the key.
     fn key(&self) -> &Self::Key;
+
+    /// Writes the given data to the backend and returns the id of the data.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `data` - The data to write.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be written.
+    ///
+    /// # Returns
+    ///
+    /// The id of the data. (TODO: Check if this is correct)
     fn hash_write_full(&self, tpe: FileType, data: &[u8]) -> RusticResult<Id>;
 
+    /// Saves the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `file` - The file to save.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be saved.
+    ///
+    /// # Returns
+    ///
+    /// The id of the file.
     fn save_file<F: RepoFile>(&self, file: &F) -> RusticResult<Id> {
         let data = serde_json::to_vec(file)
             .map_err(CryptBackendErrorKind::SerializingToJsonByteVectorFailed)?;
         self.hash_write_full(F::TYPE, &data)
     }
 
+    /// Saves the given list of files.
+    ///
+    /// # Arguments
+    ///
+    /// * `list` - The list of files to save.
+    /// * `p` - The progress bar.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be saved.
     fn save_list<'a, F: RepoFile, I: ExactSizeIterator<Item = &'a F> + Send>(
         &self,
         list: I,
@@ -198,6 +238,18 @@ pub trait DecryptWriteBackend: WriteBackend {
         Ok(())
     }
 
+    /// Deletes the given list of files.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files.
+    /// * `cacheable` - Whether the files should be cached.
+    /// * `list` - The list of files to delete.
+    /// * `p` - The progress bar.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be deleted.
     fn delete_list<'a, I: ExactSizeIterator<Item = &'a Id> + Send>(
         &self,
         tpe: FileType,
@@ -219,14 +271,28 @@ pub trait DecryptWriteBackend: WriteBackend {
     fn set_zstd(&mut self, zstd: Option<i32>);
 }
 
+/// A backend that can decrypt data.
 #[derive(Clone, Debug)]
 pub struct DecryptBackend<R, C> {
+    /// The backend to decrypt.
     backend: R,
+    /// The key to decrypt the backend with.
     key: C,
+    /// The compression level to use for zstd.
     zstd: Option<i32>,
 }
 
 impl<R: ReadBackend, C: CryptoKey> DecryptBackend<R, C> {
+    /// Creates a new decrypt backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to decrypt.
+    /// * `key` - The key to decrypt the backend with.
+    ///
+    /// # Returns
+    ///
+    /// The new decrypt backend.
     pub fn new(be: &R, key: C) -> Self {
         Self {
             backend: be.clone(),
@@ -237,12 +303,28 @@ impl<R: ReadBackend, C: CryptoKey> DecryptBackend<R, C> {
 }
 
 impl<R: WriteBackend, C: CryptoKey> DecryptWriteBackend for DecryptBackend<R, C> {
+    /// The type of the key.
     type Key = C;
 
+    /// Gets the key.
     fn key(&self) -> &Self::Key {
         &self.key
     }
 
+    /// Writes the given data to the backend and returns the id of the data.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `data` - The data to write.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be written.
+    ///
+    /// # Returns
+    ///
+    /// The id of the data. (TODO: Check if this is correct)
     fn hash_write_full(&self, tpe: FileType, data: &[u8]) -> RusticResult<Id> {
         let data = match self.zstd {
             Some(level) => {
@@ -258,6 +340,11 @@ impl<R: WriteBackend, C: CryptoKey> DecryptWriteBackend for DecryptBackend<R, C>
         Ok(id)
     }
 
+    /// Sets the compression level to use for zstd.
+    ///
+    /// # Arguments
+    ///
+    /// * `zstd` - The compression level to use for zstd.
     fn set_zstd(&mut self, zstd: Option<i32>) {
         self.zstd = zstd;
     }

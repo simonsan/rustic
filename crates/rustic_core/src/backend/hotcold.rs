@@ -4,11 +4,14 @@ use crate::{backend::FileType, backend::ReadBackend, backend::WriteBackend, id::
 
 #[derive(Clone, Debug)]
 pub struct HotColdBackend<BE: WriteBackend> {
+    /// The backend to use.
     be: BE,
+    /// The backend to use for hot files.
     hot_be: Option<BE>,
 }
 
 impl<BE: WriteBackend> HotColdBackend<BE> {
+    /// Creates a new `HotColdBackend`.
     pub fn new(be: BE, hot_be: Option<BE>) -> Self {
         Self { be, hot_be }
     }

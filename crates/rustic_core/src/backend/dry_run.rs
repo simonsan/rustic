@@ -10,13 +10,22 @@ use crate::{
     RusticResult,
 };
 
+/// A backend implementation that does not actually write to the backend.
 #[derive(Clone, Debug)]
 pub struct DryRunBackend<BE: DecryptFullBackend> {
+    /// The backend to use.
     be: BE,
+    /// Whether to actually write to the backend.
     dry_run: bool,
 }
 
 impl<BE: DecryptFullBackend> DryRunBackend<BE> {
+    /// Create a new [`DryRunBackend`].
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use.
+    /// * `dry_run` - Whether to actually write to the backend.
     pub const fn new(be: BE, dry_run: bool) -> Self {
         Self { be, dry_run }
     }

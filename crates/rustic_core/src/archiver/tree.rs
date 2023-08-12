@@ -37,8 +37,11 @@ where
 /// It either contains the original item, a new tree to be inserted or a pseudo item which indicates that a tree is finished.
 #[derive(Debug)]
 pub(crate) enum TreeType<T, U> {
+    /// New tree to be inserted.
     NewTree((PathBuf, Node, U)),
+    /// A pseudo item which indicates that a tree is finished.
     EndTree,
+    /// Original item.
     Other((PathBuf, Node, T)),
 }
 
