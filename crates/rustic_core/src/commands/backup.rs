@@ -9,11 +9,14 @@ use serde::Deserialize;
 
 use crate::{
     archiver::{parent::Parent, Archiver},
+    backend::ignore::{LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions},
     backend::{dry_run::DryRunBackend, stdin::StdinSource},
-    repofile::SnapshotFile,
-    repository::{IndexedIds, IndexedTree},
-    Id, LocalSource, LocalSourceFilterOptions, LocalSourceSaveOptions, PathList, ProgressBars,
-    Repository, RusticResult, SnapshotGroup, SnapshotGroupCriterion,
+    error::RusticResult,
+    id::Id,
+    progress::ProgressBars,
+    repofile::snapshotfile::{SnapshotGroup, SnapshotGroupCriterion},
+    repofile::{PathList, SnapshotFile},
+    repository::{IndexedIds, IndexedTree, Repository},
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -53,6 +56,17 @@ pub struct ParentOptions {
 }
 
 impl ParentOptions {
+    /// Get parent snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to use
+    /// * `snap` - The snapshot to use
+    /// * `backup_stdin` - Whether the backup is from stdin
+    ///
+    /// # Returns
+    ///
+    /// The parent snapshot id and the parent object or `None` if no parent is used.
     pub(crate) fn get_parent<P: ProgressBars, S: IndexedTree>(
         &self,
         repo: &Repository<P, S>,
@@ -129,6 +143,18 @@ pub struct BackupOptions {
     pub ignore_filter_opts: LocalSourceFilterOptions,
 }
 
+/// Backup data, create a snapshot.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to use
+/// * `opts` - The backup options
+/// * `source` - The source to backup
+/// * `snap` - The snapshot to backup
+///
+/// # Returns
+///
+/// The snapshot pointing to the backup'ed data.
 pub(crate) fn backup<P: ProgressBars, S: IndexedIds>(
     repo: &Repository<P, S>,
     opts: &BackupOptions,

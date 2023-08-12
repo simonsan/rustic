@@ -9,11 +9,11 @@ use crate::{
         decrypt::{DecryptReadBackend, DecryptWriteBackend},
         FileType, ReadBackend, WriteBackend,
     },
-    error::CommandErrorKind,
+    error::{CommandErrorKind, RusticResult},
     index::indexer::Indexer,
+    progress::{Progress, ProgressBars},
     repofile::{IndexFile, IndexPack, PackHeader, PackHeaderRef},
-    repository::Open,
-    Progress, ProgressBars, Repository, RusticResult,
+    repository::{Open, Repository},
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -28,6 +28,12 @@ pub struct RepairIndexOptions {
 }
 
 impl RepairIndexOptions {
+    /// Runs the `repair index` command
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to repair
+    /// * `dry_run` - Whether to actually modify the repository or just print what would be done
     pub(crate) fn repair<P: ProgressBars, S: Open>(
         self,
         repo: &Repository<P, S>,

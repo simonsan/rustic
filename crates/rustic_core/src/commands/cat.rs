@@ -6,12 +6,29 @@ use crate::{
     backend::{decrypt::DecryptReadBackend, FileType, ReadBackend},
     blob::{tree::Tree, BlobType},
     error::CommandErrorKind,
+    error::RusticResult,
+    id::Id,
     index::IndexedBackend,
+    progress::ProgressBars,
     repofile::SnapshotFile,
     repository::{IndexedFull, IndexedTree, Open, Repository},
-    Id, ProgressBars, RusticResult,
 };
 
+/// Prints the contents of a file.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to read from.
+/// * `tpe` - The type of the file.
+/// * `id` - The id of the file.
+///
+/// # Errors
+///
+/// If the file could not be read.
+///
+/// # Returns
+///
+/// The data read.
 pub(crate) fn cat_file<P, S: Open>(
     repo: &Repository<P, S>,
     tpe: FileType,
@@ -33,6 +50,21 @@ pub(crate) fn cat_blob<P, S: IndexedFull>(
     Ok(data)
 }
 
+/// Prints the contents of a tree.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to read from.
+/// * `snap` - The snapshot to read from.
+/// * `sn_filter` - The filter to apply to the snapshot.
+///
+/// # Errors
+///
+/// If the file could not be read.
+///
+/// # Returns
+///
+/// The data read.
 pub(crate) fn cat_tree<P: ProgressBars, S: IndexedTree>(
     repo: &Repository<P, S>,
     snap: &str,

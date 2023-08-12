@@ -7,10 +7,12 @@ use std::collections::{HashMap, HashSet};
 use crate::{
     backend::{decrypt::DecryptWriteBackend, node::NodeType, FileType},
     blob::{packer::Packer, tree::Tree, BlobType},
+    error::RusticResult,
+    id::Id,
     index::{indexer::Indexer, IndexedBackend, ReadIndex},
-    repofile::SnapshotFile,
-    repository::{IndexedFull, IndexedTree},
-    Id, ProgressBars, Repository, RusticResult, StringList,
+    progress::ProgressBars,
+    repofile::{SnapshotFile, StringList},
+    repository::{IndexedFull, IndexedTree, Repository},
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -47,6 +49,7 @@ impl Default for RepairSnapshotsOptions {
     }
 }
 
+// TODO: add documentation
 #[derive(Clone, Copy)]
 enum Changed {
     This,
@@ -55,6 +58,13 @@ enum Changed {
 }
 
 impl RepairSnapshotsOptions {
+    /// Runs the `repair snapshots` command
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to repair
+    /// * `snapshots` - The snapshots to repair
+    /// * `dry_run` - Whether to actually modify the repository or just print what would be done
     pub(crate) fn repair<P: ProgressBars, S: IndexedFull>(
         &self,
         repo: &Repository<P, S>,
@@ -134,6 +144,20 @@ impl RepairSnapshotsOptions {
         Ok(())
     }
 
+    /// Repairs a tree
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `packer` - The packer to use
+    /// * `id` - The id of the tree to repair
+    /// * `replaced` - A map of already replaced trees
+    /// * `seen` - A set of already seen trees
+    /// * `dry_run` - Whether to actually modify the repository or just print what would be done
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the change status and the id of the repaired tree
     fn repair_tree<BE: DecryptWriteBackend>(
         &self,
         be: &impl IndexedBackend,

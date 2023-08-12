@@ -24,5 +24,5 @@ pub use {
     indexfile::{IndexBlob, IndexFile, IndexPack},
     keyfile::KeyFile,
     packfile::{HeaderEntry, PackHeader, PackHeaderLength, PackHeaderRef},
-    snapshotfile::{DeleteOption, SnapshotFile, SnapshotSummary},
+    snapshotfile::{DeleteOption, PathList, SnapshotFile, SnapshotSummary, StringList},
 };
