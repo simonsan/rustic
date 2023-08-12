@@ -6,14 +6,16 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 use crate::{
     backend::{decrypt::DecryptWriteBackend, node::NodeType},
     blob::{packer::Packer, tree::TreeStreamerOnce, BlobType},
+    error::RusticResult,
     index::{indexer::Indexer, IndexedBackend, ReadIndex},
+    progress::ProgressBars,
     repofile::SnapshotFile,
-    repository::{IndexedFull, IndexedIds, IndexedTree, Open},
-    ProgressBars, Repository, RusticResult,
+    repository::{IndexedFull, IndexedIds, IndexedTree, Open, Repository},
 };
 
+/// This struct enhances `[SnapshotFile]` with the attribute `relevant`
+/// which indicates if the snapshot is relevant for copying.
 #[derive(Debug)]
-/// This struct enhances `[SnapshotFile]` with the attribute `relevant` which indicates if the snapshot is relevant for copying.
 pub struct CopySnapshot {
     /// The snapshot
     pub sn: SnapshotFile,
@@ -21,6 +23,13 @@ pub struct CopySnapshot {
     pub relevant: bool,
 }
 
+/// Copy the given snapshots to the destination repository.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to copy from
+/// * `repo_dest` - The repository to copy to
+/// * `snapshots` - The snapshots to copy
 pub(crate) fn copy<'a, Q, R: IndexedFull, P: ProgressBars, S: IndexedIds>(
     repo: &Repository<Q, R>,
     repo_dest: &Repository<P, S>,
@@ -111,6 +120,17 @@ pub(crate) fn copy<'a, Q, R: IndexedFull, P: ProgressBars, S: IndexedIds>(
     Ok(())
 }
 
+/// Filter out relevant snapshots from the given list of snapshots.
+///
+/// # Arguments
+///
+/// * `snaps` - The snapshots to filter
+/// * `dest_repo` - The destination repository
+/// * `filter` - The filter to apply to the snapshots
+///
+/// # Returns
+///
+/// A list of snapshots with the attribute `relevant` set to `true` if the snapshot is relevant for copying.
 pub(crate) fn relevant_snapshots<F, P: ProgressBars, S: Open>(
     snaps: &[SnapshotFile],
     dest_repo: &Repository<P, S>,
