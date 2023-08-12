@@ -3,10 +3,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     backend::{decrypt::DecryptReadBackend, FileType, ReadBackend, ALL_FILE_TYPES},
     blob::{BlobType, BlobTypeMap},
+    error::RusticResult,
     index::IndexEntry,
+    progress::{Progress, ProgressBars},
     repofile::indexfile::{IndexFile, IndexPack},
-    repository::Open,
-    Progress, ProgressBars, Repository, RusticResult,
+    repository::{Open, Repository},
 };
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
@@ -25,9 +26,9 @@ pub struct IndexInfos {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 /// Information about blobs within `repoinfo`
 pub struct BlobInfo {
-    /// blob type
+    /// Blob type
     pub blob_type: BlobType,
-    /// # of blobs of the type
+    /// Number of blobs of the type
     pub count: u64,
     /// Total size saved in the repository of all blobs of the type.
     ///
@@ -40,6 +41,12 @@ pub struct BlobInfo {
 }
 
 impl BlobInfo {
+    /// Add the given [`IndexEntry`] length to the data size and count.
+    ///
+    /// # Arguments
+    ///
+    /// * `ie` - The [`IndexEntry`] to add.
+    // TODO: What happens if the [`IndexEntry`] is not of the same [`BlobType`] as this [`BlobInfo`]?
     pub(crate) fn add(&mut self, ie: IndexEntry) {
         self.count += 1;
         self.size += u64::from(ie.length);
@@ -51,17 +58,26 @@ impl BlobInfo {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 /// Information about packs within `repoinfo`
 pub struct PackInfo {
-    /// packs of the given blob type
+    /// Packs of the given blob type
     pub blob_type: BlobType,
-    /// # of packs of the type
+    /// Number of packs of the type
     pub count: u64,
-    /// minimal pack size for packs of the type, None, if there is no pack.
+    /// Minimal pack size for packs of the type, None, if there is no pack.
     pub min_size: Option<u64>,
-    /// maximal pack size for packs of the type, None, if there is no pack.
+    /// Maximal pack size for packs of the type, None, if there is no pack.
     pub max_size: Option<u64>,
 }
 
 impl PackInfo {
+    /// Add the given [`IndexPack`] to the count and update the min and max size.
+    ///
+    /// # Arguments
+    ///
+    /// * `ip` - The [`IndexPack`] to add.
+    ///
+    /// # Panics
+    ///
+    // TODO: What happens if the [`IndexEntry`] is not of the same [`BlobType`] as this [`PackInfo`]?
     pub(crate) fn add(&mut self, ip: &IndexPack) {
         self.count += 1;
         let size = u64::from(ip.pack_size());
@@ -74,6 +90,11 @@ impl PackInfo {
     }
 }
 
+/// Collects the index infos from the given repository.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to collect the infos from.
 pub(crate) fn collect_index_infos<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
 ) -> RusticResult<IndexInfos> {
@@ -147,6 +168,15 @@ pub struct RepoFileInfo {
     pub size: u64,
 }
 
+/// Collects the file info from the given backend.
+///
+/// # Arguments
+///
+/// * `be` - The backend to collect the infos from.
+///
+/// # Errors
+///
+// TODO: add errors!
 pub(crate) fn collect_file_info(be: &impl ReadBackend) -> RusticResult<Vec<RepoFileInfo>> {
     let mut files = Vec::with_capacity(ALL_FILE_TYPES.len());
     for tpe in ALL_FILE_TYPES {
@@ -158,6 +188,15 @@ pub(crate) fn collect_file_info(be: &impl ReadBackend) -> RusticResult<Vec<RepoF
     Ok(files)
 }
 
+/// Collects the file infos from the given repository.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to collect the infos from.
+///
+/// # Errors
+///
+// TODO: add errors!
 pub(crate) fn collect_file_infos<P: ProgressBars, S>(
     repo: &Repository<P, S>,
 ) -> RusticResult<RepoFileInfos> {

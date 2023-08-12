@@ -19,18 +19,25 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     backend::{
         decrypt::DecryptReadBackend,
+        local::LocalDestination,
         node::{Node, NodeType},
         FileType, ReadBackend,
     },
     blob::BlobType,
     error::CommandErrorKind,
-    repository::{IndexedFull, IndexedTree, Open},
-    Id, LocalDestination, Progress, ProgressBars, Repository, RusticResult,
+    error::RusticResult,
+    id::Id,
+    progress::{Progress, ProgressBars},
+    repository::{IndexedFull, IndexedTree, Open, Repository},
 };
 
 pub(crate) mod constants {
+    /// The maximum number of reader threads to use for restoring.
     pub(crate) const MAX_READER_THREADS_NUM: usize = 20;
 }
+
+type RestoreInfo = BTreeMap<(Id, BlobLocation), Vec<FileLocation>>;
+type Filenames = Vec<PathBuf>;
 
 #[allow(clippy::struct_excessive_bools)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -59,15 +66,15 @@ pub struct RestoreOptions {
 #[derive(Default, Debug, Clone, Copy)]
 /// Statisticts for files or dirs
 pub struct FileDirStats {
-    /// # to restore
+    /// Number of files or directories to restore
     pub restore: u64,
-    /// # which are unchanged (determined by date, but not verified)
+    /// Number of files or directories which are unchanged (determined by date, but not verified)
     pub unchanged: u64,
-    /// # which are verified and unchanged
+    /// Number of files or directories which are verified and unchanged
     pub verified: u64,
-    /// # which are modified
+    /// Number of files or directories which are modified
     pub modify: u64,
-    /// # of additional entries
+    /// Number of additional entries
     pub additional: u64,
 }
 
@@ -76,11 +83,23 @@ pub struct FileDirStats {
 pub struct RestoreStats {
     /// file statistics
     pub files: FileDirStats,
-    /// dir statistics
+    /// directory statistics
     pub dirs: FileDirStats,
 }
 
 impl RestoreOptions {
+    /// Restore the repository to the given destination.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_infos` - The restore information.
+    /// * `repo` - The repository to restore.
+    /// * `node_streamer` - The node streamer to use.
+    /// * `dest` - The destination to restore to.
+    ///
+    /// # Errors
+    ///
+    /// If the restore failed.
     pub(crate) fn restore<P: ProgressBars, S: IndexedTree>(
         self,
         file_infos: RestorePlan,
@@ -98,7 +117,18 @@ impl RestoreOptions {
         Ok(())
     }
 
-    /// collect restore information, scan existing files, create needed dirs and remove superfluous files
+    /// Collect restore information, scan existing files, create needed dirs and remove superfluous files
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to restore.
+    /// * `node_streamer` - The node streamer to use.
+    /// * `dest` - The destination to restore to.
+    /// * `dry_run` - If true, don't actually restore anything, but only print out what would be done.
+    ///
+    /// # Errors
+    ///
+    /// If the restore failed.
     pub(crate) fn collect_and_prepare<P: ProgressBars, S: IndexedFull>(
         self,
         repo: &Repository<P, S>,
@@ -272,6 +302,16 @@ impl RestoreOptions {
         Ok(restore_infos)
     }
 
+    /// Restore the metadata of the files and directories.
+    ///
+    /// # Arguments
+    ///
+    /// * `node_streamer` - The node streamer to use.
+    /// * `dest` - The destination to restore to.
+    ///
+    /// # Errors
+    ///
+    /// If the restore failed.
     fn restore_metadata(
         self,
         mut node_streamer: impl Iterator<Item = RusticResult<(PathBuf, Node)>>,
@@ -304,6 +344,18 @@ impl RestoreOptions {
         Ok(())
     }
 
+    /// Set the metadata of the given file or directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `dest` - The destination to restore to.
+    /// * `path` - The path of the file or directory.
+    /// * `node` - The node information of the file or directory.
+    ///
+    /// # Errors
+    ///
+    /// If the metadata could not be set.
+    // TODO: Return a result here, introduce errors and get rid of logging.
     fn set_metadata(self, dest: &LocalDestination, path: &PathBuf, node: &Node) {
         debug!("setting metadata for {:?}", path);
         dest.create_special(path, node)
@@ -328,6 +380,17 @@ impl RestoreOptions {
 
 /// [`restore_contents`] restores all files contents as described by `file_infos`
 /// using the [`DecryptReadBackend`] `be` and writing them into the [`LocalBackend`] `dest`.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to restore.
+/// * `dest` - The destination to restore to.
+/// * `file_infos` - The restore information.
+///
+/// # Errors
+///
+/// * [`CommandErrorKind::ErrorSettingLength`] if the length of a file could not be set.
+/// * [`CommandErrorKind::FromRayonError`] if the restore failed.
 fn restore_contents<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
     dest: &LocalDestination,
@@ -456,7 +519,6 @@ fn restore_contents<P: ProgressBars, S: Open>(
     Ok(())
 }
 
-#[derive(Debug, Default)]
 /// Information about what will be restored.
 ///
 /// Struct that contains information of file contents grouped by
@@ -464,9 +526,13 @@ fn restore_contents<P: ProgressBars, S: Open>(
 /// 2) blob within this pack
 /// 3) the actual files and position of this blob within those
 /// 4) Statistical information
+#[derive(Debug, Default)]
 pub struct RestorePlan {
+    /// The names of the files to restore
     names: Filenames,
+    /// The length of the files to restore
     file_lengths: Vec<u64>,
+    /// The restore information
     r: RestoreInfo,
     /// The total restore size
     pub restore_size: u64,
@@ -476,17 +542,19 @@ pub struct RestorePlan {
     pub stats: RestoreStats,
 }
 
-type RestoreInfo = BTreeMap<(Id, BlobLocation), Vec<FileLocation>>;
-type Filenames = Vec<PathBuf>;
-
+/// `BlobLocation` contains information about a blob within a pack
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct BlobLocation {
+    /// The offset of the blob within the pack
     offset: u32,
+    /// The length of the blob
     length: u32,
+    /// The uncompressed length of the blob
     uncompressed_length: Option<NonZeroU32>,
 }
 
 impl BlobLocation {
+    /// Get the length of the data contained in this blob
     fn data_length(&self) -> u64 {
         self.uncompressed_length
             .map_or(
@@ -497,13 +565,20 @@ impl BlobLocation {
     }
 }
 
+/// `FileLocation` contains information about a file within a blob
 #[derive(Debug)]
 struct FileLocation {
+    // TODO: The index of the file within ... ?
     file_idx: usize,
+    /// The start of the file within the blob
     file_start: u64,
-    matches: bool, //indicates that the file exists and these contents are already correct
+    /// Whether the file matches the blob
+    // indicates that the file exists and these contents are already correct
+    matches: bool,
 }
 
+/// `AddFileResult` indicates the result of adding a file to [`FileInfos`]
+// TODO: Add documentation!
 enum AddFileResult {
     Existing,
     Verified,
@@ -512,6 +587,18 @@ enum AddFileResult {
 
 impl RestorePlan {
     /// Add the file to [`FileInfos`] using `index` to get blob information.
+    ///
+    /// # Arguments
+    ///
+    /// * `dest` - The destination to restore to.
+    /// * `file` - The file to add.
+    /// * `name` - The name of the file.
+    /// * `repo` - The repository to restore.
+    /// * `ignore_mtime` - If true, ignore the modification time of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be added.
     fn add_file<P, S: IndexedFull>(
         &mut self,
         dest: &LocalDestination,
@@ -522,7 +609,7 @@ impl RestorePlan {
     ) -> RusticResult<AddFileResult> {
         let mut open_file = dest.get_matching_file(&name, file.meta.size);
 
-        // Empty files which exists with correct size should always return Ok(Existsing)!
+        // Empty files which exists with correct size should always return Ok(Existing)!
         if file.meta.size == 0 {
             if let Some(meta) = open_file.as_ref().map(|f| f.metadata()).transpose()? {
                 if meta.len() == 0 {
