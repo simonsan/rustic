@@ -12,12 +12,26 @@ use crate::{
         BlobType,
     },
     error::CommandErrorKind,
+    error::RusticResult,
+    id::Id,
     index::{indexer::Indexer, ReadIndex},
-    repofile::{SnapshotFile, SnapshotSummary},
-    repository::IndexedTree,
-    Id, PathList, Progress, ProgressBars, Repository, RusticResult,
+    progress::{Progress, ProgressBars},
+    repofile::{PathList, SnapshotFile, SnapshotSummary},
+    repository::{IndexedTree, Repository},
 };
 
+/// Merges the given snapshots into a new snapshot.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to merge into
+/// * `snapshots` - The snapshots to merge
+/// * `cmp` - The comparison function for the trees
+/// * `snap` - The snapshot to merge into
+///
+/// # Returns
+///
+/// The merged snapshot
 pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(
     repo: &Repository<P, S>,
     snapshots: &[SnapshotFile],
@@ -48,6 +62,18 @@ pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(
     Ok(snap)
 }
 
+/// Merges the given trees into a new tree.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to merge into
+/// * `trees` - The trees to merge
+/// * `cmp` - The comparison function for the trees
+/// * `summary` - The summary to update
+///
+/// # Returns
+///
+/// The merged tree
 pub(crate) fn merge_trees<P: ProgressBars, S: IndexedTree>(
     repo: &Repository<P, S>,
     trees: &[Id],

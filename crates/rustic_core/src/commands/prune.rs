@@ -31,17 +31,20 @@ use crate::{
         BlobType, BlobTypeMap, Initialize,
     },
     error::CommandErrorKind,
+    error::RusticResult,
+    id::Id,
     index::{
         binarysorted::{IndexCollector, IndexType},
         indexer::Indexer,
         IndexBackend, IndexedBackend, ReadIndex,
     },
+    progress::{Progress, ProgressBars},
     repofile::{HeaderEntry, IndexBlob, IndexFile, IndexPack, SnapshotFile},
-    repository::Open,
-    Id, Progress, ProgressBars, Repository, RusticResult,
+    repository::{Open, Repository},
 };
 
 pub(super) mod constants {
+    /// Minimum size of an index file to be considered for pruning
     pub(super) const MIN_INDEX_LEN: usize = 10_000;
 }
 
@@ -135,6 +138,10 @@ impl Default for PruneOptions {
 
 impl PruneOptions {
     /// Get a `PrunePlan` from the given `PruneOptions`.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to get the `PrunePlan` for.
     pub fn get_plan<P: ProgressBars, S: Open>(
         &self,
         repo: &Repository<P, S>,
@@ -206,11 +213,14 @@ impl PruneOptions {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
 /// Enum to specify a size limit
+#[derive(Clone, Copy, Debug)]
 pub enum LimitOption {
+    /// Size in bytes
     Size(ByteSize),
+    /// Size in percentage of repository size
     Percentage(u64),
+    /// No limit
     Unlimited,
 }
 
@@ -229,15 +239,19 @@ impl FromStr for LimitOption {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy)]
 /// Statistics about what is deleted or kept within `prune`
+#[derive(Default, Debug, Clone, Copy)]
 pub struct DeleteStats {
+    /// Number of blobs to remove
     pub remove: u64,
+    /// Number of blobs to recover
     pub recover: u64,
+    /// Number of blobs to keep
     pub keep: u64,
 }
 
 impl DeleteStats {
+    /// Returns the total number of blobs
     pub const fn total(&self) -> u64 {
         self.remove + self.recover + self.keep
     }
@@ -245,46 +259,56 @@ impl DeleteStats {
 #[derive(Debug, Default, Clone, Copy)]
 /// Statistics about packs within `prune`
 pub struct PackStats {
-    /// # of used packs
+    /// Number of used packs
     pub used: u64,
-    /// # of partly used packs
+    /// Number of partly used packs
     pub partly_used: u64,
-    /// # of unused packs
+    /// Number of unused packs
     pub unused: u64, // this equals to packs-to-remove
-    /// # of packs-to-repack
+    /// Number of packs-to-repack
     pub repack: u64,
-    /// # of packs-to-keep
+    /// Number of packs-to-keep
     pub keep: u64,
 }
 
 #[derive(Debug, Default, Clone, Copy, Add)]
 /// Statistics about sizes within `prune`
 pub struct SizeStats {
+    /// Number of used blobs
     pub used: u64,
+    /// Number of unused blobs
     pub unused: u64,
+    /// Number of blobs to remove
     pub remove: u64,
+    /// Number of blobs to repack
     pub repack: u64,
+    /// Number of blobs to remove after repacking
     pub repackrm: u64,
 }
 
 impl SizeStats {
+    /// Returns the total number of blobs
     pub const fn total(&self) -> u64 {
         self.used + self.unused
     }
+
+    /// Returns the total number of blobs after pruning
     pub const fn total_after_prune(&self) -> u64 {
         self.used + self.unused_after_prune()
     }
+
+    /// Returns the total number of unused blobs after pruning
     pub const fn unused_after_prune(&self) -> u64 {
         self.unused - self.remove - self.repackrm
     }
 }
 
-#[derive(Default, Debug)]
 /// Statistics about a [`PrunePlan`]
+#[derive(Default, Debug)]
 pub struct PruneStats {
-    /// statistics about pack count
+    /// Statistics about pack count
     pub packs_to_delete: DeleteStats,
-    /// statistics about pack sizes
+    /// Statistics about pack sizes
     pub size_to_delete: DeleteStats,
     /// Statistics about current pack situation
     pub packs: PackStats,
@@ -292,13 +316,13 @@ pub struct PruneStats {
     pub blobs: BlobTypeMap<SizeStats>,
     /// Statistics about total sizes of blobs in the repository
     pub size: BlobTypeMap<SizeStats>,
-    /// # of unreferenced pack files
+    /// Number of unreferenced pack files
     pub packs_unref: u64,
     /// total size of unreferenced pack files
     pub size_unref: u64,
-    /// # of index files
+    /// Number of index files
     pub index_files: u64,
-    /// # of index files which will be rebuilt during the prune
+    /// Number of index files which will be rebuilt during the prune
     pub index_files_rebuild: u64,
 }
 
@@ -318,43 +342,77 @@ impl PruneStats {
     }
 }
 
+// TODO: add documentation!
 #[derive(Debug)]
 struct PruneIndex {
+    /// The id of the index file
     id: Id,
+    /// Whether the index file was modified
     modified: bool,
+    /// The packs in the index file
     packs: Vec<PrunePack>,
 }
 
 impl PruneIndex {
+    // TODO: add documentation!
     fn len(&self) -> usize {
         self.packs.iter().map(|p| p.blobs.len()).sum()
     }
 }
 
+/// Task to be executed by a `PrunePlan` on Packs
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PackToDo {
+    // TODO
     Undecided,
+    /// The pack should be kept
     Keep,
+    /// The pack should be repacked
     Repack,
+    /// The pack should be marked for deletion
     MarkDelete,
+    // TODO
     KeepMarked,
+    // TODO
     KeepMarkedAndCorrect,
+    /// The pack should be recovered
     Recover,
+    /// The pack should be deleted
     Delete,
 }
 
+impl Default for PackToDo {
+    fn default() -> Self {
+        Self::Undecided
+    }
+}
+
+/// A pack which is to be pruned
 #[derive(Debug)]
 struct PrunePack {
+    /// The id of the pack
     id: Id,
+    /// The type of the pack
     blob_type: BlobType,
+    /// The size of the pack
     size: u32,
+    /// Whether the pack is marked for deletion
     delete_mark: bool,
+    /// The task to be executed on the pack
     to_do: PackToDo,
+    /// The time the pack was created
     time: Option<DateTime<Local>>,
+    /// The blobs in the pack
     blobs: Vec<IndexBlob>,
 }
 
 impl PrunePack {
+    /// Create a new `PrunePack` from an `IndexPack`
+    ///
+    /// # Arguments
+    ///
+    /// * `p` - The `IndexPack` to create the `PrunePack` from
+    /// * `delete_mark` - Whether the pack is marked for deletion
     fn from_index_pack(p: IndexPack, delete_mark: bool) -> Self {
         Self {
             id: p.id,
@@ -367,14 +425,25 @@ impl PrunePack {
         }
     }
 
+    /// Create a new `PrunePack` from an `IndexPack` which is not marked for deletion
+    ///
+    /// # Arguments
+    ///
+    /// * `p` - The `IndexPack` to create the `PrunePack` from
     fn from_index_pack_unmarked(p: IndexPack) -> Self {
         Self::from_index_pack(p, false)
     }
 
+    /// Create a new `PrunePack` from an `IndexPack` which is marked for deletion
+    ///
+    /// # Arguments
+    ///
+    /// * `p` - The `IndexPack` to create the `PrunePack` from
     fn from_index_pack_marked(p: IndexPack) -> Self {
         Self::from_index_pack(p, true)
     }
 
+    /// Convert the `PrunePack` into an `IndexPack`
     fn into_index_pack(self) -> IndexPack {
         IndexPack {
             id: self.id,
@@ -384,6 +453,11 @@ impl PrunePack {
         }
     }
 
+    /// Convert the `PrunePack` into an `IndexPack` with the given time
+    ///
+    /// # Arguments
+    ///
+    /// * `time` - The time to set
     fn into_index_pack_with_time(self, time: DateTime<Local>) -> IndexPack {
         IndexPack {
             id: self.id,
@@ -393,6 +467,17 @@ impl PrunePack {
         }
     }
 
+    /// Set the task to be executed on the pack
+    ///
+    /// # Arguments
+    ///
+    /// * `todo` - The task to be executed on the pack
+    /// * `pi` - The `PackInfo` of the pack
+    /// * `stats` - The `PruneStats` of the `PrunePlan`
+    ///
+    /// # Panics
+    ///
+    ///
     fn set_todo(&mut self, todo: PackToDo, pi: &PackInfo, stats: &mut PruneStats) {
         let tpe = self.blob_type;
         match todo {
@@ -438,6 +523,7 @@ impl PrunePack {
         self.to_do = todo;
     }
 
+    /// Returns whether the pack is compressed
     fn is_compressed(&self) -> bool {
         self.blobs
             .iter()
@@ -445,27 +531,42 @@ impl PrunePack {
     }
 }
 
+/// Reasons why a pack should be repacked
 #[derive(PartialEq, Eq, Debug)]
 enum RepackReason {
+    /// The pack is partly used
     PartlyUsed,
+    /// The pack is to be compressed
     ToCompress,
+    /// The pack has a size mismatch
     SizeMismatch,
 }
-use RepackReason::{PartlyUsed, SizeMismatch, ToCompress};
 
-#[derive(Debug)]
 /// A plan what should be repacked or removed by a `prune` run
+#[derive(Debug)]
 pub struct PrunePlan {
+    /// The time the plan was created
     time: DateTime<Local>,
+    /// The ids of the blobs which are used
     used_ids: HashMap<Id, u8>,
+    /// The ids of the existing packs
     existing_packs: HashMap<Id, u32>,
+    /// The packs which should be repacked
     repack_candidates: Vec<(PackInfo, RepackReason, usize, usize)>,
+    /// The index files
     index_files: Vec<PruneIndex>,
     /// `prune` statistics
     pub stats: PruneStats,
 }
 
 impl PrunePlan {
+    /// Create a new `PrunePlan`
+    ///
+    /// # Arguments
+    ///
+    /// * `used_ids` - The ids of the blobs which are used
+    /// * `existing_packs` - The ids of the existing packs
+    /// * `index_files` - The index files
     fn new(
         used_ids: HashMap<Id, u8>,
         existing_packs: HashMap<Id, u32>,
@@ -533,6 +634,7 @@ impl PrunePlan {
         }
     }
 
+    /// This function counts the number of times a blob is used in the index files.
     fn count_used_blobs(&mut self) {
         for blob in self
             .index_files
@@ -549,8 +651,12 @@ impl PrunePlan {
         }
     }
 
+    /// This function checks whether all used blobs are present in the index files.
+    ///
+    /// # Errors
+    ///
+    /// * [`CommandErrorKind::BlobsMissing`] - If a blob is missing
     fn check(&self) -> RusticResult<()> {
-        // check that all used blobs are present in index
         for (id, count) in &self.used_ids {
             if *count == 0 {
                 return Err(CommandErrorKind::BlobsMissing(*id).into());
@@ -559,6 +665,20 @@ impl PrunePlan {
         Ok(())
     }
 
+    /// Decides what to do with the packs
+    ///
+    /// # Arguments
+    ///
+    /// * `keep_pack` - The minimum duration to keep packs before repacking or removing
+    /// * `keep_delete` - The minimum duration to keep packs marked for deletion
+    /// * `repack_cacheable_only` - Whether to only repack cacheable packs
+    /// * `repack_uncompressed` - Whether to repack packs containing uncompressed blobs
+    /// * `repack_all` - Whether to repack all packs
+    /// * `pack_sizer` - The `PackSizer` for the packs
+    ///
+    /// # Errors
+    ///
+    // TODO: add documentation!
     fn decide_packs(
         &mut self,
         keep_pack: Duration,
@@ -606,12 +726,16 @@ impl PrunePlan {
                             if too_young || keep_uncacheable {
                                 pack.set_todo(PackToDo::Keep, &pi, &mut self.stats);
                             } else if to_compress || repack_all {
-                                self.repack_candidates
-                                    .push((pi, ToCompress, index_num, pack_num));
+                                self.repack_candidates.push((
+                                    pi,
+                                    RepackReason::ToCompress,
+                                    index_num,
+                                    pack_num,
+                                ));
                             } else if size_mismatch {
                                 self.repack_candidates.push((
                                     pi,
-                                    SizeMismatch,
+                                    RepackReason::SizeMismatch,
                                     index_num,
                                     pack_num,
                                 ));
@@ -629,8 +753,12 @@ impl PrunePlan {
                                 pack.set_todo(PackToDo::Keep, &pi, &mut self.stats);
                             } else {
                                 // other partly used pack => candidate for repacking
-                                self.repack_candidates
-                                    .push((pi, PartlyUsed, index_num, pack_num));
+                                self.repack_candidates.push((
+                                    pi,
+                                    RepackReason::PartlyUsed,
+                                    index_num,
+                                    pack_num,
+                                ));
                             }
                         }
                         (true, 0, _) => match pack.time {
@@ -654,6 +782,19 @@ impl PrunePlan {
         Ok(())
     }
 
+    /// Decides if packs should be repacked
+    ///
+    /// # Arguments
+    ///
+    /// * `max_repack` - The maximum size of packs to repack
+    /// * `max_unused` - The maximum size of unused blobs
+    /// * `repack_uncompressed` - Whether to repack packs containing uncompressed blobs
+    /// * `no_resize` - Whether to resize packs
+    /// * `pack_sizer` - The `PackSizer` for the packs
+    ///
+    /// # Errors
+    ///
+    // TODO: add documentation!
     fn decide_repack(
         &mut self,
         max_repack: &LimitOption,
@@ -691,12 +832,12 @@ impl PrunePlan {
             let total_repack_size: u64 = repack_size.into_values().sum();
             if total_repack_size + u64::from(pi.used_size) >= max_repack
                 || (self.stats.size_sum().unused_after_prune() < max_unused
-                    && repack_reason == PartlyUsed
+                    && repack_reason == RepackReason::PartlyUsed
                     && blob_type == BlobType::Data)
-                || (repack_reason == SizeMismatch && no_resize)
+                || (repack_reason == RepackReason::SizeMismatch && no_resize)
             {
                 pack.set_todo(PackToDo::Keep, &pi, &mut self.stats);
-            } else if repack_reason == SizeMismatch {
+            } else if repack_reason == RepackReason::SizeMismatch {
                 resize_packs[blob_type].push((pi, index_num, pack_num));
                 repack_size[blob_type] += u64::from(pi.used_size);
             } else {
@@ -722,6 +863,13 @@ impl PrunePlan {
         }
     }
 
+    /// Checks if the existing packs are ok
+    ///
+    /// # Errors
+    ///
+    /// * [`CommandErrorKind::NoDecicion`] - If a pack is undecided
+    /// * [`CommandErrorKind::PackSizeNotMatching`] - If the size of a pack does not match
+    /// * [`CommandErrorKind::PackNotExisting`] - If a pack does not exist
     fn check_existing_packs(&mut self) -> RusticResult<()> {
         for pack in self.index_files.iter().flat_map(|index| &index.packs) {
             let existing_size = self.existing_packs.remove(&pack.id);
@@ -767,6 +915,11 @@ impl PrunePlan {
         Ok(())
     }
 
+    /// Filter out index files which do not need processing
+    ///
+    /// # Arguments
+    ///
+    /// * `instant_delete` - Whether to instantly delete unreferenced packs
     fn filter_index_files(&mut self, instant_delete: bool) {
         let mut any_must_modify = false;
         self.stats.index_files = self.index_files.len() as u64;
@@ -806,8 +959,13 @@ impl PrunePlan {
             .collect()
     }
 
-    #[allow(clippy::significant_drop_tightening)]
     /// Perform the pruning on the given repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to prune
+    /// * `opts` - The options for the pruning
+    #[allow(clippy::significant_drop_tightening)]
     pub fn do_prune<P: ProgressBars, S: Open>(
         self,
         repo: &Repository<P, S>,
@@ -1007,12 +1165,18 @@ impl PrunePlan {
     }
 }
 
+/// `PackInfo` contains information about a pack which is needed to decide what to do with the pack.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 struct PackInfo {
+    /// What type of blobs are in the pack
     blob_type: BlobType,
+    /// The number of used blobs in the pack
     used_blobs: u16,
+    /// The number of unused blobs in the pack
     unused_blobs: u16,
+    /// The size of the used blobs in the pack
     used_size: u32,
+    /// The size of the unused blobs in the pack
     unused_size: u32,
 }
 
@@ -1036,6 +1200,12 @@ impl Ord for PackInfo {
 }
 
 impl PackInfo {
+    /// Create a `PackInfo` from a `PrunePack`.
+    ///
+    /// # Arguments
+    ///
+    /// * `pack` - The `PrunePack` to create the `PackInfo` from
+    /// * `used_ids` - The `HashMap` of used ids
     fn from_pack(pack: &PrunePack, used_ids: &mut HashMap<Id, u8>) -> Self {
         let mut pi = Self {
             blob_type: pack.blob_type,
@@ -1111,7 +1281,17 @@ impl PackInfo {
     }
 }
 
-// find used blobs in repo
+/// Find used blobs in repo and return a map of used ids.
+///
+/// # Arguments
+///
+/// * `index` - The index to use
+/// * `ignore_snaps` - The snapshots to ignore
+/// * `pb` - The progress bars
+///
+/// # Errors
+///
+/// * [`CommandErrorKind::Backend`] - If an error occurs while reading from the backend
 fn find_used_blobs(
     index: &impl IndexedBackend,
     ignore_snaps: &[Id],

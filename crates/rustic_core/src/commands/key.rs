@@ -3,11 +3,13 @@ use derive_setters::Setters;
 
 use crate::{
     backend::{FileType, WriteBackend},
+    crypto::aespoly1305::Key,
     crypto::hasher::hash,
     error::CommandErrorKind,
+    error::RusticResult,
+    id::Id,
     repofile::KeyFile,
-    repository::Open,
-    Id, Key, Repository, RusticResult,
+    repository::{Open, Repository},
 };
 
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
@@ -29,6 +31,16 @@ pub struct KeyOptions {
 }
 
 impl KeyOptions {
+    /// Add the current key to the repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to add the key to.
+    /// * `pass` - The password to encrypt the key with.
+    ///
+    /// # Returns
+    ///
+    /// The id of the key.
     pub(crate) fn add_key<P, S: Open>(
         &self,
         repo: &Repository<P, S>,
@@ -38,6 +50,16 @@ impl KeyOptions {
         self.add(repo, pass, *key)
     }
 
+    /// Initialize a new key.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to add the key to.
+    /// * `pass` - The password to encrypt the key with.
+    ///
+    /// # Returns
+    ///
+    /// A tuple of the key and the id of the key.
     pub(crate) fn init_key<P, S>(
         &self,
         repo: &Repository<P, S>,
@@ -48,6 +70,17 @@ impl KeyOptions {
         Ok((key, self.add(repo, pass, key)?))
     }
 
+    /// Add a key to the repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - The repository to add the key to.
+    /// * `pass` - The password to encrypt the key with.
+    /// * `key` - The key to add.
+    ///
+    /// # Returns
+    ///
+    /// The id of the key.
     fn add<P, S>(&self, repo: &Repository<P, S>, pass: &str, key: Key) -> RusticResult<Id> {
         let ko = self.clone();
         let keyfile = KeyFile::generate(key, &pass, ko.hostname, ko.username, ko.with_created)?;
