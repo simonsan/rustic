@@ -8,22 +8,33 @@ use crate::{
     repofile::indexfile::{IndexBlob, IndexPack},
 };
 
+/// A sorted entry in the index.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct SortedEntry {
+    /// The ID of the entry.
     id: Id,
+    /// The index of the pack containing the entry.
     pack_idx: usize,
+    /// The offset of the entry in the pack.
     offset: u32,
+    /// The length of the entry in the pack.
     length: u32,
+    /// The uncompressed length of the entry.
     uncompressed_length: Option<NonZeroU32>,
 }
 
+/// `IndexType` determines which information is stored in the index.
 #[derive(Debug, Clone, Copy)]
 pub enum IndexType {
+    /// Index everything.
     Full,
+    // TODO: What is the difference between `FullTrees` and `Full`?
     FullTrees,
+    /// Index only trees.
     OnlyTrees,
 }
 
+// TODO: add documentation!
 #[derive(Debug)]
 pub(crate) enum EntriesVariants {
     None,
