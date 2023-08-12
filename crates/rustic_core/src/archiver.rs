@@ -20,17 +20,44 @@ use crate::{
     repofile::{configfile::ConfigFile, snapshotfile::SnapshotFile},
     Progress, RusticResult,
 };
+
+/// The `Archiver` is responsible for archiving files and trees.
+/// It will read the file, chunk it, and write the chunks to the backend.
 #[allow(missing_debug_implementations)]
 pub struct Archiver<BE: DecryptWriteBackend, I: IndexedBackend> {
+    /// The `FileArchiver` is responsible for archiving files.
     file_archiver: FileArchiver<BE, I>,
+
+    /// The `TreeArchiver` is responsible for archiving trees.
     tree_archiver: TreeArchiver<BE, I>,
+
+    /// The parent snapshot to use.
     parent: Parent,
+
+    /// The SharedIndexer is used to index the data.
     indexer: SharedIndexer<BE>,
+
+    /// The backend to write to.
     be: BE,
+
+    /// The SnapshotFile to write to.
     snap: SnapshotFile,
 }
 
 impl<BE: DecryptWriteBackend, I: IndexedBackend> Archiver<BE, I> {
+    /// Creates a new `Archiver`.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to write to.
+    /// * `index` - The index to read from.
+    /// * `config` - The config file.
+    /// * `parent` - The parent snapshot to use.
+    /// * `snap` - The SnapshotFile to write to.
+    ///
+    /// # Errors
+    ///
+    /// If we can't create the `FileArchiver` or `TreeArchiver`.
     pub fn new(
         be: BE,
         index: I,
@@ -54,6 +81,17 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> Archiver<BE, I> {
         })
     }
 
+    /// Archives the given source.
+    ///
+    /// This will archive all files and trees in the given source.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index to read from.
+    /// * `src` - The source to archive.
+    /// * `backup_path` - The path to the backup.
+    /// * `as_path` - The path to archive the backup as.
+    /// * `p` - The progress bar.
     pub fn archive<R>(
         mut self,
         index: &I,

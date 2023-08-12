@@ -33,6 +33,35 @@ use crate::{
     RusticResult,
 };
 
+/// Local backend, used when backing up.
+///
+/// This backend is used when backing up to a local directory.
+/// It will create a directory structure like this:
+///
+/// ```text
+/// <path>/
+/// ├── config
+/// ├── data
+/// │   ├── 00
+/// │   │   └── <id>
+/// │   ├── 01
+/// │   │   └── <id>
+/// │   └── ...
+/// ├── index
+/// │   └── <id>
+/// ├── keys
+/// │   └── <id>
+/// ├── snapshots
+/// │   └── <id>
+/// └── ...
+/// ```
+///
+/// The `data` directory will contain all data files, split into 256 subdirectories.
+/// The `config` directory will contain the config file.
+/// The `index` directory will contain the index file.
+/// The `keys` directory will contain the keys file.
+/// The `snapshots` directory will contain the snapshots file.
+/// All other directories will contain the pack files.
 #[derive(Clone, Debug)]
 pub struct LocalBackend {
     path: PathBuf,
@@ -41,6 +70,15 @@ pub struct LocalBackend {
 }
 
 impl LocalBackend {
+    /// Create a new [`LocalBackend`]
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The base path of the backend
+    ///
+    /// # Errors
+    ///
+    /// If the directory could not be created.
     pub fn new(path: &str) -> RusticResult<Self> {
         let path = path.into();
         fs::create_dir_all(&path).map_err(LocalErrorKind::DirectoryCreationFailed)?;
@@ -51,6 +89,18 @@ impl LocalBackend {
         })
     }
 
+    /// Path to the given file type and id.
+    ///
+    /// If the file type is `FileType::Pack`, the id will be used to determine the subdirectory.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Returns
+    ///
+    /// The path to the file.
     fn path(&self, tpe: FileType, id: &Id) -> PathBuf {
         let hex_id = id.to_hex();
         match tpe {
@@ -60,6 +110,25 @@ impl LocalBackend {
         }
     }
 
+    /// Call the given command.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `filename` - The path to the file.
+    /// * `command` - The command to call.
+    ///
+    /// # Errors
+    ///
+    /// If the command could not be called or the command was not successful.
+    ///
+    /// # Notes
+    ///
+    /// The following placeholders are supported:
+    /// * `%file` - The path to the file.
+    /// * `%type` - The type of the file.
+    /// * `%id` - The id of the file.
     fn call_command(tpe: FileType, id: &Id, filename: &Path, command: &str) -> RusticResult<()> {
         let id = id.to_hex();
         let patterns = &["%file", "%type", "%id"];
@@ -88,12 +157,31 @@ impl LocalBackend {
 }
 
 impl ReadBackend for LocalBackend {
+    /// Returns the location of the backend.
+    ///
+    /// This is `local:<path>`.
     fn location(&self) -> String {
         let mut location = "local:".to_string();
         location.push_str(&self.path.to_string_lossy());
         location
     }
 
+    /// Sets an option of the backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `option` - The option to set.
+    /// * `value` - The value to set the option to.
+    ///
+    /// # Errors
+    ///
+    /// If the option is not supported.
+    ///
+    /// # Notes
+    ///
+    /// The following options are supported:
+    /// * `post-create-command` - The command to call after a file was created.
+    /// * `post-delete-command` - The command to call after a file was deleted.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()> {
         match option {
             "post-create-command" => {
@@ -109,6 +197,19 @@ impl ReadBackend for LocalBackend {
         Ok(())
     }
 
+    /// Lists all files of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be listed.
+    ///
+    /// # Notes
+    ///
+    /// If the file type is `FileType::Config`, this will return a list with a single default id.
     fn list(&self, tpe: FileType) -> RusticResult<Vec<Id>> {
         trace!("listing tpe: {tpe:?}");
         if tpe == FileType::Config {
@@ -128,6 +229,29 @@ impl ReadBackend for LocalBackend {
         Ok(walker.collect())
     }
 
+    /// Lists all files with their size of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be listed.
+    ///
+    /// # Notes
+    ///
+    /// If the file type is `FileType::Config`, this will return a list with a single default id and the size of the config file.
+    ///
+    /// If the file type is `FileType::Pack`, this will return a list with the ids and sizes of all files in the `data` directory.
+    ///
+    /// If the file type is `FileType::Index`, this will return a list with the ids and sizes of all files in the `index` directory.
+    ///
+    /// If the file type is `FileType::Keys`, this will return a list with the ids and sizes of all files in the `keys` directory.
+    ///
+    /// If the file type is `FileType::Snapshots`, this will return a list with the ids and sizes of all files in the `snapshots` directory.
+    ///
+    /// If the file type is `FileType::Other`, this will return a list with the ids and sizes of all files in the `other` directory.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         trace!("listing tpe: {tpe:?}");
         let path = self.path.join(tpe.to_string());
@@ -166,6 +290,16 @@ impl ReadBackend for LocalBackend {
         Ok(walker.collect())
     }
 
+    /// Reads full data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         trace!("reading tpe: {tpe:?}, id: {id}");
         Ok(fs::read(self.path(tpe, id))
@@ -260,7 +394,9 @@ impl WriteBackend for LocalBackend {
 #[derive(Clone, Debug)]
 /// Local destination, used when restoring.
 pub struct LocalDestination {
+    /// The base path of the destination.
     path: PathBuf,
+    /// Whether we expect a single file as destination.
     is_file: bool,
 }
 
@@ -290,6 +426,21 @@ impl LocalDestination {
         Ok(Self { path, is_file })
     }
 
+    /// Path to the given item (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to get the path for
+    ///
+    /// # Returns
+    ///
+    /// The path to the item.
+    ///
+    /// # Notes
+    ///
+    /// If the destination is a file, this will return the base path.
+    ///
+    /// If the destination is a directory, this will return the base path joined with the item.
     pub(crate) fn path(&self, item: impl AsRef<Path>) -> PathBuf {
         if self.is_file {
             self.path.clone()
@@ -299,16 +450,56 @@ impl LocalDestination {
     }
 
     /// Remove the given dir (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `dirname` - The directory to remove
+    ///
+    /// # Errors
+    ///
+    /// If the directory could not be removed.
+    ///
+    /// # Notes
+    ///
+    /// This will remove the directory recursively.
     pub fn remove_dir(&self, dirname: impl AsRef<Path>) -> RusticResult<()> {
         Ok(fs::remove_dir_all(dirname).map_err(LocalErrorKind::DirectoryRemovalFailed)?)
     }
 
     /// Remove the given file (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `filename` - The file to remove
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be removed.
+    ///
+    /// # Notes
+    ///
+    /// This will remove the file.
+    ///
+    /// If the file is a symlink, the symlink will be removed, not the file it points to.
+    ///
+    /// If the file is a directory or device, this will fail.
     pub fn remove_file(&self, filename: impl AsRef<Path>) -> RusticResult<()> {
         Ok(fs::remove_file(filename).map_err(LocalErrorKind::FileRemovalFailed)?)
     }
 
     /// Create the given dir (relative to the base path)
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The directory to create
+    ///
+    /// # Errors
+    ///
+    /// If the directory could not be created.
+    ///
+    /// # Notes
+    ///
+    /// This will create the directory structure recursively.
     pub fn create_dir(&self, item: impl AsRef<Path>) -> RusticResult<()> {
         let dirname = self.path.join(item);
         fs::create_dir_all(dirname).map_err(LocalErrorKind::DirectoryCreationFailed)?;

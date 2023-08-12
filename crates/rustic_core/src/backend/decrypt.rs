@@ -23,14 +23,49 @@ use crate::{
     Progress, RusticResult,
 };
 
+/**
+A backend that can decrypt data.
+This is a trait that is implemented by all backends that can decrypt data.
+It is implemented for all backends that implement `DecryptWriteBackend` and `DecryptReadBackend`.
+This trait is used by the `Repository` to decrypt data.
+*/
 pub trait DecryptFullBackend: DecryptWriteBackend + DecryptReadBackend {}
 impl<T: DecryptWriteBackend + DecryptReadBackend> DecryptFullBackend for T {}
 
 pub trait DecryptReadBackend: ReadBackend {
+    /// Decrypts the given data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to decrypt.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be decrypted.
     fn decrypt(&self, data: &[u8]) -> RusticResult<Vec<u8>>;
 
+    /// Reads the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn read_encrypted_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes>;
 
+    /// Reads the given file from partial data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The partial data to decrypt.
+    /// * `uncompressed_length` - The length of the uncompressed data.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be decrypted or the length of the uncompressed data does not match.
     fn read_encrypted_from_partial(
         &self,
         data: &[u8],
@@ -47,6 +82,20 @@ pub trait DecryptReadBackend: ReadBackend {
         Ok(data.into())
     }
 
+    /// Reads the given file with the given offset and length.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file should be cached.
+    /// * `offset` - The offset to read from.
+    /// * `length` - The length to read.
+    /// * `uncompressed_length` - The length of the uncompressed data.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn read_encrypted_partial(
         &self,
         tpe: FileType,
@@ -62,12 +111,30 @@ pub trait DecryptReadBackend: ReadBackend {
         )
     }
 
+    /// Gets the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn get_file<F: RepoFile>(&self, id: &Id) -> RusticResult<F> {
         let data = self.read_encrypted_full(F::TYPE, id)?;
         Ok(serde_json::from_slice(&data)
             .map_err(CryptBackendErrorKind::DeserializingFromBytesOfJsonTextFailed)?)
     }
 
+    /// Streams all files.
+    ///
+    /// # Arguments
+    ///
+    /// * `p` - The progress bar.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be read.
     fn stream_all<F: RepoFile>(
         &self,
         p: &impl Progress,
@@ -76,6 +143,16 @@ pub trait DecryptReadBackend: ReadBackend {
         self.stream_list(list, p)
     }
 
+    /// Streams a list of files.
+    ///
+    /// # Arguments
+    ///
+    /// * `list` - The list of files to stream.
+    /// * `p` - The progress bar.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be read.
     fn stream_list<F: RepoFile>(
         &self,
         list: Vec<Id>,

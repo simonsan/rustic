@@ -262,6 +262,17 @@ impl Iterator for LocalSource {
     }
 }
 
+/// Maps a [`DirEntry`] to a [`ReadSourceEntry`].
+///
+/// # Arguments
+///
+/// * `entry` - The [`DirEntry`] to map.
+/// * `with_atime` - Whether to save access time for files and directories.
+/// * `ignore_devid` - Whether to save device ID for files and directories.
+///
+/// # Errors
+///
+/// If the [`DirEntry`] could not be mapped.
 #[cfg(windows)]
 fn map_entry(
     entry: DirEntry,
@@ -331,6 +342,15 @@ fn map_entry(
     Ok(ReadSourceEntry { path, node, open })
 }
 
+/// Get the user name for the given uid.
+///
+/// # Arguments
+///
+/// * `uid` - The uid to get the user name for.
+///
+/// # Returns
+///
+/// The user name for the given uid or `None` if the user could not be found.
 #[cfg(not(windows))]
 #[cached]
 fn get_user_by_uid(uid: u32) -> Option<String> {
@@ -344,6 +364,15 @@ fn get_user_by_uid(uid: u32) -> Option<String> {
     }
 }
 
+/// Get the group name for the given gid.
+///
+/// # Arguments
+///
+/// * `gid` - The gid to get the group name for.
+///
+/// # Returns
+///
+/// The group name for the given gid or `None` if the group could not be found.
 #[cfg(not(windows))]
 #[cached]
 fn get_group_by_gid(gid: u32) -> Option<String> {
@@ -357,8 +386,18 @@ fn get_group_by_gid(gid: u32) -> Option<String> {
     }
 }
 
+/// Maps a [`DirEntry`] to a [`ReadSourceEntry`].
+///
+/// # Arguments
+///
+/// * `entry` - The [`DirEntry`] to map.
+/// * `with_atime` - Whether to save access time for files and directories.
+/// * `ignore_devid` - Whether to save device ID for files and directories.
+///
+/// # Errors
+///
+/// If the [`DirEntry`] could not be mapped.
 #[cfg(not(windows))]
-// map_entry: turn entry into (Path, Node)
 fn map_entry(
     entry: DirEntry,
     with_atime: bool,

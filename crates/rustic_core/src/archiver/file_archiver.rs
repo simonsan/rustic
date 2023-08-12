@@ -24,6 +24,8 @@ use crate::{
     Progress, RusticResult,
 };
 
+/// The `FileArchiver` is responsible for archiving files.
+/// It will read the file, chunk it, and write the chunks to the backend.
 #[derive(Clone)]
 pub(crate) struct FileArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
     index: I,
@@ -32,6 +34,18 @@ pub(crate) struct FileArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
 }
 
 impl<BE: DecryptWriteBackend, I: IndexedBackend> FileArchiver<BE, I> {
+    /// Creates a new `FileArchiver`.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to write to.
+    /// * `index` - The index to read from.
+    /// * `indexer` - The indexer to write to.
+    /// * `config` - The config file.
+    ///
+    /// # Errors
+    ///
+    /// If we can't get chunker polynominal.
     pub(crate) fn new(
         be: BE,
         index: I,

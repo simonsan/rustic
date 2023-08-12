@@ -30,19 +30,19 @@ pub const ALL_FILE_TYPES: [FileType; 4] = [
 /// Type for describing the kind of a file that can occur.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum FileType {
-    /// config
+    /// Config file
     #[serde(rename = "config")]
     Config,
-    /// index
+    /// Index
     #[serde(rename = "index")]
     Index,
-    /// keys
+    /// Keys
     #[serde(rename = "key")]
     Key,
-    /// snapshots
+    /// Snapshots
     #[serde(rename = "snapshot")]
     Snapshot,
-    /// data
+    /// Data
     #[serde(rename = "pack")]
     Pack,
 }
@@ -60,6 +60,7 @@ impl From<FileType> for &'static str {
 }
 
 impl FileType {
+    /// Returns if the file type is cacheable.
     const fn is_cacheable(self) -> bool {
         match self {
             Self::Config | Self::Key | Self::Pack => false,
@@ -68,13 +69,45 @@ impl FileType {
     }
 }
 
+/// Trait for backends that can read.
+///
+/// This trait is implemented by all backends that can read data.
 pub trait ReadBackend: Clone + Send + Sync + 'static {
+    /// Returns the location of the backend.
     fn location(&self) -> String;
 
+    /// Sets an option of the backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `option` - The option to set.
+    /// * `value` - The value to set the option to.
+    ///
+    /// # Errors
+    ///
+    /// If the option is not supported.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()>;
 
+    /// Lists all files with their size of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be listed.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>>;
 
+    /// Lists all files of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
+    ///
+    /// # Errors
+    ///
+    /// If the files could not be listed.
     fn list(&self, tpe: FileType) -> RusticResult<Vec<Id>> {
         Ok(self
             .list_with_size(tpe)?
@@ -83,8 +116,31 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
             .collect())
     }
 
+    /// Reads full data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes>;
 
+    /// Reads partial data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file should be cached.
+    /// * `offset` - The offset to read from.
+    /// * `length` - The length to read.
+    ///
+    /// # Errors
+    ///
+    /// If the file could not be read.
     fn read_partial(
         &self,
         tpe: FileType,
@@ -94,6 +150,21 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
         length: u32,
     ) -> RusticResult<Bytes>;
 
+    /// Finds the id of the file starting with the given string.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `vec` - The strings to search for.
+    ///
+    /// # Errors
+    ///
+    /// If no id could be found or if the id is not unique.
+    ///
+    /// # Note
+    ///
+    /// This function is used to find the id of a snapshot or index file.
+    /// The id of a snapshot or index file is the id of the first pack file.
     fn find_starts_with<T: AsRef<str>>(&self, tpe: FileType, vec: &[T]) -> RusticResult<Vec<Id>> {
         #[derive(Clone, Copy, PartialEq, Eq)]
         enum MapResult<T> {
@@ -130,10 +201,12 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
             .collect()
     }
 
+    // ! TODO
     fn find_id(&self, tpe: FileType, id: &str) -> RusticResult<Id> {
         Ok(self.find_ids(tpe, &[id.to_string()])?.remove(0))
     }
 
+    // ! TODO
     fn find_ids<T: AsRef<str>>(&self, tpe: FileType, ids: &[T]) -> RusticResult<Vec<Id>> {
         ids.iter()
             .map(|id| Id::from_hex(id.as_ref()))
@@ -144,6 +217,8 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
     }
 }
 
+/// Trait for backends that can write.
+/// This trait is implemented by all backends that can write data.
 pub trait WriteBackend: ReadBackend {
     fn create(&self) -> RusticResult<()>;
 
@@ -152,8 +227,8 @@ pub trait WriteBackend: ReadBackend {
     fn remove(&self, tpe: FileType, id: &Id, cacheable: bool) -> RusticResult<()>;
 }
 
-#[derive(Debug, Clone)]
 /// Information about an entry to be able to open it.
+#[derive(Debug, Clone)]
 pub struct ReadSourceEntry<O> {
     /// The path of the entry.
     pub path: PathBuf,
@@ -163,22 +238,61 @@ pub struct ReadSourceEntry<O> {
     pub open: Option<O>,
 }
 
+/// Trait for backends that can read and open sources.
+/// This trait is implemented by all backends that can read data and open from a source.
 pub trait ReadSourceOpen {
     type Reader: Read + Send + 'static;
 
+    /// Opens the source.
+    ///
+    /// # Errors
+    ///
+    /// If the source could not be opened.
     fn open(self) -> RusticResult<Self::Reader>;
 }
 
+/// Trait for backends that can read from a source.
+/// This trait is implemented by all backends that can read data from a source.
 pub trait ReadSource {
     type Open: ReadSourceOpen;
     type Iter: Iterator<Item = RusticResult<ReadSourceEntry<Self::Open>>>;
 
+    /// Returns the size of the source.
+    ///
+    /// # Errors
+    ///
+    /// If the size could not be determined.
     fn size(&self) -> RusticResult<Option<u64>>;
+
+    /// Returns an iterator over the entries of the source.
     fn entries(self) -> Self::Iter;
 }
 
+/// Trait for backends that can write to a source.
+/// This trait is implemented by all backends that can write data to a source.
 pub trait WriteSource: Clone {
+    /// Create a new source.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path of the source.
+    /// * `node` - The node information of the source.
     fn create<P: Into<PathBuf>>(&self, path: P, node: Node);
+
+    /// Set the metadata of a source.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path of the source.
+    /// * `node` - The node information of the source.
     fn set_metadata<P: Into<PathBuf>>(&self, path: P, node: Node);
+
+    /// Write data to a source at the given offset.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path of the source.
+    /// * `offset` - The offset to write at.
+    /// * `data` - The data to write.
     fn write_at<P: Into<PathBuf>>(&self, path: P, offset: u64, data: Bytes);
 }

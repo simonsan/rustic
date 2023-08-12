@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .add_tags("tag1,tag2")?
         .to_snapshot()?;
 
+    // Create snapshot
     let snap = repo.backup(&backup_opts, source, snap)?;
 
     println!("successfully created snapshot:\n{snap:#?}");
