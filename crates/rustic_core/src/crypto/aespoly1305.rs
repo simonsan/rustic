@@ -4,15 +4,43 @@ use aes256ctr_poly1305aes::{
 };
 use rand::{thread_rng, RngCore};
 
-use crate::{crypto::CryptoKey, error::CryptoErrorKind, RusticResult};
+use crate::{crypto::CryptoKey, error::CryptoErrorKind, error::RusticResult};
 
 pub(crate) type Nonce = aead::Nonce<Aes256CtrPoly1305Aes>;
 pub(crate) type AeadKey = aead::Key<Aes256CtrPoly1305Aes>;
 
+/// The `Key` is used to encrypt and decrypt data.
+///
+/// It is a 64 byte key that is used to derive the encryption, kdf, and random keys.
+///
+/// The first 32 bytes are used for encryption.
+///
+/// The next 16 bytes are used for the kdf.
+///
+/// The last 16 bytes are used for random data.
+///
+/// The key is generated randomly.
+///
+/// # Examples
+///
+/// ```
+/// use rustic_core::crypto::aespoly1305::Key;
+///
+/// let key = Key::new();
+///
+/// let data = b"Hello!".to_vec();
+///
+/// let enc = key.encrypt_data(&data).unwrap();
+///
+/// let dec = key.decrypt_data(&enc).unwrap();
+///
+/// assert_eq!(data, dec);
+///
 #[derive(Clone, Default, Debug, Copy)]
 pub struct Key(AeadKey);
 
 impl Key {
+    /// Create a new [`Key`] with a random key.
     #[must_use]
     pub fn new() -> Self {
         let mut key = AeadKey::default();
@@ -20,11 +48,23 @@ impl Key {
         Self(key)
     }
 
+    /// Create a new [`Key`] from a slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The slice to create the [`Key`] from.
     #[must_use]
     pub fn from_slice(key: &[u8]) -> Self {
         Self(*AeadKey::from_slice(key))
     }
 
+    /// Create a new [`Key`] from the encryption, kdf, and random keys. The keys are concatenated together.
+    ///
+    /// # Arguments
+    ///
+    /// * `encrypt` - The encryption key.
+    /// * `k` - The kdf key.
+    /// * `r` - The random key.
     #[must_use]
     pub fn from_keys(encrypt: &[u8], k: &[u8], r: &[u8]) -> Self {
         let mut key = AeadKey::default();
@@ -35,6 +75,7 @@ impl Key {
         Self(key)
     }
 
+    /// Returns the encryption, kdf, and random keys.
     #[must_use]
     pub fn to_keys(self) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
         let mut encrypt = vec![0; 32];
@@ -49,6 +90,15 @@ impl Key {
 }
 
 impl CryptoKey for Key {
+    /// Returns the decrypted data from the given encrypted data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The encrypted data.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be decrypted.
     fn decrypt_data(&self, data: &[u8]) -> RusticResult<Vec<u8>> {
         if data.len() < 16 {
             return Err(CryptoErrorKind::CryptoKeyTooShort)?;
@@ -60,6 +110,15 @@ impl CryptoKey for Key {
             .map_err(|err| CryptoErrorKind::DataDecryptionFailed(err).into())
     }
 
+    /// Returns the encrypted data from the given data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to encrypt.
+    ///
+    /// # Errors
+    ///
+    /// If the data could not be encrypted.
     fn encrypt_data(&self, data: &[u8]) -> RusticResult<Vec<u8>> {
         let mut nonce = Nonce::default();
         thread_rng().fill_bytes(&mut nonce);
