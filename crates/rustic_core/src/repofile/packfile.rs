@@ -298,7 +298,15 @@ impl<'a> PackHeaderRef<'a> {
         )
     }
 
-    /// generate the binary representation of the pack header
+    /// Generate the binary representation of the pack header
+    ///
+    /// # Returns
+    ///
+    /// The binary representation of the pack header
+    ///
+    /// # Errors
+    ///
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if writing the binary representation failed
     pub(crate) fn to_binary(&self) -> RusticResult<Vec<u8>> {
         let mut writer = Cursor::new(Vec::with_capacity(self.pack_size() as usize));
         // collect header entries
