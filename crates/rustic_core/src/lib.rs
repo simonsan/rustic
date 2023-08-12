@@ -127,7 +127,8 @@ pub(crate) mod backend;
 pub(crate) mod blob;
 pub(crate) mod cdc;
 pub(crate) mod chunker;
-pub(crate) mod commands;
+/// Commands which can be executed on a repository
+pub mod commands;
 pub(crate) mod crypto;
 pub(crate) mod error;
 pub(crate) mod id;

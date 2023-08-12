@@ -3,10 +3,29 @@
 use log::info;
 
 use crate::{
-    backend::WriteBackend, chunker::random_poly, commands::config::save_config,
-    repofile::ConfigFile, ConfigOptions, Id, Key, KeyOptions, Repository, RusticResult,
+    backend::WriteBackend,
+    chunker::random_poly,
+    commands::config::{save_config, ConfigOptions},
+    commands::key::KeyOptions,
+    crypto::aespoly1305::Key,
+    error::RusticResult,
+    id::Id,
+    repofile::ConfigFile,
+    repository::Repository,
 };
 
+/// Initialize a new repository.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to initialize.
+/// * `pass` - The password to encrypt the key with.
+/// * `key_opts` - The options to create the key with.
+/// * `config_opts` - The options to create the config with.
+///
+/// # Returns
+///
+/// A tuple of the key and the config file.
 pub(crate) fn init<P, S>(
     repo: &Repository<P, S>,
     pass: &str,
@@ -25,6 +44,18 @@ pub(crate) fn init<P, S>(
     Ok((key, config))
 }
 
+/// Initialize a new repository with a given config.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to initialize.
+/// * `pass` - The password to encrypt the key with.
+/// * `key_opts` - The options to create the key with.
+/// * `config` - The config to use.
+///
+/// # Returns
+///
+/// The key used to encrypt the config.
 pub(crate) fn init_with_config<P, S>(
     repo: &Repository<P, S>,
     pass: &str,

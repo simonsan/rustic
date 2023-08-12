@@ -3,12 +3,22 @@ use std::io::Write;
 use crate::{
     backend::node::{Node, NodeType},
     blob::BlobType,
-    error::CommandErrorKind,
+    error::{CommandErrorKind, RusticResult},
     index::IndexedBackend,
     repository::{IndexedFull, IndexedTree, Repository},
-    RusticResult,
 };
 
+/// Dumps the contents of a file.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to read from.
+/// * `node` - The node to dump.
+/// * `w` - The writer to write to.
+///
+/// # Errors
+///
+/// * [`CommandErrorKind::DumpNotSupported`] if the node is not a file.
 pub(crate) fn dump<P, S: IndexedFull>(
     repo: &Repository<P, S>,
     node: &Node,
