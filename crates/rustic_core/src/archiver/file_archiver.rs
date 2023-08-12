@@ -69,6 +69,20 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> FileArchiver<BE, I> {
         })
     }
 
+    /// Processes the given item.
+    ///
+    /// # Arguments
+    ///
+    /// * `item` - The item to process.
+    /// * `p` - The progress tracker.
+    ///
+    /// # Errors
+    ///
+    /// If the item could not be processed.
+    ///
+    /// # Returns
+    ///
+    /// The processed item.
     pub(crate) fn process<O: ReadSourceOpen>(
         &self,
         item: ItemWithParent<Option<O>>,

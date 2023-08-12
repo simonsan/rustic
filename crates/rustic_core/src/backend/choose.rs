@@ -10,6 +10,7 @@ use crate::{
     RusticResult,
 };
 
+/// Backend helper that chooses the correct backend based on the url.
 #[derive(Clone, Debug)]
 pub enum ChooseBackend {
     Local(LocalBackend),
@@ -18,6 +19,15 @@ pub enum ChooseBackend {
 }
 
 impl ChooseBackend {
+    /// Create a new [`ChooseBackend`] from a given url.
+    ///
+    /// # Arguments
+    ///
+    /// * `url` - The url to create the [`ChooseBackend`] from.
+    ///
+    /// # Errors
+    ///
+    /// If the url is not supported.
     pub fn from_url(url: &str) -> RusticResult<Self> {
         Ok(match url.split_once(':') {
             #[cfg(windows)]
@@ -34,6 +44,7 @@ impl ChooseBackend {
 }
 
 impl ReadBackend for ChooseBackend {
+    /// Returns the location of the backend.
     fn location(&self) -> String {
         match self {
             Self::Local(local) => local.location(),
@@ -42,6 +53,12 @@ impl ReadBackend for ChooseBackend {
         }
     }
 
+    /// Sets an option of the backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `option` - The option to set.
+    /// * `value` - The value to set the option to.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.set_option(option, value),
@@ -50,6 +67,11 @@ impl ReadBackend for ChooseBackend {
         }
     }
 
+    /// Lists all files with their size of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         match self {
             Self::Local(local) => local.list_with_size(tpe),
@@ -58,6 +80,12 @@ impl ReadBackend for ChooseBackend {
         }
     }
 
+    /// Reads full data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         match self {
             Self::Local(local) => local.read_full(tpe, id),
@@ -66,6 +94,15 @@ impl ReadBackend for ChooseBackend {
         }
     }
 
+    /// Reads partial data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
+    /// * `offset` - The offset to read from.
+    /// * `length` - The length to read.
     fn read_partial(
         &self,
         tpe: FileType,
@@ -83,6 +120,7 @@ impl ReadBackend for ChooseBackend {
 }
 
 impl WriteBackend for ChooseBackend {
+    /// Creates the backend.
     fn create(&self) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.create(),
@@ -91,6 +129,14 @@ impl WriteBackend for ChooseBackend {
         }
     }
 
+    /// Writes the given data to the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
+    /// * `buf` - The data to write.
     fn write_bytes(&self, tpe: FileType, id: &Id, cacheable: bool, buf: Bytes) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.write_bytes(tpe, id, cacheable, buf),
@@ -99,6 +145,13 @@ impl WriteBackend for ChooseBackend {
         }
     }
 
+    /// Removes the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
     fn remove(&self, tpe: FileType, id: &Id, cacheable: bool) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.remove(tpe, id, cacheable),

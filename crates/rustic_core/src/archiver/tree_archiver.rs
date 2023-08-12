@@ -14,6 +14,8 @@ use crate::{
     RusticResult,
 };
 
+pub(crate) type TreeItem = TreeType<(ParentResult<()>, u64), ParentResult<Id>>;
+
 pub(crate) struct TreeArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
     tree: Tree,
     stack: Vec<(PathBuf, Node, ParentResult<Id>, Tree)>,
@@ -21,8 +23,6 @@ pub(crate) struct TreeArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
     tree_packer: Packer<BE>,
     summary: SnapshotSummary,
 }
-
-pub(crate) type TreeItem = TreeType<(ParentResult<()>, u64), ParentResult<Id>>;
 
 impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     pub(crate) fn new(

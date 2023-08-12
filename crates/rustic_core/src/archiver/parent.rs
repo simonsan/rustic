@@ -10,24 +10,46 @@ use crate::{
     id::Id, index::IndexedBackend, RusticResult,
 };
 
+pub(crate) type ItemWithParent<O> = TreeType<(O, ParentResult<()>), ParentResult<Id>>;
+
+/// The `Parent` is responsible for finding the parent tree of a given tree.
 #[derive(Debug)]
 pub struct Parent {
+    /// The tree id of the parent tree.
     tree_id: Option<Id>,
+    /// The parent tree.
     tree: Option<Tree>,
+    /// The current node index.
     node_idx: usize,
+    /// The stack of parent trees.
     stack: Vec<(Option<Tree>, usize)>,
+    /// Ignore ctime when comparing nodes.
     ignore_ctime: bool,
+    /// Ignore inode number when comparing nodes.
     ignore_inode: bool,
 }
 
+/// The result of a parent search.
 #[derive(Clone, Debug)]
 pub(crate) enum ParentResult<T> {
+    /// The parent was found.
     Matched(T),
+    /// The parent was not found.
     NotFound,
+    /// The parent was found but not matched.
     NotMatched,
 }
 
 impl<T> ParentResult<T> {
+    /// Maps a `ParentResult<T>` to a `ParentResult<R>` by applying a function to a contained value.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The function to apply.
+    ///
+    /// # Returns
+    ///
+    /// A `ParentResult<R>` with the result of the function for each `ParentResult<T>`.
     fn map<R>(self, f: impl FnOnce(T) -> R) -> ParentResult<R> {
         match self {
             Self::Matched(t) => ParentResult::Matched(f(t)),
@@ -37,9 +59,15 @@ impl<T> ParentResult<T> {
     }
 }
 
-pub(crate) type ItemWithParent<O> = TreeType<(O, ParentResult<()>), ParentResult<Id>>;
-
 impl Parent {
+    /// Creates a new `Parent`.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to read from.
+    /// * `tree_id` - The tree id of the parent tree.
+    /// * `ignore_ctime` - Ignore ctime when comparing nodes.
+    /// * `ignore_inode` - Ignore inode number when comparing nodes.
     pub(crate) fn new<BE: IndexedBackend>(
         be: &BE,
         tree_id: Option<Id>,
@@ -64,6 +92,15 @@ impl Parent {
         }
     }
 
+    /// Returns the parent node with the given name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the parent node.
+    ///
+    /// # Returns
+    ///
+    /// The parent node with the given name, or `None` if the parent node is not found.
     fn p_node(&mut self, name: &OsStr) -> Option<&Node> {
         match &self.tree {
             None => None,
@@ -87,6 +124,20 @@ impl Parent {
         }
     }
 
+    /// Returns whether the given node is the parent of the given tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The node to check.
+    /// * `name` - The name of the tree.
+    ///
+    /// # Returns
+    ///
+    /// Whether the given node is the parent of the given tree.
+    ///
+    /// # Note
+    ///
+    /// TODO: This function does not check whether the given node is a directory.
     fn is_parent(&mut self, node: &Node, name: &OsStr) -> ParentResult<&Node> {
         // use new variables as the mutable borrow is used later
         let ignore_ctime = self.ignore_ctime;

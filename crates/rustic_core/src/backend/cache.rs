@@ -17,27 +17,46 @@ use crate::{
     RusticResult,
 };
 
+/// Backend that caches data.
+///
+/// This backend caches data in a directory.
+/// It can be used to cache data from a remote backend.
 #[derive(Clone, Debug)]
 pub struct CachedBackend<BE: WriteBackend> {
+    /// The backend to cache.
     be: BE,
+    /// The cache.
     cache: Option<Cache>,
 }
 
 impl<BE: WriteBackend> CachedBackend<BE> {
+    /// Create a new [`CachedBackend`] from a given backend.
     pub fn new(be: BE, cache: Option<Cache>) -> Self {
         Self { be, cache }
     }
 }
 
 impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
+    /// Returns the location of the backend.
     fn location(&self) -> String {
         self.be.location()
     }
 
+    /// Sets an option of the backend.
+    ///
+    ///  # Arguments
+    ///
+    /// * `option` - The option to set.
+    /// * `value` - The value to set the option to.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()> {
         self.be.set_option(option, value)
     }
 
+    /// Lists all files with their size of the given type.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the files to list.
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         let list = self.be.list_with_size(tpe)?;
 
@@ -50,6 +69,12 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
         Ok(list)
     }
 
+    /// Reads full data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         match (&self.cache, tpe.is_cacheable()) {
             (None, _) | (Some(_), false) => self.be.read_full(tpe, id),
@@ -67,6 +92,15 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
         }
     }
 
+    /// Reads partial data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
+    /// * `offset` - The offset to read from.
+    /// * `length` - The length to read.
     fn read_partial(
         &self,
         tpe: FileType,
@@ -105,10 +139,21 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
 }
 
 impl<BE: WriteBackend> WriteBackend for CachedBackend<BE> {
+    /// Creates the backend.
     fn create(&self) -> RusticResult<()> {
         self.be.create()
     }
 
+    /// Writes the given data to the given file.
+    ///
+    /// If the file is cacheable, it will also be written to the cache.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
+    /// * `buf` - The data to write.
     fn write_bytes(&self, tpe: FileType, id: &Id, cacheable: bool, buf: Bytes) -> RusticResult<()> {
         if let Some(cache) = &self.cache {
             if cacheable || tpe.is_cacheable() {
@@ -118,6 +163,14 @@ impl<BE: WriteBackend> WriteBackend for CachedBackend<BE> {
         self.be.write_bytes(tpe, id, cacheable, buf)
     }
 
+    /// Removes the given file.
+    ///
+    /// If the file is cacheable, it will also be removed from the cache.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
     fn remove(&self, tpe: FileType, id: &Id, cacheable: bool) -> RusticResult<()> {
         if let Some(cache) = &self.cache {
             if cacheable || tpe.is_cacheable() {
