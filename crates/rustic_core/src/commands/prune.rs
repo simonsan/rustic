@@ -145,6 +145,11 @@ impl PruneOptions {
     /// # Arguments
     ///
     /// * `repo` - The repository to get the `PrunePlan` for.
+    ///
+    /// # Errors
+    ///
+    /// * [`CommandErrorKind::RepackUncompressedRepoV1`] if `repack_uncompressed` is set and the repository is a version 1 repository
+    /// * [`CommandErrorKind::FromOutOfRangeError`] if `keep_pack` or `keep_delete` is out of range
     pub fn get_plan<P: ProgressBars, S: Open>(
         &self,
         repo: &Repository<P, S>,
@@ -477,10 +482,6 @@ impl PrunePack {
     /// * `todo` - The task to be executed on the pack
     /// * `pi` - The `PackInfo` of the pack
     /// * `stats` - The `PruneStats` of the `PrunePlan`
-    ///
-    /// # Panics
-    ///
-    ///
     fn set_todo(&mut self, todo: PackToDo, pi: &PackInfo, stats: &mut PruneStats) {
         let tpe = self.blob_type;
         match todo {
@@ -870,7 +871,7 @@ impl PrunePlan {
     ///
     /// # Errors
     ///
-    /// * [`CommandErrorKind::NoDecicion`] - If a pack is undecided
+    /// * [`CommandErrorKind::NoDecision`] - If a pack is undecided
     /// * [`CommandErrorKind::PackSizeNotMatching`] - If the size of a pack does not match
     /// * [`CommandErrorKind::PackNotExisting`] - If a pack does not exist
     fn check_existing_packs(&mut self) -> RusticResult<()> {
@@ -889,7 +890,7 @@ impl PrunePlan {
             };
 
             match pack.to_do {
-                PackToDo::Undecided => return Err(CommandErrorKind::NoDecicion(pack.id).into()),
+                PackToDo::Undecided => return Err(CommandErrorKind::NoDecision(pack.id).into()),
                 PackToDo::Keep | PackToDo::Recover => {
                     for blob in &pack.blobs {
                         _ = self.used_ids.remove(&blob.id);
@@ -1077,7 +1078,7 @@ impl PrunePlan {
             .into_par_iter()
             .try_for_each(|pack| -> RusticResult<_> {
                 match pack.to_do {
-                    PackToDo::Undecided => return Err(CommandErrorKind::NoDecicion(pack.id).into()),
+                    PackToDo::Undecided => return Err(CommandErrorKind::NoDecision(pack.id).into()),
                     PackToDo::Keep => {
                         // keep pack: add to new index
                         let pack = pack.into_index_pack();

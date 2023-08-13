@@ -152,8 +152,8 @@ pub enum CommandErrorKind {
     PackSizeNotMatching(Id, u32, u32),
     /// "used pack {0} does not exist!
     PackNotExisting(Id),
-    /// pack {0} got no decicion what to do
-    NoDecicion(Id),
+    /// pack {0} got no decision what to do
+    NoDecision(Id),
     /// {0:?}
     FromParseIntError(#[from] ParseIntError),
     /// {0}

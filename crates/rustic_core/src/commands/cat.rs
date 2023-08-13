@@ -60,7 +60,7 @@ pub(crate) fn cat_blob<P, S: IndexedFull>(
 ///
 /// # Errors
 ///
-/// If the file could not be read.
+/// * [`CommandErrorKind::PathIsNoDir`] - If the path is not a directory.
 ///
 /// # Returns
 ///

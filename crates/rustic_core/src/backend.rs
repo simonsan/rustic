@@ -17,7 +17,7 @@ use displaydoc::Display;
 use log::trace;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend::node::Node, error::BackendErrorKind, id::Id, RusticResult};
+use crate::{backend::node::Node, error::BackendErrorKind, error::RusticResult, id::Id};
 
 /// All [`FileType`]s which are located in separated directories
 pub const ALL_FILE_TYPES: [FileType; 4] = [
@@ -159,7 +159,8 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
     ///
     /// # Errors
     ///
-    /// If no id could be found or if the id is not unique.
+    /// * [`BackendErrorKind::NoSuitableIdFound`] if no id could be found.
+    /// * [`BackendErrorKind::IdNotUnique`] if the id is not unique.
     ///
     /// # Note
     ///
@@ -236,10 +237,26 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
 /// Trait for backends that can write.
 /// This trait is implemented by all backends that can write data.
 pub trait WriteBackend: ReadBackend {
+    /// Creates a new backend.
     fn create(&self) -> RusticResult<()>;
 
+    /// Writes bytes to the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the data should be cached.
+    /// * `buf` - The data to write.
     fn write_bytes(&self, tpe: FileType, id: &Id, cacheable: bool, buf: Bytes) -> RusticResult<()>;
 
+    /// Removes the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    /// * `cacheable` - Whether the file is cacheable.
     fn remove(&self, tpe: FileType, id: &Id, cacheable: bool) -> RusticResult<()>;
 }
 
@@ -260,10 +277,6 @@ pub trait ReadSourceOpen {
     type Reader: Read + Send + 'static;
 
     /// Opens the source.
-    ///
-    /// # Errors
-    ///
-    /// If the source could not be opened.
     fn open(self) -> RusticResult<Self::Reader>;
 }
 
@@ -274,10 +287,6 @@ pub trait ReadSource {
     type Iter: Iterator<Item = RusticResult<ReadSourceEntry<Self::Open>>>;
 
     /// Returns the size of the source.
-    ///
-    /// # Errors
-    ///
-    /// If the size could not be determined.
     fn size(&self) -> RusticResult<Option<u64>>;
 
     /// Returns an iterator over the entries of the source.

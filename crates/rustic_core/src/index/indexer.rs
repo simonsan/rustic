@@ -89,7 +89,7 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
         self.save()
     }
 
-    /// Save file if length of packs and packs_to_delete is greater than `0`.
+    /// Save file if length of packs and `packs_to_delete` is greater than `0`.
     ///
     /// # Errors
     ///

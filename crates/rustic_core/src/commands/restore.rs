@@ -131,7 +131,8 @@ impl RestoreOptions {
     ///
     /// # Errors
     ///
-    /// If the restore failed.
+    /// * [`CommandErrorKind::ErrorCreating`] if a directory could not be created.
+    /// * [`CommandErrorKind::ErrorCollecting`] if the restore information could not be collected.
     pub(crate) fn collect_and_prepare<P: ProgressBars, S: IndexedFull>(
         self,
         repo: &Repository<P, S>,

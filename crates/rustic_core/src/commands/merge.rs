@@ -71,6 +71,10 @@ pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(
 /// * `cmp` - The comparison function for the trees
 /// * `summary` - The summary to update
 ///
+/// # Errors
+///
+/// * [`CommandErrorKind::ConversionToU64Failed`] if the size of the tree is too large
+///
 /// # Returns
 ///
 /// The merged tree

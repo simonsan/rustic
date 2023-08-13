@@ -78,6 +78,10 @@ impl KeyOptions {
     /// * `pass` - The password to encrypt the key with.
     /// * `key` - The key to add.
     ///
+    /// # Errors
+    ///
+    /// * [`CommandErrorKind::FromJsonError`] - If the key could not be serialized.
+    ///
     /// # Returns
     ///
     /// The id of the key.
