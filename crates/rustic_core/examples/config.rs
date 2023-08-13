@@ -1,5 +1,5 @@
 //! `config` example
-use rustic_core::{ConfigOptions, Repository, RepositoryOptions};
+use rustic_core::{max_compression_level, ConfigOptions, Repository, RepositoryOptions};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 use std::error::Error;
 
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let repo = Repository::new(&repo_opts)?.open()?;
 
     // Set Config, e.g. Compression level
-    let config_opts = ConfigOptions::default().set_compression(22);
+    let config_opts = ConfigOptions::default().set_compression(max_compression_level());
     repo.apply_config(&config_opts)?;
     Ok(())
 }
