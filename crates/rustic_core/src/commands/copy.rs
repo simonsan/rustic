@@ -25,6 +25,13 @@ pub struct CopySnapshot {
 
 /// Copy the given snapshots to the destination repository.
 ///
+/// # Type Parameters
+///
+/// * `Q` - The progress bar type.
+/// * `R` - The type of the indexed tree.
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to copy from
@@ -121,6 +128,12 @@ pub(crate) fn copy<'a, Q, R: IndexedFull, P: ProgressBars, S: IndexedIds>(
 }
 
 /// Filter out relevant snapshots from the given list of snapshots.
+///
+/// # Type Parameters
+///
+/// * `F` - The type of the filter.
+/// * `P` - The progress bar type.
+/// * `S` - The state of the repository.
 ///
 /// # Arguments
 ///

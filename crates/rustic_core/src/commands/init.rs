@@ -16,6 +16,11 @@ use crate::{
 
 /// Initialize a new repository.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to initialize.
@@ -45,6 +50,11 @@ pub(crate) fn init<P, S>(
 }
 
 /// Initialize a new repository with a given config.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
 ///
 /// # Arguments
 ///

@@ -64,6 +64,11 @@ enum Changed {
 impl RepairSnapshotsOptions {
     /// Runs the `repair snapshots` command
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type
+    /// * `S` - The type of the indexed tree.
+    ///
     /// # Arguments
     ///
     /// * `repo` - The repository to repair
@@ -149,6 +154,10 @@ impl RepairSnapshotsOptions {
     }
 
     /// Repairs a tree
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The type of the backend.
     ///
     /// # Arguments
     ///

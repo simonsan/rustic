@@ -41,6 +41,11 @@ pub struct CheckOptions {
 impl CheckOptions {
     /// Runs the `check` command
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The state the repository is in.
+    ///
     /// # Arguments
     ///
     /// * `repo` - The repository to check
@@ -429,6 +434,10 @@ fn check_snapshots(index: &impl IndexedBackend, pb: &impl ProgressBars) -> Rusti
 /// # Errors
 ///
 /// If the pack is invalid
+///
+/// # Panics
+///
+/// If zstd decompression fails.
 fn check_pack(
     be: &impl DecryptReadBackend,
     index_pack: IndexPack,

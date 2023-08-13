@@ -93,6 +93,11 @@ pub struct RestoreStats {
 impl RestoreOptions {
     /// Restore the repository to the given destination.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The type of the indexed tree.
+    ///
     /// # Arguments
     ///
     /// * `file_infos` - The restore information.
@@ -121,6 +126,11 @@ impl RestoreOptions {
     }
 
     /// Collect restore information, scan existing files, create needed dirs and remove superfluous files
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The type of the indexed tree.
     ///
     /// # Arguments
     ///
@@ -385,6 +395,11 @@ impl RestoreOptions {
 /// [`restore_contents`] restores all files contents as described by `file_infos`
 /// using the [`DecryptReadBackend`] `be` and writing them into the [`LocalBackend`] `dest`.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to restore.
@@ -591,6 +606,11 @@ enum AddFileResult {
 
 impl RestorePlan {
     /// Add the file to [`FileInfos`] using `index` to get blob information.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The type of the indexed tree.
     ///
     /// # Arguments
     ///

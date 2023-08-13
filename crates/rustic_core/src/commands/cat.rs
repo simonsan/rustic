@@ -16,6 +16,11 @@ use crate::{
 
 /// Prints the contents of a file.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to read from.
@@ -39,6 +44,22 @@ pub(crate) fn cat_file<P, S: Open>(
     Ok(data)
 }
 
+// TODO: Add documentation!
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to read from.
+/// * `tpe` - The type of the file.
+/// * `id` - The id of the file.
+///
+/// # Errors
+///
+// TODO: add errors!
 pub(crate) fn cat_blob<P, S: IndexedFull>(
     repo: &Repository<P, S>,
     tpe: BlobType,
@@ -51,6 +72,11 @@ pub(crate) fn cat_blob<P, S: IndexedFull>(
 }
 
 /// Prints the contents of a tree.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
 ///
 /// # Arguments
 ///

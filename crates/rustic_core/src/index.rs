@@ -190,6 +190,10 @@ pub trait IndexedBackend: ReadIndex + Clone + Sync + Send + 'static {
 }
 
 /// A backend with an index
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend type
 #[derive(Clone, Debug)]
 pub struct IndexBackend<BE: DecryptReadBackend> {
     /// The backend to read from.
@@ -240,6 +244,10 @@ impl<BE: DecryptReadBackend> ReadIndex for IndexBackend<BE> {
 impl<BE: DecryptReadBackend> IndexBackend<BE> {
     /// Create a new [`IndexBackend`] from an [`Index`]
     ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type
+    ///
     /// # Arguments
     ///
     /// * `be` - The backend to read from
@@ -252,6 +260,10 @@ impl<BE: DecryptReadBackend> IndexBackend<BE> {
     }
 
     /// Create a new [`IndexBackend`] from an [`IndexCollector`]
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type
     ///
     /// # Arguments
     ///
@@ -279,6 +291,10 @@ impl<BE: DecryptReadBackend> IndexBackend<BE> {
 
     /// Create a new [`IndexBackend`]
     ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type
+    ///
     /// # Arguments
     ///
     /// * `be` - The backend to read from
@@ -288,6 +304,10 @@ impl<BE: DecryptReadBackend> IndexBackend<BE> {
     }
 
     /// Create a new [`IndexBackend`] with only full trees
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type
     ///
     /// # Arguments
     ///

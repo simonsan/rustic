@@ -222,7 +222,7 @@ pub trait DecryptWriteBackend: WriteBackend {
     ///
     /// # Errors
     ///
-    /// If the files could not be saved.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the file could not be serialized to json.
     fn save_list<'a, F: RepoFile, I: ExactSizeIterator<Item = &'a F> + Send>(
         &self,
         list: I,
@@ -250,6 +250,10 @@ pub trait DecryptWriteBackend: WriteBackend {
     /// # Errors
     ///
     /// If the files could not be deleted.
+    ///
+    /// # Panics
+    ///
+    /// If the files could not be deleted.
     fn delete_list<'a, I: ExactSizeIterator<Item = &'a Id> + Send>(
         &self,
         tpe: FileType,
@@ -259,6 +263,7 @@ pub trait DecryptWriteBackend: WriteBackend {
     ) -> RusticResult<()> {
         p.set_length(list.len() as u64);
         list.par_bridge().try_for_each(|id| -> RusticResult<_> {
+            // TODO: Don't panic on file not being able to be deleted.
             self.remove(tpe, id, cacheable).unwrap();
             p.inc(1);
             Ok(())

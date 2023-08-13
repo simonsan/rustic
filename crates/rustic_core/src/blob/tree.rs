@@ -18,11 +18,12 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::{
     backend::{node::Metadata, node::Node, node::NodeType},
     crypto::hasher::hash,
+    error::RusticResult,
     error::TreeErrorKind,
     id::Id,
     index::IndexedBackend,
+    progress::Progress,
     repofile::snapshotfile::SnapshotSummary,
-    Progress, RusticResult,
 };
 
 pub(super) mod constants {
@@ -382,6 +383,10 @@ where
 }
 
 /// [`TreeStreamerOnce`] recursively visits all trees and subtrees, but each tree ID only once
+///
+/// # Type Parameters
+///
+/// * `P` - The progress indicator
 #[derive(Debug)]
 pub struct TreeStreamerOnce<P> {
     /// The visited tree IDs
@@ -400,6 +405,11 @@ pub struct TreeStreamerOnce<P> {
 
 impl<P: Progress> TreeStreamerOnce<P> {
     /// Creates a new `TreeStreamerOnce`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The type of the backend.
+    /// * `P` - The type of the progress indicator.
     ///
     /// # Arguments
     ///

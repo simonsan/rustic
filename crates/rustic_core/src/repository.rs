@@ -182,6 +182,10 @@ impl RepositoryOptions {
 
 /// Parse a command line command
 ///
+/// # Type Parameters
+///
+/// * `E` - The type of the error
+///
 /// # Arguments
 ///
 /// * `input` - The command line command to parse
@@ -231,9 +235,14 @@ pub fn read_password_from_reader(file: &mut impl BufRead) -> RusticResult<String
 #[derive(Debug, Clone)]
 /// A `Repository` allows all kind of actions to be performed.
 ///
+/// # Type Parameters
+///
+/// * `P` - The type of the progress bar
+/// * `S` - The type of the status
+///
 /// # Notes
 ///
-/// A reposiotry can be in different states and allows some actions only when in certain state(s).
+/// A repository can be in different states and allows some actions only when in certain state(s).
 pub struct Repository<P, S> {
     /// The name of the repository
     pub name: String,
@@ -258,6 +267,10 @@ impl Repository<NoProgressBars, ()> {
 
 impl<P> Repository<P, ()> {
     /// Create a new repository from the given [`RepositoryOptions`] with given progress bars
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bar
     ///
     /// # Arguments
     ///
@@ -439,6 +452,10 @@ impl<P, S> Repository<P, S> {
     ///
     /// This returns an open repository which can be directly used.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bar
+    ///
     /// # Arguments
     ///
     /// * `key_opts` - The options to use for the key
@@ -461,6 +478,10 @@ impl<P, S> Repository<P, S> {
     /// Initialize a new repository with given password and options.
     ///
     /// This returns an open repository which can be directly used.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bar
     ///
     /// # Arguments
     ///
@@ -488,6 +509,10 @@ impl<P, S> Repository<P, S> {
     ///
     /// This returns an open repository which can be directly used.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bar
+    ///
     /// # Arguments
     ///
     /// * `password` - The password to use
@@ -505,6 +530,10 @@ impl<P, S> Repository<P, S> {
     }
 
     /// Open the repository with given [`Key`] and [`ConfigFile`].
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bar
     ///
     /// # Arguments
     ///
@@ -960,6 +989,11 @@ impl<P, S: IndexedTree> IndexedTree for Repository<P, S> {
 }
 
 /// The indexed status of a repository
+///
+/// # Type Parameters
+///
+/// * `T` - The type of index
+/// * `S` - The type of the open status
 #[derive(Debug)]
 pub struct IndexedStatus<T, S: Open> {
     /// The open status
@@ -1239,6 +1273,11 @@ impl<P: ProgressBars, S: IndexedFull> Repository<P, S> {
     }
 
     /// Copy the given `snapshots` to `repo_dest`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Q` - The type of the progress bar
+    /// * `R` - The type of the index.
     ///
     /// # Arguments
     ///

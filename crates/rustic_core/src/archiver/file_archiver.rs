@@ -30,7 +30,7 @@ use crate::{
 ///
 /// # Type Parameters
 ///
-/// * `BE` - The backend to write to.
+/// * `BE` - The backend type.
 /// * `I` - The index to read from.
 #[derive(Clone)]
 pub(crate) struct FileArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
@@ -44,7 +44,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> FileArchiver<BE, I> {
     ///
     /// # Type Parameters
     ///
-    /// * `BE` - The backend to write to.
+    /// * `BE` - The backend type.
     /// * `I` - The index to read from.
     ///
     /// # Arguments

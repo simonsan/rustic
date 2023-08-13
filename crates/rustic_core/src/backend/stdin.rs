@@ -4,7 +4,7 @@ use crate::{
     backend::{
         node::Metadata, node::Node, node::NodeType, ReadSource, ReadSourceEntry, ReadSourceOpen,
     },
-    RusticResult,
+    error::RusticResult,
 };
 
 /// The `StdinSource` is a `ReadSource` for stdin.

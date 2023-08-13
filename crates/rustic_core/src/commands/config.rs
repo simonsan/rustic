@@ -13,6 +13,11 @@ use crate::{
 
 /// Apply the [`ConfigOptions`] to a given [`ConfigFile`]
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to apply the config to
@@ -36,6 +41,11 @@ pub(crate) fn apply_config<P, S: Open>(
 }
 
 /// Save a [`ConfigFile`] to the repository
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
 ///
 /// # Arguments
 ///

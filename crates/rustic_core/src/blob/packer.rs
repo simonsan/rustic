@@ -17,14 +17,15 @@ use crate::{
     blob::BlobType,
     crypto::{hasher::hash, CryptoKey},
     error::PackerErrorKind,
+    error::RusticResult,
     id::Id,
     index::indexer::SharedIndexer,
     repofile::{
         configfile::ConfigFile, indexfile::IndexBlob, indexfile::IndexPack,
         packfile::PackHeaderLength, packfile::PackHeaderRef, snapshotfile::SnapshotSummary,
     },
-    RusticResult,
 };
+
 pub(super) mod constants {
     use std::time::Duration;
 
@@ -122,6 +123,10 @@ impl PackSizer {
 }
 
 /// The `Packer` is responsible for packing blobs into pack files.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend type.
 #[allow(missing_debug_implementations)]
 #[derive(Clone)]
 pub struct Packer<BE: DecryptWriteBackend> {
@@ -139,6 +144,10 @@ pub struct Packer<BE: DecryptWriteBackend> {
 
 impl<BE: DecryptWriteBackend> Packer<BE> {
     /// Creates a new `Packer`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type.
     ///
     /// # Arguments
     ///
@@ -358,7 +367,7 @@ impl PackerStats {
 ///
 /// # Type Parameters
 ///
-/// * `BE` - The backend to write to.
+/// * `BE` - The backend type.
 #[allow(missing_debug_implementations, clippy::module_name_repetitions)]
 pub(crate) struct RawPacker<BE: DecryptWriteBackend> {
     /// The backend to write to.
@@ -388,7 +397,7 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
     ///
     /// # Type Parameters
     ///
-    /// * `BE` - The backend to write to.
+    /// * `BE` - The backend type.
     ///
     /// # Arguments
     ///
@@ -576,7 +585,7 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
 // TODO: add documentation
 /// # Type Parameters
 ///
-/// * `BE` - The backend to write to.
+/// * `BE` - The backend type.
 #[derive(Clone)]
 pub(crate) struct FileWriterHandle<BE: DecryptWriteBackend> {
     /// The backend to write to.
@@ -617,7 +626,7 @@ impl Actor {
     ///
     /// # Type Parameters
     ///
-    /// * `BE` - The backend to write to.
+    /// * `BE` - The backend type.
     ///
     /// # Arguments
     ///

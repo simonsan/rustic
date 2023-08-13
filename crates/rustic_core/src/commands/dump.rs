@@ -10,6 +10,11 @@ use crate::{
 
 /// Dumps the contents of a file.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to read from.

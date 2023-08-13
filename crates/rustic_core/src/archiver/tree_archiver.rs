@@ -20,7 +20,7 @@ pub(crate) type TreeItem = TreeType<(ParentResult<()>, u64), ParentResult<Id>>;
 ///
 /// # Type Parameters
 ///
-/// * `BE` - The backend to write to.
+/// * `BE` - The backend type.
 /// * `I` - The index to read from.
 ///
 // TODO: Add documentation
@@ -42,7 +42,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     ///
     /// # Type Parameters
     ///
-    /// * `BE` - The backend to write to.
+    /// * `BE` - The backend type.
     /// * `I` - The index to read from.
     ///
     /// # Arguments

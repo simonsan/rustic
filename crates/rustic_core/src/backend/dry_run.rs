@@ -4,10 +4,10 @@ use zstd::decode_all;
 use crate::{
     backend::{
         decrypt::DecryptFullBackend, decrypt::DecryptReadBackend, decrypt::DecryptWriteBackend,
-        FileType, Id, ReadBackend, WriteBackend,
+        FileType, ReadBackend, WriteBackend,
     },
-    error::CryptBackendErrorKind,
-    RusticResult,
+    error::{CryptBackendErrorKind, RusticResult},
+    id::Id,
 };
 
 /// A backend implementation that does not actually write to the backend.
@@ -21,6 +21,10 @@ pub struct DryRunBackend<BE: DecryptFullBackend> {
 
 impl<BE: DecryptFullBackend> DryRunBackend<BE> {
     /// Create a new [`DryRunBackend`].
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to use.
     ///
     /// # Arguments
     ///
@@ -36,6 +40,21 @@ impl<BE: DecryptFullBackend> DecryptReadBackend for DryRunBackend<BE> {
         self.be.decrypt(data)
     }
 
+    /// Reads encrypted data of the given file.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// * [`CryptBackendErrorKind::DecryptionNotSupportedForBackend`] - If the backend does not support decryption.
+    /// * [`CryptBackendErrorKind::DecodingZstdCompressedDataFailed`] - If decoding the zstd compressed data failed.
+    ///
+    /// # Returns
+    ///
+    /// The data read.
     fn read_encrypted_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         let decrypted = self.decrypt(&self.read_full(tpe, id)?)?;
         Ok(match decrypted.first() {

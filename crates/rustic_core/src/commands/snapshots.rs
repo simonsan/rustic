@@ -10,6 +10,11 @@ use crate::{
 
 /// Get the snapshots from the repository.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to get the snapshots from.

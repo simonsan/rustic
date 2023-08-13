@@ -26,9 +26,10 @@ use crate::backend::node::NodeType;
 use crate::{
     backend::{
         node::{ExtendedAttribute, Metadata, Node},
-        FileType, Id, ReadBackend, WriteBackend, ALL_FILE_TYPES,
+        FileType, ReadBackend, WriteBackend, ALL_FILE_TYPES,
     },
     error::{LocalErrorKind, RusticResult},
+    id::Id,
     repository::parse_command,
 };
 

@@ -58,6 +58,11 @@ pub struct ParentOptions {
 impl ParentOptions {
     /// Get parent snapshot.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the progress bars.
+    /// * `S` - The type of the indexed tree.
+    ///
     /// # Arguments
     ///
     /// * `repo` - The repository to use
@@ -144,6 +149,11 @@ pub struct BackupOptions {
 }
 
 /// Backup data, create a snapshot.
+///
+/// # Type Parameters
+///
+/// * `P` - The type of the progress bars.
+/// * `S` - The type of the indexed tree.
 ///
 /// # Arguments
 ///

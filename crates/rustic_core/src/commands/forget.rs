@@ -57,6 +57,11 @@ impl ForgetGroups {
 
 /// Get the list of snapshots to forget.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to use

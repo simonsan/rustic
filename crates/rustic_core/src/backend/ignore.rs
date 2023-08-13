@@ -27,8 +27,7 @@ use crate::{
         node::{Metadata, Node, NodeType},
         ReadSource, ReadSourceEntry, ReadSourceOpen,
     },
-    error::IgnoreErrorKind,
-    RusticResult,
+    error::{IgnoreErrorKind, RusticResult},
 };
 
 // Walk doesn't implement Debug
@@ -131,7 +130,8 @@ impl LocalSource {
     ///
     /// # Errors
     ///
-    /// If the local source could not be created.
+    /// * [`IgnoreErrorKind::GenericError`] - If the a glob pattern could not be added to the override builder.
+    /// * [`IgnoreErrorKind::FromIoError`] - If a glob file could not be read.
     pub fn new(
         save_opts: LocalSourceSaveOptions,
         filter_opts: &LocalSourceFilterOptions,
@@ -238,7 +238,7 @@ impl ReadSourceOpen for OpenFile {
     ///
     /// # Errors
     ///
-    /// If the file could not be opened.
+    /// * [`IgnoreErrorKind::UnableToOpenFile`] - If the file could not be opened.
     fn open(self) -> RusticResult<Self::Reader> {
         let path = self.0;
         File::open(path).map_err(|err| IgnoreErrorKind::UnableToOpenFile(err).into())
@@ -312,7 +312,8 @@ impl Iterator for LocalSource {
 ///
 /// # Errors
 ///
-/// If the [`DirEntry`] could not be mapped.
+/// * [`IgnoreErrorKind::GenericError`] - If metadata could not be read.
+/// * [`IgnoreErrorKind::FromIoError`] - If path of the entry could not be read.
 #[cfg(windows)]
 fn map_entry(
     entry: DirEntry,
@@ -436,7 +437,8 @@ fn get_group_by_gid(gid: u32) -> Option<String> {
 ///
 /// # Errors
 ///
-/// If the [`DirEntry`] could not be mapped.
+/// * [`IgnoreErrorKind::GenericError`] - If metadata could not be read.
+/// * [`IgnoreErrorKind::FromIoError`] - If the xattr of the entry could not be read.
 #[cfg(not(windows))]
 fn map_entry(
     entry: DirEntry,

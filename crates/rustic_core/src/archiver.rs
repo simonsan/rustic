@@ -26,7 +26,7 @@ use crate::{
 ///
 /// # Type Parameters
 ///
-/// * `BE` - The backend to write to.
+/// * `BE` - The backend type.
 /// * `I` - The index to read from.
 #[allow(missing_debug_implementations)]
 pub struct Archiver<BE: DecryptWriteBackend, I: IndexedBackend> {

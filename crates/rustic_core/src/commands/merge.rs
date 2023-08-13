@@ -64,6 +64,11 @@ pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(
 
 /// Merges the given trees into a new tree.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to merge into

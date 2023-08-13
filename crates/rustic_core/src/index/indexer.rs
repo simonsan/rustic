@@ -44,6 +44,10 @@ where
 impl<BE: DecryptWriteBackend> Indexer<BE> {
     /// Creates a new `Indexer`.
     ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type.
+    ///
     /// # Arguments
     ///
     /// * `be` - The backend to write to.
@@ -58,6 +62,10 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     }
 
     /// Creates a new `Indexer` without an index.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type.
     ///
     /// # Arguments
     ///
@@ -80,6 +88,10 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     }
 
     /// Returns a `SharedIndexer` to use in multiple threads.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend type.
     pub fn into_shared(self) -> SharedIndexer<BE> {
         Arc::new(RwLock::new(self))
     }
@@ -93,7 +105,7 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     ///
     /// # Errors
     ///
-    /// If the file could not be saved.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the index file could not be serialized.
     pub fn save(&self) -> RusticResult<()> {
         if (self.file.packs.len() + self.file.packs_to_delete.len()) > 0 {
             _ = self.be.save_file(&self.file)?;
@@ -106,6 +118,11 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     /// # Arguments
     ///
     /// * `pack` - The pack to add.
+    ///
+    /// # Errors
+    ///
+    /// * [`IndexErrorKind::CouldNotGetElapsedTimeFromSystemTime`] - If the elapsed time could not be retrieved from the system time.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the index file could not be serialized.
     pub fn add(&mut self, pack: IndexPack) -> RusticResult<()> {
         self.add_with(pack, false)
     }
@@ -118,7 +135,8 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     ///
     /// # Errors
     ///
-    /// If the pack could not be removed from the backend.
+    /// * [`IndexErrorKind::CouldNotGetElapsedTimeFromSystemTime`] - If the elapsed time could not be retrieved from the system time.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the index file could not be serialized.
     pub fn add_remove(&mut self, pack: IndexPack) -> RusticResult<()> {
         self.add_with(pack, true)
     }
@@ -132,8 +150,8 @@ impl<BE: DecryptWriteBackend> Indexer<BE> {
     ///
     /// # Errors
     ///
-    /// If the pack could not be added.
-    /// If the pack could not be removed from the backend.
+    /// * [`IndexErrorKind::CouldNotGetElapsedTimeFromSystemTime`] - If the elapsed time could not be retrieved from the system time.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the index file could not be serialized.
     pub fn add_with(&mut self, pack: IndexPack, delete: bool) -> RusticResult<()> {
         self.count += pack.blobs.len();
 

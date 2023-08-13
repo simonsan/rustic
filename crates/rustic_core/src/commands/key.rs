@@ -33,6 +33,11 @@ pub struct KeyOptions {
 impl KeyOptions {
     /// Add the current key to the repository.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The state the repository is in.
+    ///
     /// # Arguments
     ///
     /// * `repo` - The repository to add the key to.
@@ -51,6 +56,11 @@ impl KeyOptions {
     }
 
     /// Initialize a new key.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type.
+    /// * `S` - The state the repository is in.
     ///
     /// # Arguments
     ///

@@ -301,6 +301,10 @@ impl Node {
 
     #[must_use]
     /// Get the node name as `OsString`, handling name ecaping
+    ///
+    /// # Panics
+    ///
+    /// If the name is not valid unicode
     pub fn name(&self) -> OsString {
         unescape_filename(&self.name).unwrap_or_else(|_| OsString::from_str(&self.name).unwrap())
     }

@@ -30,6 +30,11 @@ pub struct RepairIndexOptions {
 impl RepairIndexOptions {
     /// Runs the `repair index` command
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The progress bar type
+    /// * `S` - The state the repository is in
+    ///
     /// # Arguments
     ///
     /// * `repo` - The repository to repair

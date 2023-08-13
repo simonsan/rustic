@@ -13,8 +13,9 @@ use rand::{
 };
 
 use crate::{
-    backend::{rest::RestBackend, FileType, Id, ReadBackend, WriteBackend},
+    backend::{rest::RestBackend, FileType, ReadBackend, WriteBackend},
     error::{ProviderErrorKind, RusticResult},
+    id::Id,
 };
 
 pub(super) mod constants {

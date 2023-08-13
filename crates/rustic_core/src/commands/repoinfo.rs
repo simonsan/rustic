@@ -92,6 +92,11 @@ impl PackInfo {
 
 /// Collects the index infos from the given repository.
 ///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
 /// # Arguments
 ///
 /// * `repo` - The repository to collect the infos from.
@@ -189,6 +194,11 @@ pub(crate) fn collect_file_info(be: &impl ReadBackend) -> RusticResult<Vec<RepoF
 }
 
 /// Collects the file infos from the given repository.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The type of the indexed tree.
 ///
 /// # Arguments
 ///
