@@ -342,7 +342,7 @@ impl PruneStats {
             .fold(SizeStats::default(), |acc, x| acc + *x)
     }
 
-    /// Compute statistics about total size of blobs of all types
+    /// Compute total size statistics for blobs of all types
     pub fn size_sum(&self) -> SizeStats {
         self.size
             .values()

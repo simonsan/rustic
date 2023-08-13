@@ -24,7 +24,7 @@ use thiserror::Error;
 
 use crate::{backend::node::NodeType, id::Id, repofile::indexfile::IndexPack};
 
-/// Result type often returned from methods that can have `RusticError`s.
+/// Result type that is being returned from methods that can fail and thus have [`RusticError`]s.
 pub type RusticResult<T> = Result<T, RusticError>;
 
 // [`Error`] is public, but opaque and easy to keep compatible.
