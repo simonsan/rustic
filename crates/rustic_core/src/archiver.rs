@@ -23,6 +23,11 @@ use crate::{
 
 /// The `Archiver` is responsible for archiving files and trees.
 /// It will read the file, chunk it, and write the chunks to the backend.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend to write to.
+/// * `I` - The index to read from.
 #[allow(missing_debug_implementations)]
 pub struct Archiver<BE: DecryptWriteBackend, I: IndexedBackend> {
     /// The `FileArchiver` is responsible for archiving files.
@@ -84,6 +89,10 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> Archiver<BE, I> {
     /// Archives the given source.
     ///
     /// This will archive all files and trees in the given source.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `R` - The type of the source.
     ///
     /// # Arguments
     ///

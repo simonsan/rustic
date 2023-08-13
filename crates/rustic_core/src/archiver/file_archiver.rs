@@ -26,6 +26,11 @@ use crate::{
 
 /// The `FileArchiver` is responsible for archiving files.
 /// It will read the file, chunk it, and write the chunks to the backend.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend to write to.
+/// * `I` - The index to read from.
 #[derive(Clone)]
 pub(crate) struct FileArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
     index: I,
@@ -35,6 +40,11 @@ pub(crate) struct FileArchiver<BE: DecryptWriteBackend, I: IndexedBackend> {
 
 impl<BE: DecryptWriteBackend, I: IndexedBackend> FileArchiver<BE, I> {
     /// Creates a new `FileArchiver`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to write to.
+    /// * `I` - The index to read from.
     ///
     /// # Arguments
     ///
@@ -70,6 +80,10 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> FileArchiver<BE, I> {
     }
 
     /// Processes the given item.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `O` - The type of the tree item.
     ///
     /// # Arguments
     ///

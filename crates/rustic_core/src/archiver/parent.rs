@@ -10,6 +10,11 @@ use crate::{
     id::Id, index::IndexedBackend, RusticResult,
 };
 
+/// The `ItemWithParent` is a `TreeType` wrapping the result of a parent search and a type `O`.
+///
+/// # Type Parameters
+///
+/// * `O` - The type of the `TreeType`.
 pub(crate) type ItemWithParent<O> = TreeType<(O, ParentResult<()>), ParentResult<Id>>;
 
 /// The `Parent` is responsible for finding the parent tree of a given tree.
@@ -30,6 +35,10 @@ pub struct Parent {
 }
 
 /// The result of a parent search.
+///
+/// # Type Parameters
+///
+/// * `T` - The type of the matched parent.
 #[derive(Clone, Debug)]
 pub(crate) enum ParentResult<T> {
     /// The parent was found.
@@ -42,6 +51,10 @@ pub(crate) enum ParentResult<T> {
 
 impl<T> ParentResult<T> {
     /// Maps a `ParentResult<T>` to a `ParentResult<R>` by applying a function to a contained value.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `R` - The type of the returned `ParentResult`.
     ///
     /// # Arguments
     ///
@@ -61,6 +74,10 @@ impl<T> ParentResult<T> {
 
 impl Parent {
     /// Creates a new `Parent`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The type of the backend.
     ///
     /// # Arguments
     ///
@@ -157,6 +174,16 @@ impl Parent {
         })
     }
 
+    // TODO: add documentation!
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The type of the backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to read from.
+    /// * `name` - The name of the parent node.
     fn set_dir<BE: IndexedBackend>(&mut self, be: &BE, name: &OsStr) {
         let tree = self.p_node(name).and_then(|p_node| {
             p_node.subtree.map_or_else(
@@ -178,6 +205,11 @@ impl Parent {
         self.node_idx = 0;
     }
 
+    // TODO: add documentation!
+    ///
+    /// # Errors
+    ///
+    /// * [`ArchiverErrorKind::TreeStackEmpty`] if the tree stack is empty.
     fn finish_dir(&mut self) -> RusticResult<()> {
         let (tree, node_idx) = self
             .stack
@@ -190,10 +222,26 @@ impl Parent {
         Ok(())
     }
 
+    // TODO: add documentation!
     pub(crate) fn tree_id(&self) -> Option<Id> {
         self.tree_id
     }
 
+    // TODO: add documentation!
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The type of the backend.
+    /// * `O` - The type of the tree item.
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to read from.
+    /// * `item` - The item to process.
+    ///
+    /// # Errors
+    ///
+    /// * [`ArchiverErrorKind::TreeStackEmpty`] if the tree stack is empty.
     pub(crate) fn process<BE: IndexedBackend, O>(
         &mut self,
         be: &BE,

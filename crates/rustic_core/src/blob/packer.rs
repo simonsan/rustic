@@ -150,7 +150,9 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     ///
     /// # Errors
     ///
-    /// If the zstd compression level is invalid.
+    /// * [`PackerErrorKind::ZstdError`] if the zstd compression level is invalid.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::IntConversionFailed`] if converting the data length to u64 fails
     pub fn new(
         be: BE,
         blob_type: BlobType,
@@ -300,6 +302,10 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     /// # Errors
     ///
     /// If the packer could not be finalized
+    ///
+    /// # Panics
+    ///
+    /// If the channel could not be dropped
     pub fn finalize(self) -> RusticResult<PackerStats> {
         // cancel channel
         drop(self.sender);
@@ -308,7 +314,7 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     }
 }
 
-///
+// TODO: add documentation!
 #[derive(Default, Debug, Clone, Copy)]
 pub struct PackerStats {
     /// The number of blobs added
@@ -349,6 +355,10 @@ impl PackerStats {
 }
 
 /// The `RawPacker` is responsible for packing blobs into pack files.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend to write to.
 #[allow(missing_debug_implementations, clippy::module_name_repetitions)]
 pub(crate) struct RawPacker<BE: DecryptWriteBackend> {
     /// The backend to write to.
@@ -375,6 +385,10 @@ pub(crate) struct RawPacker<BE: DecryptWriteBackend> {
 
 impl<BE: DecryptWriteBackend> RawPacker<BE> {
     /// Creates a new `RawPacker`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to write to.
     ///
     /// # Arguments
     ///
@@ -532,9 +546,10 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
     ///
     /// If the header could not be written
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// If the Actor is not present
+    /// * [`PackerErrorKind::IntConversionFailed`] if converting the header length to u32 fails
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if the header could not be written
     fn save(&mut self) -> RusticResult<()> {
         if self.size == 0 {
             return Ok(());
@@ -559,6 +574,9 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
 }
 
 // TODO: add documentation
+/// # Type Parameters
+///
+/// * `BE` - The backend to write to.
 #[derive(Clone)]
 pub(crate) struct FileWriterHandle<BE: DecryptWriteBackend> {
     /// The backend to write to.
@@ -596,6 +614,10 @@ pub(crate) struct Actor {
 
 impl Actor {
     /// Creates a new `Actor`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to write to.
     ///
     /// # Arguments
     ///
@@ -664,6 +686,10 @@ impl Actor {
 }
 
 /// The `Repacker` is responsible for repacking blobs into pack files.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend to read from.
 #[allow(missing_debug_implementations)]
 pub struct Repacker<BE>
 where
@@ -679,6 +705,10 @@ where
 
 impl<BE: DecryptFullBackend> Repacker<BE> {
     /// Creates a new `Repacker`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to read from.
     ///
     /// # Arguments
     ///

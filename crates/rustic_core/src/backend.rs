@@ -152,6 +152,10 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
 
     /// Finds the id of the file starting with the given string.
     ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the strings.
+    ///
     /// # Arguments
     ///
     /// * `tpe` - The type of the file.
@@ -217,6 +221,10 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
 
     /// Finds the ids of the files starting with the given strings.
     ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type of the strings.
+    ///
     /// # Arguments
     ///
     /// * `tpe` - The type of the file.
@@ -261,6 +269,10 @@ pub trait WriteBackend: ReadBackend {
 }
 
 /// Information about an entry to be able to open it.
+///
+/// # Type Parameters
+///
+/// * `O` - The type of the open information.
 #[derive(Debug, Clone)]
 pub struct ReadSourceEntry<O> {
     /// The path of the entry.
@@ -298,6 +310,10 @@ pub trait ReadSource {
 pub trait WriteSource: Clone {
     /// Create a new source.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the path.
+    ///
     /// # Arguments
     ///
     /// * `path` - The path of the source.
@@ -306,6 +322,10 @@ pub trait WriteSource: Clone {
 
     /// Set the metadata of a source.
     ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the path.
+    ///
     /// # Arguments
     ///
     /// * `path` - The path of the source.
@@ -313,6 +333,10 @@ pub trait WriteSource: Clone {
     fn set_metadata<P: Into<PathBuf>>(&self, path: P, node: Node);
 
     /// Write data to a source at the given offset.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` - The type of the path.
     ///
     /// # Arguments
     ///
