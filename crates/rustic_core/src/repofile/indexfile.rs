@@ -25,10 +25,17 @@ pub struct IndexFile {
 }
 
 impl RepoFile for IndexFile {
+    /// The [`FileType`] associated with the [`IndexFile`]
     const TYPE: FileType = FileType::Index;
 }
 
 impl IndexFile {
+    /// Add a new pack to the index file
+    ///
+    /// # Arguments
+    ///
+    /// * `p` - The pack to add
+    /// * `delete` - If the pack should be marked for deletion
     pub(crate) fn add(&mut self, p: IndexPack, delete: bool) {
         if delete {
             self.packs_to_delete.push(p);
@@ -54,6 +61,15 @@ pub struct IndexPack {
 }
 
 impl IndexPack {
+    /// Add a new blob to the pack
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The blob id
+    /// * `tpe` - The blob type
+    /// * `offset` - The blob offset within the pack
+    /// * `length` - The blob length within the pack
+    /// * `uncompressed_length` - The blob uncompressed length within the pack
     pub(crate) fn add(
         &mut self,
         id: Id,
@@ -71,15 +87,18 @@ impl IndexPack {
         });
     }
 
-    // calculate the pack size from the contained blobs
+    /// Calculate the pack size from the contained blobs
     #[must_use]
     pub(crate) fn pack_size(&self) -> u32 {
         self.size
             .unwrap_or_else(|| PackHeaderRef::from_index_pack(self).pack_size())
     }
 
-    /// returns the blob type of the pack. Note that only packs with
-    /// identical blob types are allowed
+    /// Returns the blob type of the pack.
+    ///
+    /// # Note
+    ///
+    /// Only packs with identical blob types are allowed.
     #[must_use]
     pub fn blob_type(&self) -> BlobType {
         // TODO: This is a hack to support packs without blobs (e.g. when deleting unreferenced files)
@@ -94,27 +113,45 @@ impl IndexPack {
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Copy)]
 /// Index information about a `blob`
 pub struct IndexBlob {
-    /// blob Id
+    /// Blob Id
     pub id: Id,
     #[serde(rename = "type")]
-    /// type of the blob
+    /// Type of the blob
     pub tpe: BlobType,
-    /// offset of the blob within the `pack` file
+    /// Offset of the blob within the `pack` file
     pub offset: u32,
-    /// length of the blob as stored within the `pack` file
+    /// Length of the blob as stored within the `pack` file
     pub length: u32,
-    /// data length of the blob. This is only set if the blob is compressed.
+    /// Data length of the blob. This is only set if the blob is compressed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uncompressed_length: Option<NonZeroU32>,
 }
 
 impl PartialOrd<Self> for IndexBlob {
+    /// Compare two blobs by their offset
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The other blob to compare to
+    ///
+    /// # Returns
+    ///
+    /// The ordering of the two blobs
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.offset.partial_cmp(&other.offset)
     }
 }
 
 impl Ord for IndexBlob {
+    /// Compare two blobs by their offset
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The other blob to compare to
+    ///
+    /// # Returns
+    ///
+    /// The ordering of the two blobs
     fn cmp(&self, other: &Self) -> Ordering {
         self.offset.cmp(&other.offset)
     }

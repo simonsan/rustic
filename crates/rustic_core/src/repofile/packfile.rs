@@ -14,7 +14,9 @@ use crate::{
 pub(super) mod constants {
     // 32 equals the size of the crypto overhead
     // TODO: use from crypto mod
+    /// The overhead of compression and encryption
     pub(super) const COMP_OVERHEAD: u32 = 32;
+    /// The length of the length field within the pack header
     pub(super) const LENGTH_LEN: u32 = 4;
 }
 
@@ -24,17 +26,31 @@ pub(super) mod constants {
 pub struct PackHeaderLength(pub u32);
 
 impl PackHeaderLength {
+    /// Create a new [`PackHeaderLength`] from a [`u32`]
+    ///
+    /// # Arguments
+    ///
+    /// * `len` - The length of the pack header
     #[must_use]
     pub(crate) const fn from_u32(len: u32) -> Self {
         Self(len)
     }
 
+    /// Convert this pack header length into a [`u32`]
     #[must_use]
     pub(crate) const fn to_u32(self) -> u32 {
         self.0
     }
 
     /// Read pack header length from binary representation
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The binary representation of the pack header length
+    ///
+    /// # Errors
+    ///
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
     pub(crate) fn from_binary(data: &[u8]) -> RusticResult<Self> {
         let mut reader = Cursor::new(data);
         Ok(
@@ -43,7 +59,11 @@ impl PackHeaderLength {
         )
     }
 
-    /// generate the binary representation of the pack header length
+    /// Generate the binary representation of the pack header length
+    ///
+    /// # Errors
+    ///
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if writing the binary representation failed
     pub(crate) fn to_binary(self) -> RusticResult<Vec<u8>> {
         let mut writer = Cursor::new(Vec::with_capacity(4));
         self.write(&mut writer)
@@ -57,50 +77,58 @@ impl PackHeaderLength {
 /// An entry in the pack header
 pub enum HeaderEntry {
     #[brw(magic(0u8))]
-    /// entry for uncompressed data blob
+    /// Entry for uncompressed data blob
     Data {
-        /// lengths within packfile
+        /// Lengths within a packfile
         len: u32,
-        /// id of data blob
+        /// Id of data blob
         id: Id,
     },
 
     #[brw(magic(1u8))]
-    /// entry for uncompressed tree blob
+    /// Entry for uncompressed tree blob
     Tree {
-        /// lengths within packfile
+        /// Lengths within a packfile
         len: u32,
-        /// id of tree blob
+        /// Id of tree blob
         id: Id,
     },
 
     #[brw(magic(2u8))]
-    /// entry for compressed data blob
+    /// Entry for compressed data blob
     CompData {
-        /// lengths within packfile
+        /// Lengths within a packfile
         len: u32,
-        /// raw blob length withou compression/encryption
+        /// Raw blob length without compression/encryption
         len_data: u32,
-        /// id of compressed data blob
+        /// Id of compressed data blob
         id: Id,
     },
 
     #[brw(magic(3u8))]
-    /// entry for compressed tree blob
+    /// Entry for compressed tree blob
     CompTree {
-        /// lengths within packfile
+        /// Lengths within a packfile
         len: u32,
-        /// raw blob length withou compression/encryption
+        /// Raw blob length withou compression/encryption
         len_data: u32,
-        /// id of compressed tree blob
+        /// Id of compressed tree blob
         id: Id,
     },
 }
 
 impl HeaderEntry {
+    /// The length of an uncompressed header entry
     const ENTRY_LEN: u32 = 37;
+
+    /// The length of a compressed header entry
     pub(crate) const ENTRY_LEN_COMPRESSED: u32 = 41;
 
+    /// Read a [`HeaderEntry`] from an [`IndexBlob`]
+    ///
+    /// # Arguments
+    ///
+    /// * `blob` - The [`IndexBlob`] to read from
     const fn from_blob(blob: &IndexBlob) -> Self {
         match (blob.uncompressed_length, blob.tpe) {
             (None, BlobType::Data) => Self::Data {
@@ -124,7 +152,7 @@ impl HeaderEntry {
         }
     }
 
-    // the length of this header entry
+    /// The length of this header entry
     const fn length(&self) -> u32 {
         match &self {
             Self::Data { .. } | Self::Tree { .. } => Self::ENTRY_LEN,
@@ -132,6 +160,11 @@ impl HeaderEntry {
         }
     }
 
+    /// Convert this header entry into a [`IndexBlob`]
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - The offset to read from
     const fn into_blob(self, offset: u32) -> IndexBlob {
         match self {
             Self::Data { len, id } => IndexBlob {
@@ -171,7 +204,15 @@ impl HeaderEntry {
 pub struct PackHeader(pub Vec<IndexBlob>);
 
 impl PackHeader {
-    /// Read the binary representation of the pack header
+    /// Create a new [`PackHeader`] from a [`IndexPack`]
+    ///
+    /// # Arguments
+    ///
+    /// * `pack` - The binary representation of the pack header
+    ///
+    /// # Errors
+    ///
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
     pub(crate) fn from_binary(pack: &[u8]) -> RusticResult<Self> {
         let mut reader = Cursor::new(pack);
         let mut offset = 0;
@@ -191,6 +232,20 @@ impl PackHeader {
     }
 
     /// Read the pack header directly from a packfile using the backend
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `id` - The id of the packfile
+    /// * `size_hint` - The size hint for the pack header
+    /// * `pack_size` - The size of the packfile
+    ///
+    /// # Errors
+    ///
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
+    /// * [`PackFileErrorKind::HeaderLengthTooLarge`] if the header length is too large
+    /// * [`PackFileErrorKind::HeaderLengthDoesNotMatchHeaderContents`] if the header length does not match the header contents
+    /// * [`PackFileErrorKind::HeaderPackSizeComputedDoesNotMatchRealPackFile`] if the pack size computed from the header does not match the real pack file size
     pub(crate) fn from_file(
         be: &impl DecryptReadBackend,
         id: Id,
@@ -253,35 +308,41 @@ impl PackHeader {
         Ok(header)
     }
 
-    // destructor for [`PackHeader`] cannot be evaluated at compile time
+    /// Convert this [`PackHeader`] into a [`Vec`] of [`IndexBlob`]s
+    // Destructor for [`PackHeader`] cannot be evaluated at compile time
     #[allow(clippy::missing_const_for_fn)]
     #[must_use]
     pub(crate) fn into_blobs(self) -> Vec<IndexBlob> {
         self.0
     }
 
-    // calculate the pack header size from the contained blobs
+    /// Calculate the pack header size from the contained blobs
     fn size(&self) -> u32 {
         PackHeaderRef(&self.0).size()
     }
 
-    // calculate the pack size from the contained blobs
+    /// Calculate the pack size from the contained blobs
     fn pack_size(&self) -> u32 {
         PackHeaderRef(&self.0).pack_size()
     }
 }
 
 #[derive(Debug, Clone)]
-/// like [`PackHeader`], but as reference
+/// Same as [`PackHeader`], but as reference
 pub struct PackHeaderRef<'a>(pub &'a [IndexBlob]);
 
 impl<'a> PackHeaderRef<'a> {
+    /// Create a new [`PackHeaderRef`] from a [`IndexPack`]
+    ///
+    /// # Arguments
+    ///
+    /// * `pack` - The [`IndexPack`] to create the [`PackHeaderRef`] from
     #[must_use]
     pub(crate) fn from_index_pack(pack: &'a IndexPack) -> Self {
         Self(&pack.blobs)
     }
 
-    // calculate the pack header size from the contained blobs
+    /// Calculate the pack header size from the contained blobs
     #[must_use]
     pub(crate) fn size(&self) -> u32 {
         self.0.iter().fold(constants::COMP_OVERHEAD, |acc, blob| {
@@ -289,7 +350,7 @@ impl<'a> PackHeaderRef<'a> {
         })
     }
 
-    // calculate the pack size from the contained blobs
+    /// Calculate the pack size from the contained blobs
     #[must_use]
     pub(crate) fn pack_size(&self) -> u32 {
         self.0.iter().fold(
@@ -299,10 +360,6 @@ impl<'a> PackHeaderRef<'a> {
     }
 
     /// Generate the binary representation of the pack header
-    ///
-    /// # Returns
-    ///
-    /// The binary representation of the pack header
     ///
     /// # Errors
     ///

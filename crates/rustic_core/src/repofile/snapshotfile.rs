@@ -22,10 +22,11 @@ use serde_with::{serde_as, DeserializeFromStr, DisplayFromStr};
 use crate::{
     backend::{decrypt::DecryptReadBackend, FileType},
     error::SnapshotFileErrorKind,
+    error::{RusticError, RusticResult},
     id::Id,
+    progress::Progress,
     repofile::RepoFile,
     repository::parse_command,
-    Progress, RusticError, RusticResult,
 };
 
 #[serde_as]
@@ -88,12 +89,16 @@ pub struct SnapshotOptions {
 
 impl SnapshotOptions {
     /// Add tags to this [`SnapshotOptions`]
+    ///
+    /// # Arguments
+    ///
+    /// * `tag` - The tag to add
     pub fn add_tags(mut self, tag: &str) -> RusticResult<Self> {
         self.tag.push(StringList::from_str(tag)?);
         Ok(self)
     }
 
-    /// Create a new [`SnapshotFile`]  using this `SnapshotOption`s
+    /// Create a new [`SnapshotFile`] using this `SnapshotOption`s
     pub fn to_snapshot(&self) -> RusticResult<SnapshotFile> {
         SnapshotFile::from_options(self)
     }
@@ -107,41 +112,41 @@ impl SnapshotOptions {
 #[derivative(Default)]
 #[non_exhaustive]
 pub struct SnapshotSummary {
-    /// new files compared to the last (i.e. parent) snapshot
+    /// New files compared to the last (i.e. parent) snapshot
     pub files_new: u64,
-    /// changed files compared to the last (i.e. parent) snapshot
+    /// Changed files compared to the last (i.e. parent) snapshot
     pub files_changed: u64,
-    /// unchanged files compared to the last (i.e. parent) snapshot
+    /// Unchanged files compared to the last (i.e. parent) snapshot
     pub files_unmodified: u64,
     /// Total processed files
     pub total_files_processed: u64,
     /// Total size of all processed files
     pub total_bytes_processed: u64,
-    /// new dirs compared to the last (i.e. parent) snapshot
+    /// New directories compared to the last (i.e. parent) snapshot
     pub dirs_new: u64,
-    /// changed dirs compared to the last (i.e. parent) snapshot
+    /// Changed directories compared to the last (i.e. parent) snapshot
     pub dirs_changed: u64,
-    /// unchanged dirs compared to the last (i.e. parent) snapshot
+    /// Unchanged directories compared to the last (i.e. parent) snapshot
     pub dirs_unmodified: u64,
-    /// Total processed dirs
+    /// Total processed directories
     pub total_dirs_processed: u64,
-    /// total # data blobs added by this snapshots
+    /// Total number of data blobs added by this snapshot
     pub total_dirsize_processed: u64,
     /// Total size of all processed dirs
     pub data_blobs: u64,
-    /// total # tree blobs added by this snapshots
+    /// Total number of tree blobs added by this snapshot
     pub tree_blobs: u64,
-    /// total bytes (uncompressed) added by this snapshots
+    /// total bytes (uncompressed) added by this snapshot
     pub data_added: u64,
-    /// total bytes added to the repository by this snapshots
+    /// Total bytes added to the repository by this snapshot
     pub data_added_packed: u64,
-    /// total bytes (uncompressed) for new/changed files added by this snapshots
+    /// Total bytes (uncompressed) for new/changed files added by this snapshot
     pub data_added_files: u64,
-    /// total bytes for new/changed files added to the repositor by this snapshots
+    /// Total bytes for new/changed files added to the repository by this snapshot
     pub data_added_files_packed: u64,
-    /// total bytes (uncompressed) for new/changed dirs added by this snapshots
+    /// Total bytes (uncompressed) for new/changed directories added by this snapshot
     pub data_added_trees: u64,
-    /// total bytes for new/changed dirs added to the repositor by this snapshots
+    /// Total bytes for new/changed dirs added to the repository by this snapshot
     pub data_added_trees_packed: u64,
 
     /// The command used to make this backup
@@ -161,6 +166,15 @@ pub struct SnapshotSummary {
 }
 
 impl SnapshotSummary {
+    /// Create a new [`SnapshotSummary`].
+    ///
+    /// # Arguments
+    ///
+    /// * `snap_time` - The time of the snapshot
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::OutOfRange`] if the time is not in the range of `Local::now()`
     pub(crate) fn finalize(&mut self, snap_time: DateTime<Local>) -> RusticResult<()> {
         let end_time = Local::now();
         self.backup_duration = (end_time - self.backup_start)
@@ -190,6 +204,7 @@ pub enum DeleteOption {
 }
 
 impl DeleteOption {
+    /// Returns whether the delete option is set to `NotSet`.
     const fn is_not_set(&self) -> bool {
         matches!(self, Self::NotSet)
     }
@@ -214,12 +229,12 @@ pub struct SnapshotFile {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     /// Programm and version used to create this snapshot
     pub program_version: String,
-    /// (optional) The parent snapshot used to generate this snapshot
+    /// The parent snapshot used to generate this snapshot
     pub parent: Option<Id>,
     /// The tree blob id where the contents of this snapshot are stored
     pub tree: Id,
     #[serde(default, skip_serializing_if = "String::is_empty")]
-    /// (optional) Label fot the snapshot
+    /// Label fot the snapshot
     pub label: String,
     /// The list of paths contained in this snapshot
     pub paths: StringList,
@@ -236,17 +251,16 @@ pub struct SnapshotFile {
     /// The gid of the user who started the backup run
     pub gid: u32,
     #[serde(default)]
-    /// (optional) a list if tags for this snapshot
+    /// A list if tags for this snapshot
     pub tags: StringList,
-    /// (optional) the original Id of this snapshot. This is stored when the snapshot is modified.
+    /// the original Id of this snapshot. This is stored when the snapshot is modified.
     pub original: Option<Id>,
     #[serde(default, skip_serializing_if = "DeleteOption::is_not_set")]
-    /// Options if the snapshot
+    /// Options of the snapshot
     pub delete: DeleteOption,
-
-    /// (optional) Summary information about the backup run
+    /// Summary information about the backup run
     pub summary: Option<SnapshotSummary>,
-    /// (optional) A description about what's contained in this snapshot
+    /// A description about what's contained in this snapshot
     pub description: Option<String>,
 
     #[serde(default, skip_serializing_if = "Id::is_null")]
@@ -255,12 +269,26 @@ pub struct SnapshotFile {
 }
 
 impl RepoFile for SnapshotFile {
+    /// The file type of a [`SnapshotFile`] is always [`FileType::Snapshot`]
     const TYPE: FileType = FileType::Snapshot;
 }
 
 impl SnapshotFile {
     /// Create a [`SnapshotFile`] from [`SnapshotOptions`].
-    /// Note that this is the preferred way to create a new [`SnapshotFile`] to be used within [`crate::Repository::backup`]
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - The [`SnapshotOptions`] to use
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::NonUnicodeHostname`] if the hostname is not valid unicode
+    /// * [`SnapshotFileErrorKind::OutOfRange`] if the delete time is not in the range of `Local::now()`
+    /// * [`SnapshotFileErrorKind::ReadingDescriptionFailed`] if the description file could not be read
+    ///
+    /// # Note
+    ///
+    /// This is the preferred way to create a new [`SnapshotFile`] to be used within [`crate::Repository::backup`].
     pub fn from_options(opts: &SnapshotOptions) -> RusticResult<Self> {
         let hostname = if let Some(host) = &opts.host {
             host.clone()
@@ -318,6 +346,11 @@ impl SnapshotFile {
         Ok(snap)
     }
 
+    /// Create a [`SnapshotFile`] from a given [`Id`] and [`RepoFile`].
+    ///
+    /// # Arguments
+    ///
+    /// * `tuple` - A tuple of the [`Id`] and the [`RepoFile`] to use
     fn set_id(tuple: (Id, Self)) -> Self {
         let (id, mut snap) = tuple;
         snap.id = id;
@@ -326,10 +359,23 @@ impl SnapshotFile {
     }
 
     /// Get a [`SnapshotFile`] from the backend
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `id` - The id of the snapshot
     fn from_backend<B: DecryptReadBackend>(be: &B, id: &Id) -> RusticResult<Self> {
         Ok(Self::set_id((*id, be.get_file(id)?)))
     }
 
+    /// Get a [`SnapshotFile`] from the backend by (part of the) Id
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `string` - The (part of the) id of the snapshot
+    /// * `predicate` - A predicate to filter the snapshots
+    /// * `p` - A progress bar to use
     pub(crate) fn from_str<B: DecryptReadBackend>(
         be: &B,
         string: &str,
@@ -343,6 +389,16 @@ impl SnapshotFile {
     }
 
     /// Get the latest [`SnapshotFile`] from the backend
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `predicate` - A predicate to filter the snapshots
+    /// * `p` - A progress bar to use
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::NoSnapshotsFound`] if no snapshots are found
     pub(crate) fn latest<B: DecryptReadBackend>(
         be: &B,
         predicate: impl FnMut(&Self) -> bool + Send + Sync,
@@ -371,6 +427,11 @@ impl SnapshotFile {
     }
 
     /// Get a [`SnapshotFile`] from the backend by (part of the) id
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `id` - The (part of the) id of the snapshot
     pub(crate) fn from_id<B: DecryptReadBackend>(be: &B, id: &str) -> RusticResult<Self> {
         info!("getting snapshot...");
         let id = be.find_id(FileType::Snapshot, id)?;
@@ -378,6 +439,12 @@ impl SnapshotFile {
     }
 
     /// Get a Vec of [`SnapshotFile`] from the backend by list of (parts of the) ids
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `ids` - The list of (parts of the) ids of the snapshots
+    /// * `p` - A progress bar to use
     pub(crate) fn from_ids<B: DecryptReadBackend, T: AsRef<str>>(
         be: &B,
         ids: &[T],
@@ -390,6 +457,16 @@ impl SnapshotFile {
             .try_collect()
     }
 
+    /// Compare two [`SnapshotFile`]s by criteria from [`SnapshotGroupCriterion`].
+    ///
+    /// # Arguments
+    ///
+    /// * `crit` - The criteria to use for comparison
+    /// * `other` - The other [`SnapshotFile`] to compare to
+    ///
+    /// # Returns
+    ///
+    /// The ordering of the two [`SnapshotFile`]s
     fn cmp_group(&self, crit: SnapshotGroupCriterion, other: &Self) -> Ordering {
         if crit.hostname {
             self.hostname.cmp(&other.hostname)
@@ -419,8 +496,12 @@ impl SnapshotFile {
         })
     }
 
-    #[must_use]
     /// Check if the [`SnapshotFile`] is in the given [`SnapshotGroup`].
+    ///
+    /// # Arguments
+    ///
+    /// * `group` - The [`SnapshotGroup`] to check
+    #[must_use]
     pub fn has_group(&self, group: &SnapshotGroup) -> bool {
         group
             .hostname
@@ -433,6 +514,13 @@ impl SnapshotFile {
 
     /// Get [`SnapshotFile`]s which match the filter grouped by the group criterion
     /// from the backend
+    ///
+    /// # Arguments
+    ///
+    /// * `be` - The backend to use
+    /// * `filter` - A filter to filter the snapshots
+    /// * `crit` - The criteria to use for grouping
+    /// * `p` - A progress bar to use
     pub(crate) fn group_from_backend<B, F>(
         be: &B,
         filter: F,
@@ -457,6 +545,7 @@ impl SnapshotFile {
         Ok(result)
     }
 
+    // TODO: add documentation!
     pub(crate) fn all_from_backend<B, F>(
         be: &B,
         filter: F,
@@ -473,7 +562,15 @@ impl SnapshotFile {
             .try_collect()
     }
 
-    /// Add tag lists to snapshot. Returns whether snapshot was changed.
+    /// Add tag lists to snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `tag_lists` - The tag lists to add
+    ///
+    /// # Returns
+    ///
+    /// Returns whether snapshot was changed.
     pub fn add_tags(&mut self, tag_lists: Vec<StringList>) -> bool {
         let old_tags = self.tags.clone();
         self.tags.add_all(tag_lists);
@@ -482,7 +579,15 @@ impl SnapshotFile {
         old_tags != self.tags
     }
 
-    /// Set tag lists to snapshot. Returns whether snapshot was changed.
+    /// Set tag lists to snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `tag_lists` - The tag lists to set
+    ///
+    /// # Returns
+    ///
+    /// Returns whether snapshot was changed.
     pub fn set_tags(&mut self, tag_lists: Vec<StringList>) -> bool {
         let old_tags = std::mem::take(&mut self.tags);
         self.tags.add_all(tag_lists);
@@ -491,7 +596,15 @@ impl SnapshotFile {
         old_tags != self.tags
     }
 
-    /// Remove tag lists from snapshot. Returns whether snapshot was changed.
+    /// Remove tag lists from snapshot.
+    ///
+    /// # Arguments
+    ///
+    /// * `tag_lists` - The tag lists to remove
+    ///
+    /// # Returns
+    ///
+    /// Returns whether snapshot was changed.
     pub fn remove_tags(&mut self, tag_lists: &[StringList]) -> bool {
         let old_tags = self.tags.clone();
         self.tags.remove_all(tag_lists);
@@ -500,12 +613,20 @@ impl SnapshotFile {
     }
 
     /// Returns whether a snapshot must be deleted now
+    ///
+    /// # Arguments
+    ///
+    /// * `now` - The current time
     #[must_use]
     pub fn must_delete(&self, now: DateTime<Local>) -> bool {
         matches!(self.delete,DeleteOption::After(time) if time < now)
     }
 
     /// Returns whether a snapshot must be kept now
+    ///
+    /// # Arguments
+    ///
+    /// * `now` - The current time
     #[must_use]
     pub fn must_keep(&self, now: DateTime<Local>) -> bool {
         match self.delete {
@@ -516,8 +637,18 @@ impl SnapshotFile {
     }
 
     /// Modifies the snapshot setting/adding/removing tag(s) and modifying [`DeleteOption`]s.
-    /// Returns None if the snapshot was not changed and
-    /// Some(snap) with a copy of the changed snapshot if it was changed.
+    ///
+    /// # Arguments
+    ///
+    /// * `set` - The tags to set
+    /// * `add` - The tags to add
+    /// * `remove` - The tags to remove
+    /// * `delete` - The delete option to set
+    ///
+    /// # Returns
+    ///
+    /// `None` if the snapshot was not changed and
+    /// `Some(snap)` with a copy of the changed snapshot if it was changed.
     pub fn modify_sn(
         &mut self,
         set: Vec<StringList>,
@@ -543,7 +674,11 @@ impl SnapshotFile {
         changed.then_some(self.clone())
     }
 
-    // clear ids which are not saved by the copy command (and not compared when checking if snapshots already exist in the copy target)
+    /// Clear ids which are not saved by the copy command (and not compared when checking if snapshots already exist in the copy target)
+    ///
+    /// # Arguments
+    ///
+    /// * `sn` - The snapshot to clear the ids from
     #[must_use]
     pub(crate) fn clear_ids(mut sn: Self) -> Self {
         sn.id = Id::default();
@@ -557,6 +692,7 @@ impl PartialEq<Self> for SnapshotFile {
         self.time.eq(&other.time)
     }
 }
+
 impl Eq for SnapshotFile {}
 
 impl PartialOrd for SnapshotFile {
@@ -576,7 +712,7 @@ impl Ord for SnapshotFile {
 #[non_exhaustive]
 /// [`SnapshotGroupCriterion`] determines how to group snapshots.
 ///
-/// Defaut grouping is by hostname, label and paths.
+/// Default grouping is by hostname, label and paths.
 pub struct SnapshotGroupCriterion {
     /// Whether to group by hostnames
     pub hostname: bool,
@@ -656,6 +792,11 @@ impl Display for SnapshotGroup {
 
 impl SnapshotGroup {
     /// Extracts the suitable [`SnapshotGroup`] from a [`SnapshotFile`] using a given [`SnapshotGroupCriterion`].
+    ///
+    /// # Arguments
+    ///
+    /// * `sn` - The [`SnapshotFile`] to extract the [`SnapshotGroup`] from
+    /// * `crit` - The [`SnapshotGroupCriterion`] to use
     pub fn from_snapshot(sn: &SnapshotFile, crit: SnapshotGroupCriterion) -> Self {
         Self {
             hostname: crit.hostname.then(|| sn.hostname.clone()),
@@ -665,15 +806,15 @@ impl SnapshotGroup {
         }
     }
 
-    #[must_use]
     /// Returns whether this is an empty group, i.e. no grouping information is contained.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self == &Self::default()
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 /// `StringList` is a rustic-internal list of Strings. It is used within [`SnapshotFile`]
+#[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct StringList(pub(crate) Vec<String>);
 
 impl FromStr for StringList {
@@ -694,22 +835,38 @@ impl Display for StringList {
 
 impl StringList {
     /// Returns whether a [`StringList`] contains a given String.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The String to check
     pub fn contains(&self, s: &str) -> bool {
         self.0.iter().any(|m| m == s)
     }
 
     /// Returns whether a [`StringList`] contains all Strings of another [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `sl` - The [`StringList`] to check
     pub fn contains_all(&self, sl: &Self) -> bool {
         sl.0.iter().all(|s| self.contains(s))
     }
 
     /// Returns whether a [`StringList`] matches a list of [`StringList`]s, i.e. whether it contains all Strings of one
     /// the given [`StringList`]s.
+    ///
+    /// # Arguments
+    ///
+    /// * `sls` - The list of [`StringList`]s to check
     pub fn matches(&self, sls: &[Self]) -> bool {
         sls.is_empty() || sls.iter().any(|sl| self.contains_all(sl))
     }
 
     /// Add a String to a [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The String to add
     pub fn add(&mut self, s: String) {
         if !self.contains(&s) {
             self.0.push(s);
@@ -717,6 +874,10 @@ impl StringList {
     }
 
     /// Add all Strings from another [`StringList`] to this [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `sl` - The [`StringList`] to add
     pub fn add_list(&mut self, sl: Self) {
         for s in sl.0 {
             self.add(s);
@@ -724,6 +885,10 @@ impl StringList {
     }
 
     /// Add all Strings from all given [`StringList`]s to this [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `string_lists` - The [`StringList`]s to add
     pub fn add_all(&mut self, string_lists: Vec<Self>) {
         for sl in string_lists {
             self.add_list(sl);
@@ -731,6 +896,14 @@ impl StringList {
     }
 
     /// Adds the given Paths as Strings to this [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `paths` - The Paths to add
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::NonUnicodePath`] if a path is not valid unicode
     pub(crate) fn set_paths<T: AsRef<Path>>(&mut self, paths: &[T]) -> RusticResult<()> {
         self.0 = paths
             .iter()
@@ -745,6 +918,10 @@ impl StringList {
     }
 
     /// Remove all Strings from all given [`StringList`]s from this [`StringList`].
+    ///
+    /// # Arguments
+    ///
+    /// * `string_lists` - The [`StringList`]s to remove
     pub fn remove_all(&mut self, string_lists: &[Self]) {
         self.0
             .retain(|s| !string_lists.iter().any(|sl| sl.contains(s)));
@@ -755,8 +932,8 @@ impl StringList {
         self.0.sort_unstable();
     }
 
+    /// Format this [`StringList`] using newlines
     #[must_use]
-    /// format this [`StringList`] using newlines
     pub fn formatln(&self) -> String {
         self.0.join("\n")
     }
@@ -785,6 +962,10 @@ impl Display for PathList {
 
 impl PathList {
     /// Create a `PathList` from `String`s.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` - The `String`s to use
     pub fn from_strings<I>(source: I) -> Self
     where
         I: IntoIterator,
@@ -799,6 +980,14 @@ impl PathList {
     }
 
     /// Create a `PathList` by parsing a Strings containing paths separated by whitspaces.
+    ///
+    /// # Arguments
+    ///
+    /// * `sources` - The String to parse
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::FromNomError`] if the parsing failed
     pub fn from_string(sources: &str) -> RusticResult<Self> {
         let sources = parse_command::<()>(sources)
             .map_err(SnapshotFileErrorKind::FromNomError)?
@@ -806,24 +995,30 @@ impl PathList {
         Ok(Self::from_strings(sources))
     }
 
-    #[must_use]
     /// Number of paths in the `PathList`.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
-    #[must_use]
     /// Returns whether the `PathList` is empty.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.len() == 0
     }
 
+    /// Clone the internal `Vec<PathBuf>`.
     #[must_use]
     pub(crate) fn paths(&self) -> Vec<PathBuf> {
         self.0.clone()
     }
 
     /// Sanitize paths: Parse dots, absolutize if needed and merge paths.
+    ///
+    /// # Errors
+    ///
+    /// * [`SnapshotFileErrorKind::RemovingDotsFromPathFailed`] if removing dots from path failed
+    /// * [`SnapshotFileErrorKind::CanonicalizingPathFailed`] if canonicalizing path failed
     pub fn sanitize(mut self) -> RusticResult<Self> {
         for path in &mut self.0 {
             *path = path
