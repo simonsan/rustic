@@ -35,47 +35,63 @@ pub(super) mod constants {
 pub struct ConfigFile {
     /// Repository version. Currently 1 and 2 are supported
     pub version: u32,
+
     /// The [`Id`] identifying the repsitors
     pub id: Id,
+
     /// The chunker polynomial used to chunk data
     pub chunker_polynomial: String,
+
     /// Marker if this is a hot repository. If not set, this is no hot repository
     ///
-    /// Note: When using hot/cold repositories, this is only set within the hot part of the repository.
-    pub is_hot: Option<bool>,
-    /// compression level
+    /// # Note
     ///
-    /// Note: that `Some(0)` means no compression. If not set, use the default compression:
-    /// - for repository version 1, use no compression (as not supported)
-    /// - for repository version 2, use the zstd default compression
+    /// When using hot/cold repositories, this is only set within the hot part of the repository.
+    pub is_hot: Option<bool>,
+
+    /// Compression level
+    ///
+    /// # Note
+    ///
+    /// `Some(0)` means no compression. If not set, use the default compression:
+    /// * for repository version 1, use no compression (as not supported)
+    /// * for repository version 2, use the zstd default compression
     pub compression: Option<i32>,
-    /// size of tree packs. This will be enhanced by the `treepack_growfactor` depending on the repository size
+
+    /// Size of tree packs. This will be enhanced by the `treepack_growfactor` depending on the repository size
     ///
     /// If not set, defaults to 4 MiB
     pub treepack_size: Option<u32>,
-    /// grow factor to increase size of tree packs depending on the repository size
+
+    /// Grow factor to increase size of tree packs depending on the repository size
     ///
-    /// If not set, defaults to 32
+    /// If not set, defaults to `32`
     pub treepack_growfactor: Option<u32>,
-    /// maximum targeted tree pack size.
+
+    /// Maximum targeted tree pack size.
     pub treepack_size_limit: Option<u32>,
-    /// size of data packs. This will be enhanced by the `datapack_growfactor` depending on the repository size
+
+    /// Size of data packs. This will be enhanced by the `datapack_growfactor` depending on the repository size
     ///
-    /// If not set, defaults to 32 MiB
+    /// If not set, defaults to `32 MiB`
     pub datapack_size: Option<u32>,
-    /// grow factor to increase size of data packs depending on the repository size
+
+    /// Grow factor to increase size of data packs depending on the repository size
     ///
-    /// If not set, defaults to 32
+    /// If not set, defaults to `32`
     pub datapack_growfactor: Option<u32>,
+
     /// maximum targeted data pack size.
     pub datapack_size_limit: Option<u32>,
-    /// tolerate pack sizes which are larger than given percentage of targeted pack size
+
+    /// Tolerate pack sizes which are larger than given percentage of targeted pack size
     ///
-    /// If not set, defaults to 30
+    /// If not set, defaults to `30`
     pub min_packsize_tolerate_percent: Option<u32>,
-    /// tolerate pack sizes which are smaller than given percentage of targeted pack size
+
+    /// Tolerate pack sizes which are smaller than given percentage of targeted pack size
     ///
-    /// If not set or set to 0 this is unlimited.
+    /// If not set or set to `0` this is unlimited.
     pub max_packsize_tolerate_percent: Option<u32>,
 }
 

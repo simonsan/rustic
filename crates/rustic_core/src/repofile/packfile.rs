@@ -77,7 +77,7 @@ impl PackHeaderLength {
 /// An entry in the pack header
 pub enum HeaderEntry {
     #[brw(magic(0u8))]
-    /// Entry for uncompressed data blob
+    /// Entry for an uncompressed data blob
     Data {
         /// Lengths within a packfile
         len: u32,
@@ -86,7 +86,7 @@ pub enum HeaderEntry {
     },
 
     #[brw(magic(1u8))]
-    /// Entry for uncompressed tree blob
+    /// Entry for an uncompressed tree blob
     Tree {
         /// Lengths within a packfile
         len: u32,
@@ -95,7 +95,7 @@ pub enum HeaderEntry {
     },
 
     #[brw(magic(2u8))]
-    /// Entry for compressed data blob
+    /// Entry for a compressed data blob
     CompData {
         /// Lengths within a packfile
         len: u32,
@@ -106,7 +106,7 @@ pub enum HeaderEntry {
     },
 
     #[brw(magic(3u8))]
-    /// Entry for compressed tree blob
+    /// Entry for a compressed tree blob
     CompTree {
         /// Lengths within a packfile
         len: u32,
@@ -328,7 +328,7 @@ impl PackHeader {
 }
 
 #[derive(Debug, Clone)]
-/// Same as [`PackHeader`], but as reference
+/// As [`PackHeader`], but utilizing a reference instead
 pub struct PackHeaderRef<'a>(pub &'a [IndexBlob]);
 
 impl<'a> PackHeaderRef<'a> {

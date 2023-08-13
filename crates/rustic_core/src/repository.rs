@@ -357,7 +357,7 @@ impl<P, S> Repository<P, S> {
         }
     }
 
-    /// Gives the id of the config file
+    /// Returns the Id of the config file
     ///
     /// # Errors
     ///
@@ -757,8 +757,8 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     ///
     /// # Notes
     ///
-    /// `ids` may contain part of snapshots id which will be resolved. However, "latest" is not supported in
-    /// this function.
+    /// `ids` may contain part of snapshots id which will be resolved.
+    /// However, "latest" is not supported in this function.
     pub fn get_snapshots<T: AsRef<str>>(&self, ids: &[T]) -> RusticResult<Vec<SnapshotFile>> {
         let p = self.pb.progress_counter("getting snapshots...");
         SnapshotFile::from_ids(self.dbe(), ids, &p)

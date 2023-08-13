@@ -7,14 +7,23 @@ use rayon::ThreadPoolBuilder;
 use super::parse_command;
 use crate::{
     backend::{FileType, ReadBackend},
-    error::RepositoryErrorKind,
-    Id, Progress, ProgressBars, Repository, RusticResult,
+    error::{RepositoryErrorKind, RusticResult},
+    id::Id,
+    progress::{Progress, ProgressBars},
+    repository::Repository,
 };
 
 pub(super) mod constants {
+    /// The maximum number of reader threads to use for warm-up.
     pub(super) const MAX_READER_THREADS_NUM: usize = 20;
 }
 
+/// Warm up the repository and wait.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to warm up.
+/// * `packs` - The packs to warm up.
 pub(crate) fn warm_up_wait<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     packs: impl ExactSizeIterator<Item = Id>,
@@ -28,6 +37,12 @@ pub(crate) fn warm_up_wait<P: ProgressBars, S>(
     Ok(())
 }
 
+/// Warm up the repository.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to warm up.
+/// * `packs` - The packs to warm up.
 pub(crate) fn warm_up<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     packs: impl ExactSizeIterator<Item = Id>,
@@ -40,6 +55,17 @@ pub(crate) fn warm_up<P: ProgressBars, S>(
     Ok(())
 }
 
+/// Warm up the repository using a command.
+///
+/// # Arguments
+///
+/// * `packs` - The packs to warm up.
+/// * `command` - The command to execute.
+/// * `pb` - The progress bar to use.
+///
+/// # Errors
+///
+/// * [`RepositoryErrorKind::FromNomError`] if the command could not be parsed.
 fn warm_up_command<P: ProgressBars>(
     packs: impl ExactSizeIterator<Item = Id>,
     command: &str,
@@ -62,6 +88,16 @@ fn warm_up_command<P: ProgressBars>(
     Ok(())
 }
 
+/// Warm up the repository using access.
+///
+/// # Arguments
+///
+/// * `repo` - The repository to warm up.
+/// * `packs` - The packs to warm up.
+///
+/// # Errors
+///
+/// * [`RepositoryErrorKind::FromThreadPoolbilderError`] if the thread pool could not be created.
 fn warm_up_access<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     packs: impl ExactSizeIterator<Item = Id>,

@@ -38,10 +38,16 @@ use crate::{
 #[non_exhaustive]
 /// Options for creating a new [`SnapshotFile`] structure for a new backup snapshot.
 ///
-/// Note that the preferred way is to use [`SnapshotFile::from_options`] to create a SnapshotFile for a new backup.
 /// This struct derives [`serde::Deserialize`] allowing to use it in config files.
-/// With the feature `merge` enabled, this also derives [`merge::Merge`] to allow merging [`SnapshotOptions`] from multiple sources.
-/// With the feature `clap` enabled, this also derives [`clap::Parser`] allowing it to be used as CLI options.
+///
+/// # Features
+///
+/// * With the feature `merge` enabled, this also derives [`merge::Merge`] to allow merging [`SnapshotOptions`] from multiple sources.
+/// * With the feature `clap` enabled, this also derives [`clap::Parser`] allowing it to be used as CLI options.
+///
+/// # Note
+///
+/// The preferred way is to use [`SnapshotFile::from_options`] to create a SnapshotFile for a new backup.
 pub struct SnapshotOptions {
     /// Label snapshot with given label
     #[cfg_attr(feature = "clap", clap(long, value_name = "LABEL"))]
@@ -136,17 +142,17 @@ pub struct SnapshotSummary {
     pub data_blobs: u64,
     /// Total number of tree blobs added by this snapshot
     pub tree_blobs: u64,
-    /// total bytes (uncompressed) added by this snapshot
+    /// Total uncompressed bytes added by this snapshot
     pub data_added: u64,
     /// Total bytes added to the repository by this snapshot
     pub data_added_packed: u64,
-    /// Total bytes (uncompressed) for new/changed files added by this snapshot
+    /// Total uncompressed bytes (new/changed files) added by this snapshot
     pub data_added_files: u64,
     /// Total bytes for new/changed files added to the repository by this snapshot
     pub data_added_files_packed: u64,
-    /// Total bytes (uncompressed) for new/changed directories added by this snapshot
+    /// Total uncompressed bytes (new/changed directories) added by this snapshot
     pub data_added_trees: u64,
-    /// Total bytes for new/changed dirs added to the repository by this snapshot
+    /// Total bytes (new/changed directories) added to the repository by this snapshot
     pub data_added_trees_packed: u64,
 
     /// The command used to make this backup
@@ -154,15 +160,17 @@ pub struct SnapshotSummary {
     #[derivative(Default(value = "Local::now()"))]
     /// Start time of the backup.
     ///
-    /// Note that this may differ to the snapshot `time`.
+    /// # Note
+    ///
+    /// This may differ from the snapshot `time`.
     pub backup_start: DateTime<Local>,
     #[derivative(Default(value = "Local::now()"))]
-    /// End time of the backup.
+    /// The time that the backup has been finished.
     pub backup_end: DateTime<Local>,
     /// Total duration of the backup in seconds, i.e. the time between `backup_start` and `backup_end`
-    pub backup_duration: f64, // in seconds
-    /// Total duration of the rustic command run in seconds
-    pub total_duration: f64, // in seconds
+    pub backup_duration: f64,
+    /// Total duration that the rustic command ran in seconds
+    pub total_duration: f64,
 }
 
 impl SnapshotSummary {
@@ -192,7 +200,7 @@ impl SnapshotSummary {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Derivative, Copy)]
 #[derivative(Default)]
-/// Options wich describe if and when a snapshots should or must not be deleted.
+/// Options for deleting snapshots.
 pub enum DeleteOption {
     #[derivative(Default)]
     /// No delete option set.
@@ -217,6 +225,8 @@ impl DeleteOption {
 ///
 /// It is usually saved in the repository under `snapshot/<ID>`
 ///
+/// # Note
+///
 /// [`SnapshotFile`] implements [`Eq`], [`PartialEq`], [`Ord`], [`PartialOrd`] by comparing only the `time` field.
 /// If you need another ordering, you have to implement that yourself.
 pub struct SnapshotFile {
@@ -227,40 +237,40 @@ pub struct SnapshotFile {
         value = "\"rustic \".to_string() + option_env!(\"PROJECT_VERSION\").unwrap_or(env!(\"CARGO_PKG_VERSION\"))"
     ))]
     #[serde(default, skip_serializing_if = "String::is_empty")]
-    /// Programm and version used to create this snapshot
+    /// Program identifier and its version that have been used to create this snapshot.
     pub program_version: String,
-    /// The parent snapshot used to generate this snapshot
+    /// The Id of the parent snapshot that this snapshot has been based on
     pub parent: Option<Id>,
     /// The tree blob id where the contents of this snapshot are stored
     pub tree: Id,
     #[serde(default, skip_serializing_if = "String::is_empty")]
-    /// Label fot the snapshot
+    /// Label for the snapshot
     pub label: String,
     /// The list of paths contained in this snapshot
     pub paths: StringList,
     #[serde(default)]
-    /// The hostname the snapshot was made
+    /// The hostname of the device on which the snapshot has been created
     pub hostname: String,
     #[serde(default)]
-    /// The user who started the backup run
+    /// The username that started the backup run
     pub username: String,
     #[serde(default)]
-    /// The uid of the user who started the backup run
+    /// The uid of the username that started the backup run
     pub uid: u32,
     #[serde(default)]
-    /// The gid of the user who started the backup run
+    /// The gid of the username that started the backup run
     pub gid: u32,
     #[serde(default)]
-    /// A list if tags for this snapshot
+    /// A list of tags for this snapshot
     pub tags: StringList,
-    /// the original Id of this snapshot. This is stored when the snapshot is modified.
+    /// The original Id of this snapshot. This is stored when the snapshot is modified.
     pub original: Option<Id>,
     #[serde(default, skip_serializing_if = "DeleteOption::is_not_set")]
-    /// Options of the snapshot
+    /// Options for deletion of the snapshot
     pub delete: DeleteOption,
     /// Summary information about the backup run
     pub summary: Option<SnapshotSummary>,
-    /// A description about what's contained in this snapshot
+    /// A description of what is contained in this snapshot
     pub description: Option<String>,
 
     #[serde(default, skip_serializing_if = "Id::is_null")]
@@ -438,7 +448,7 @@ impl SnapshotFile {
         Self::from_backend(be, &id)
     }
 
-    /// Get a Vec of [`SnapshotFile`] from the backend by list of (parts of the) ids
+    /// Get a list of [`SnapshotFile`]s from the backend by supplying a list of/parts of their Ids
     ///
     /// # Arguments
     ///
@@ -712,7 +722,7 @@ impl Ord for SnapshotFile {
 #[non_exhaustive]
 /// [`SnapshotGroupCriterion`] determines how to group snapshots.
 ///
-/// Default grouping is by hostname, label and paths.
+/// `Default` grouping is by hostname, label and paths.
 pub struct SnapshotGroupCriterion {
     /// Whether to group by hostnames
     pub hostname: bool,
@@ -758,13 +768,13 @@ impl FromStr for SnapshotGroupCriterion {
 #[non_exhaustive]
 /// [`SnapshotGroup`] specifies the group after a grouping using [`SnapshotGroupCriterion`].
 pub struct SnapshotGroup {
-    /// group hostname, if grouped by hostname
+    /// Group hostname, if grouped by hostname
     pub hostname: Option<String>,
-    /// group label, if grouped by label
+    /// Group label, if grouped by label
     pub label: Option<String>,
-    /// group paths, if grouped by paths
+    /// Group paths, if grouped by paths
     pub paths: Option<StringList>,
-    /// group tags, if grouped by tags
+    /// Group tags, if grouped by tags
     pub tags: Option<StringList>,
 }
 
@@ -852,8 +862,8 @@ impl StringList {
         sl.0.iter().all(|s| self.contains(s))
     }
 
-    /// Returns whether a [`StringList`] matches a list of [`StringList`]s, i.e. whether it contains all Strings of one
-    /// the given [`StringList`]s.
+    /// Returns whether a [`StringList`] matches a list of [`StringList`]s,
+    /// i.e. whether it contains all Strings of one the given [`StringList`]s.
     ///
     /// # Arguments
     ///
