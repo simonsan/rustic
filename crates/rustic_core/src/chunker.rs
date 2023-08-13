@@ -165,7 +165,7 @@ impl<R: Read + Send> Iterator for ChunkIter<R> {
 ///
 /// # Errors
 ///
-/// * [`PolynomialErrorKind::NoSuitablePolynomialFound`] if no polynomial could be found in one million tries.
+/// * [`PolynomialErrorKind::NoSuitablePolynomialFound`] - If no polynomial could be found in one million tries.
 pub fn random_poly() -> RusticResult<u64> {
     for _ in 0..constants::RAND_POLY_MAX_TRIES {
         let mut poly: u64 = thread_rng().gen();

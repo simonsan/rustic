@@ -150,9 +150,9 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::ZstdError`] if the zstd compression level is invalid.
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
-    /// * [`PackerErrorKind::IntConversionFailed`] if converting the data length to u64 fails
+    /// * [`PackerErrorKind::ZstdError`] - If the zstd compression level is invalid.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::IntConversionFailed`] - If converting the data length to u64 fails
     pub fn new(
         be: BE,
         blob_type: BlobType,
@@ -237,7 +237,7 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
     pub fn add(&self, data: Bytes, id: Id) -> RusticResult<()> {
         // compute size limit based on total size and size bounds
         self.add_with_sizelimit(data, id, None)
@@ -253,7 +253,7 @@ impl<BE: DecryptWriteBackend> Packer<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
     fn add_with_sizelimit(&self, data: Bytes, id: Id, size_limit: Option<u32>) -> RusticResult<()> {
         self.sender
             .send((data, id, size_limit))
@@ -472,8 +472,8 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::IntConversionFailed`] if converting the data length to u64 fails
-    /// * [`PackerErrorKind::CouldNotGetElapsedTimeFromSystemTime`] if elapsed time could not be retrieved from system time
+    /// * [`PackerErrorKind::IntConversionFailed`] - If converting the data length to u64 fails
+    /// * [`PackerErrorKind::CouldNotGetElapsedTimeFromSystemTime`] - If elapsed time could not be retrieved from system time
     fn add_raw(
         &mut self,
         data: &[u8],
@@ -519,8 +519,8 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::IntConversionFailed`] if converting the header length to u32 fails
-    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if the header could not be written
+    /// * [`PackerErrorKind::IntConversionFailed`] - If converting the header length to u32 fails
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] - If the header could not be written
     fn write_header(&mut self) -> RusticResult<()> {
         // compute the pack header
         let data = PackHeaderRef::from_index_pack(&self.index).to_binary()?;
@@ -548,8 +548,8 @@ impl<BE: DecryptWriteBackend> RawPacker<BE> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::IntConversionFailed`] if converting the header length to u32 fails
-    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if the header could not be written
+    /// * [`PackerErrorKind::IntConversionFailed`] - If converting the header length to u32 fails
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] - If the header could not be written
     fn save(&mut self) -> RusticResult<()> {
         if self.size == 0 {
             return Ok(());

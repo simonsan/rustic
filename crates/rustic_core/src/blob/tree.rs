@@ -90,8 +90,8 @@ impl Tree {
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::BlobIdNotFound`] if the tree ID is not found in the backend.
-    /// * [`TreeErrorKind::DeserializingTreeFailed`] if deserialization fails.
+    /// * [`TreeErrorKind::BlobIdNotFound`] - If the tree ID is not found in the backend.
+    /// * [`TreeErrorKind::DeserializingTreeFailed`] - If deserialization fails.
     ///
     /// # Returns
     ///
@@ -115,9 +115,9 @@ impl Tree {
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::NotADirectory`] if the path is not a directory.
-    /// * [`TreeErrorKind::PathNotFound`] if the path is not found.
-    /// * [`TreeErrorKind::PathIsNotUtf8Conform`] if the path is not UTF-8 conform.
+    /// * [`TreeErrorKind::NotADirectory`] - If the path is not a directory.
+    /// * [`TreeErrorKind::PathNotFound`] - If the path is not found.
+    /// * [`TreeErrorKind::PathIsNotUtf8Conform`] - If the path is not UTF-8 conform.
     pub(crate) fn node_from_path(
         be: &impl IndexedBackend,
         id: Id,
@@ -152,8 +152,8 @@ impl Tree {
 ///
 /// # Errors
 ///
-/// * [`TreeErrorKind::ContainsCurrentOrParentDirectory`] if the component is a current or parent directory.
-/// * [`TreeErrorKind::PathIsNotUtf8Conform`] if the component is not UTF-8 conform.
+/// * [`TreeErrorKind::ContainsCurrentOrParentDirectory`] - If the component is a current or parent directory.
+/// * [`TreeErrorKind::PathIsNotUtf8Conform`] - If the component is not UTF-8 conform.
 pub(crate) fn comp_to_osstr(p: Component<'_>) -> RusticResult<Option<OsString>> {
     let s = match p {
         Component::RootDir => None,
@@ -252,8 +252,8 @@ where
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::BlobIdNotFound`] if the tree ID is not found in the backend.
-    /// * [`TreeErrorKind::DeserializingTreeFailed`] if deserialization fails.
+    /// * [`TreeErrorKind::BlobIdNotFound`] - If the tree ID is not found in the backend.
+    /// * [`TreeErrorKind::DeserializingTreeFailed`] - If deserialization fails.
     fn new_streamer(
         be: BE,
         node: &Node,
@@ -287,8 +287,8 @@ where
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::BuildingNodeStreamerFailed`] if building the streamer fails.
-    /// * [`TreeErrorKind::ReadingFileStringFromGlobsFailed`] if reading a glob file fails.
+    /// * [`TreeErrorKind::BuildingNodeStreamerFailed`] - If building the streamer fails.
+    /// * [`TreeErrorKind::ReadingFileStringFromGlobsFailed`] - If reading a glob file fails.
     pub fn new_with_glob(be: BE, node: &Node, opts: &TreeStreamerOptions) -> RusticResult<Self> {
         let mut override_builder = OverrideBuilder::new("/");
 
@@ -409,7 +409,7 @@ impl<P: Progress> TreeStreamerOnce<P> {
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::SendingCrossbeamMessageFailed`] if sending the message fails.
+    /// * [`TreeErrorKind::SendingCrossbeamMessageFailed`] - If sending the message fails.
     pub fn new<BE: IndexedBackend>(be: BE, ids: Vec<Id>, p: P) -> RusticResult<Self> {
         p.set_length(ids.len() as u64);
 
@@ -463,7 +463,7 @@ impl<P: Progress> TreeStreamerOnce<P> {
     ///
     /// # Errors
     ///
-    /// * [`TreeErrorKind::SendingCrossbeamMessageFailed`] if sending the message fails.
+    /// * [`TreeErrorKind::SendingCrossbeamMessageFailed`] - If sending the message fails.
     fn add_pending(&mut self, path: PathBuf, id: Id, count: usize) -> RusticResult<bool> {
         if self.visited.insert(id) {
             self.queue_in
@@ -529,7 +529,7 @@ impl<P: Progress> Iterator for TreeStreamerOnce<P> {
 ///
 /// # Errors
 ///
-// TODO: * [`TreeErrorKind::MergingTreesFailed`] if merging the trees fails.
+// TODO: * [`TreeErrorKind::MergingTreesFailed`] - If merging the trees fails.
 pub(crate) fn merge_trees(
     be: &impl IndexedBackend,
     trees: &[Id],

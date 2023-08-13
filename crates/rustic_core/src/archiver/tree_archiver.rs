@@ -8,10 +8,10 @@ use crate::{
     backend::{decrypt::DecryptWriteBackend, node::Node},
     blob::{packer::Packer, tree::Tree, BlobType},
     error::ArchiverErrorKind,
+    error::RusticResult,
     id::Id,
     index::{indexer::SharedIndexer, IndexedBackend},
     repofile::{configfile::ConfigFile, snapshotfile::SnapshotSummary},
-    RusticResult,
 };
 
 pub(crate) type TreeItem = TreeType<(ParentResult<()>, u64), ParentResult<Id>>;
@@ -55,9 +55,9 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::ZstdError`] if the zstd compression level is invalid.
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
-    /// * [`PackerErrorKind::IntConversionFailed`] if converting the data length to u64 fails
+    /// * [`PackerErrorKind::ZstdError`] - If the zstd compression level is invalid.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::IntConversionFailed`] - If converting the data length to u64 fails
     pub(crate) fn new(
         be: BE,
         index: I,
@@ -89,7 +89,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     ///
     /// # Errors
     ///
-    /// * [`ArchiverErrorKind::TreeStackEmpty`] if the tree stack is empty.
+    /// * [`ArchiverErrorKind::TreeStackEmpty`] - If the tree stack is empty.
     // TODO: Add more errors!
     pub(crate) fn add(&mut self, item: TreeItem) -> RusticResult<()> {
         match item {
@@ -158,7 +158,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
     ///
     /// # Returns
     ///
@@ -201,7 +201,7 @@ impl<BE: DecryptWriteBackend, I: IndexedBackend> TreeArchiver<BE, I> {
     ///
     /// # Errors
     ///
-    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] if sending the message to the raw packer fails.
+    /// * [`PackerErrorKind::SendingCrossbeamMessageFailed`] - If sending the message to the raw packer fails.
     ///
     /// # Returns
     ///

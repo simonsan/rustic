@@ -19,9 +19,10 @@ use crate::{
     chunker::ChunkIter,
     crypto::hasher::hash,
     error::ArchiverErrorKind,
+    error::RusticResult,
     index::{indexer::SharedIndexer, IndexedBackend},
+    progress::Progress,
     repofile::configfile::ConfigFile,
-    Progress, RusticResult,
 };
 
 /// The `FileArchiver` is responsible for archiving files.

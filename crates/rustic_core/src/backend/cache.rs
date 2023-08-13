@@ -14,13 +14,17 @@ use crate::{
     backend::{FileType, ReadBackend, WriteBackend},
     error::CacheBackendErrorKind,
     id::Id,
-    RusticResult,
+    error::RusticResult,
 };
 
 /// Backend that caches data.
 ///
 /// This backend caches data in a directory.
 /// It can be used to cache data from a remote backend.
+///
+/// # Type Parameters
+///
+/// * `BE` - The backend to cache.
 #[derive(Clone, Debug)]
 pub struct CachedBackend<BE: WriteBackend> {
     /// The backend to cache.
@@ -31,13 +35,17 @@ pub struct CachedBackend<BE: WriteBackend> {
 
 impl<BE: WriteBackend> CachedBackend<BE> {
     /// Create a new [`CachedBackend`] from a given backend.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `BE` - The backend to cache.
     pub fn new(be: BE, cache: Option<Cache>) -> Self {
         Self { be, cache }
     }
 }
 
 impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
-    /// Returns the location of the backend.
+    /// Returns the location of the backend as a String.
     fn location(&self) -> String {
         self.be.location()
     }
@@ -86,7 +94,7 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
     ///
     /// # Errors
     ///
-    /// If the file does not exist.
+    /// * [`CacheBackendErrorKind::FromIoError`] - If the file could not be read.
     ///
     /// # Returns
     ///
@@ -120,7 +128,7 @@ impl<BE: WriteBackend> ReadBackend for CachedBackend<BE> {
     ///
     /// # Errors
     ///
-    /// If the file does not exist.
+    /// * [`CacheBackendErrorKind::FromIoError`] - If the file could not be read.
     ///
     /// # Returns
     ///

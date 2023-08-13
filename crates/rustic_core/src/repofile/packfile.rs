@@ -50,7 +50,7 @@ impl PackHeaderLength {
     ///
     /// # Errors
     ///
-    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] - If reading the binary representation failed
     pub(crate) fn from_binary(data: &[u8]) -> RusticResult<Self> {
         let mut reader = Cursor::new(data);
         Ok(
@@ -63,7 +63,7 @@ impl PackHeaderLength {
     ///
     /// # Errors
     ///
-    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if writing the binary representation failed
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] - If writing the binary representation failed
     pub(crate) fn to_binary(self) -> RusticResult<Vec<u8>> {
         let mut writer = Cursor::new(Vec::with_capacity(4));
         self.write(&mut writer)
@@ -212,7 +212,7 @@ impl PackHeader {
     ///
     /// # Errors
     ///
-    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] - If reading the binary representation failed
     pub(crate) fn from_binary(pack: &[u8]) -> RusticResult<Self> {
         let mut reader = Cursor::new(pack);
         let mut offset = 0;
@@ -242,10 +242,10 @@ impl PackHeader {
     ///
     /// # Errors
     ///
-    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] if reading the binary representation failed
-    /// * [`PackFileErrorKind::HeaderLengthTooLarge`] if the header length is too large
-    /// * [`PackFileErrorKind::HeaderLengthDoesNotMatchHeaderContents`] if the header length does not match the header contents
-    /// * [`PackFileErrorKind::HeaderPackSizeComputedDoesNotMatchRealPackFile`] if the pack size computed from the header does not match the real pack file size
+    /// * [`PackFileErrorKind::ReadingBinaryRepresentationFailed`] - If reading the binary representation failed
+    /// * [`PackFileErrorKind::HeaderLengthTooLarge`] - If the header length is too large
+    /// * [`PackFileErrorKind::HeaderLengthDoesNotMatchHeaderContents`] - If the header length does not match the header contents
+    /// * [`PackFileErrorKind::HeaderPackSizeComputedDoesNotMatchRealPackFile`] - If the pack size computed from the header does not match the real pack file size
     pub(crate) fn from_file(
         be: &impl DecryptReadBackend,
         id: Id,
@@ -363,7 +363,7 @@ impl<'a> PackHeaderRef<'a> {
     ///
     /// # Errors
     ///
-    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] if writing the binary representation failed
+    /// * [`PackFileErrorKind::WritingBinaryRepresentationFailed`] - If writing the binary representation failed
     pub(crate) fn to_binary(&self) -> RusticResult<Vec<u8>> {
         let mut writer = Cursor::new(Vec::with_capacity(self.pack_size() as usize));
         // collect header entries

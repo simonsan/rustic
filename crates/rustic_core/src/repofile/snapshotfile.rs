@@ -182,7 +182,7 @@ impl SnapshotSummary {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::OutOfRange`] if the time is not in the range of `Local::now()`
+    /// * [`SnapshotFileErrorKind::OutOfRange`] - If the time is not in the range of `Local::now()`
     pub(crate) fn finalize(&mut self, snap_time: DateTime<Local>) -> RusticResult<()> {
         let end_time = Local::now();
         self.backup_duration = (end_time - self.backup_start)
@@ -292,9 +292,9 @@ impl SnapshotFile {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::NonUnicodeHostname`] if the hostname is not valid unicode
-    /// * [`SnapshotFileErrorKind::OutOfRange`] if the delete time is not in the range of `Local::now()`
-    /// * [`SnapshotFileErrorKind::ReadingDescriptionFailed`] if the description file could not be read
+    /// * [`SnapshotFileErrorKind::NonUnicodeHostname`] - If the hostname is not valid unicode
+    /// * [`SnapshotFileErrorKind::OutOfRange`] - If the delete time is not in the range of `Local::now()`
+    /// * [`SnapshotFileErrorKind::ReadingDescriptionFailed`] - If the description file could not be read
     ///
     /// # Note
     ///
@@ -408,7 +408,7 @@ impl SnapshotFile {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::NoSnapshotsFound`] if no snapshots are found
+    /// * [`SnapshotFileErrorKind::NoSnapshotsFound`] - If no snapshots are found
     pub(crate) fn latest<B: DecryptReadBackend>(
         be: &B,
         predicate: impl FnMut(&Self) -> bool + Send + Sync,
@@ -913,7 +913,7 @@ impl StringList {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::NonUnicodePath`] if a path is not valid unicode
+    /// * [`SnapshotFileErrorKind::NonUnicodePath`] - If a path is not valid unicode
     pub(crate) fn set_paths<T: AsRef<Path>>(&mut self, paths: &[T]) -> RusticResult<()> {
         self.0 = paths
             .iter()
@@ -997,7 +997,7 @@ impl PathList {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::FromNomError`] if the parsing failed
+    /// * [`SnapshotFileErrorKind::FromNomError`] - If the parsing failed
     pub fn from_string(sources: &str) -> RusticResult<Self> {
         let sources = parse_command::<()>(sources)
             .map_err(SnapshotFileErrorKind::FromNomError)?
@@ -1027,8 +1027,8 @@ impl PathList {
     ///
     /// # Errors
     ///
-    /// * [`SnapshotFileErrorKind::RemovingDotsFromPathFailed`] if removing dots from path failed
-    /// * [`SnapshotFileErrorKind::CanonicalizingPathFailed`] if canonicalizing path failed
+    /// * [`SnapshotFileErrorKind::RemovingDotsFromPathFailed`] - If removing dots from path failed
+    /// * [`SnapshotFileErrorKind::CanonicalizingPathFailed`] - If canonicalizing path failed
     pub fn sanitize(mut self) -> RusticResult<Self> {
         for path in &mut self.0 {
             *path = path

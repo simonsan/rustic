@@ -163,8 +163,8 @@ pub trait ReadBackend: Clone + Send + Sync + 'static {
     ///
     /// # Errors
     ///
-    /// * [`BackendErrorKind::NoSuitableIdFound`] if no id could be found.
-    /// * [`BackendErrorKind::IdNotUnique`] if the id is not unique.
+    /// * [`BackendErrorKind::NoSuitableIdFound`] - If no id could be found.
+    /// * [`BackendErrorKind::IdNotUnique`] - If the id is not unique.
     ///
     /// # Note
     ///

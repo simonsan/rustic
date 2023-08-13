@@ -49,7 +49,10 @@ pub struct RcloneBackend {
 ///
 /// # Errors
 ///
-/// If the rclone version could not be determined.
+/// * [`ProviderErrorKind::FromIoError`] - If the rclone version could not be determined.
+/// * [`ProviderErrorKind::FromUtf8Error`] - If the rclone version could not be determined.
+/// * [`ProviderErrorKind::NoOutputForRcloneVersion`] - If the rclone version could not be determined.
+/// * [`ProviderErrorKind::FromParseIntError`] - If the rclone version could not be determined.
 ///
 /// # Returns
 ///
@@ -89,7 +92,12 @@ impl RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the url is not supported.
+    /// * [`ProviderErrorKind::FromIoError`] - If the rclone version could not be determined.
+    /// * [`ProviderErrorKind::NoStdOutForRclone`] - If the rclone version could not be determined.
+    /// * [`ProviderErrorKind::RCloneExitWithBadStatus`] - If rclone exited with a bad status.
+    /// * [`ProviderErrorKind::UrlNotStartingWithHttp`] - If the URL does not start with `http`.
+    /// * [`RestErrorKind::UrlParsingFailed`] - If the URL could not be parsed.
+    /// * [`RestErrorKind::BuildingClientFailed`] - If the client could not be built.
     pub fn new(url: &str) -> RusticResult<Self> {
         match rclone_version() {
             Ok((major, minor, patch)) => {
@@ -224,11 +232,11 @@ impl ReadBackend for RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be read.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     ///
     /// # Returns
     ///
-    ///
+    /// The data read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         self.rest.read_full(tpe, id)
     }
@@ -245,7 +253,7 @@ impl ReadBackend for RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be read.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     ///
     /// # Returns
     ///
@@ -267,7 +275,7 @@ impl WriteBackend for RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be created.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn create(&self) -> RusticResult<()> {
         self.rest.create()
     }
@@ -283,7 +291,7 @@ impl WriteBackend for RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be written.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn write_bytes(&self, tpe: FileType, id: &Id, cacheable: bool, buf: Bytes) -> RusticResult<()> {
         self.rest.write_bytes(tpe, id, cacheable, buf)
     }
@@ -298,7 +306,7 @@ impl WriteBackend for RcloneBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be removed.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn remove(&self, tpe: FileType, id: &Id, cacheable: bool) -> RusticResult<()> {
         self.rest.remove(tpe, id, cacheable)
     }

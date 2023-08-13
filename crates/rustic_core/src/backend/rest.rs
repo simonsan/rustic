@@ -126,7 +126,8 @@ impl RestBackend {
     ///
     /// # Errors
     ///
-    /// If the url is not supported.
+    /// * [`RestErrorKind::UrlParsingFailed`] - If the url could not be parsed.
+    /// * [`RestErrorKind::BuildingClientFailed`] - If the client could not be built.
     pub fn new(url: &str) -> RusticResult<Self> {
         let url = if url.ends_with('/') {
             Url::parse(url).map_err(RestErrorKind::UrlParsingFailed)?
@@ -238,7 +239,8 @@ impl ReadBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the list could not be retrieved.
+    /// * [`RestErrorKind::JoiningUrlFailed`] - If the url could not be created.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     ///
     /// # Notes
     ///
@@ -313,7 +315,8 @@ impl ReadBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be retrieved.
+    /// * [`reqwest::Error`] - If the request failed.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         trace!("reading tpe: {tpe:?}, id: {id}");
         let url = self.url(tpe, id)?;
@@ -344,7 +347,7 @@ impl ReadBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be retrieved.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn read_partial(
         &self,
         tpe: FileType,
@@ -379,7 +382,7 @@ impl WriteBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be created.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn create(&self) -> RusticResult<()> {
         let url = self
             .url
@@ -407,7 +410,7 @@ impl WriteBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the bytes could not be written.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     // TODO: If the file is not cacheable, the bytes could be written to a temporary file and then moved to the final location.
     fn write_bytes(
         &self,
@@ -440,7 +443,7 @@ impl WriteBackend for RestBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be removed.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     fn remove(&self, tpe: FileType, id: &Id, _cacheable: bool) -> RusticResult<()> {
         trace!("removing tpe: {:?}, id: {}", &tpe, &id);
         let url = self.url(tpe, id)?;

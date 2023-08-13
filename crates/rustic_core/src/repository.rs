@@ -208,7 +208,7 @@ pub fn parse_command<'a, E: ParseError<&'a str>>(
 ///
 /// # Errors
 ///
-/// * [`RepositoryErrorKind::ReadingPasswordFromReaderFailed`] if reading the password failed
+/// * [`RepositoryErrorKind::ReadingPasswordFromReaderFailed`] - If reading the password failed
 pub fn read_password_from_reader(file: &mut impl BufRead) -> RusticResult<String> {
     let mut password = String::new();
     _ = file
@@ -266,8 +266,8 @@ impl<P> Repository<P, ()> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::NoRepositoryGiven`] if no repository is given
-    /// * [`RepositoryErrorKind::NoIDSpecified`] if the warm-up command does not contain `%id`
+    /// * [`RepositoryErrorKind::NoRepositoryGiven`] - If no repository is given
+    /// * [`RepositoryErrorKind::NoIDSpecified`] - If the warm-up command does not contain `%id`
     pub fn new_with_progress(opts: &RepositoryOptions, pb: P) -> RusticResult<Self> {
         let be = match &opts.repository {
             Some(repo) => ChooseBackend::from_url(repo)?,
@@ -361,8 +361,8 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::ListingRepositoryConfigFileFailed`] if listing the repository config file failed
-    /// * [`RepositoryErrorKind::MoreThanOneRepositoryConfig`] if there is more than one repository config file
+    /// * [`RepositoryErrorKind::ListingRepositoryConfigFileFailed`] - If listing the repository config file failed
+    /// * [`RepositoryErrorKind::MoreThanOneRepositoryConfig`] - If there is more than one repository config file
     pub fn config_id(&self) -> RusticResult<Option<Id>> {
         let config_ids = self
             .be
@@ -382,7 +382,7 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::NoPasswordGiven`] if no password is given
+    /// * [`RepositoryErrorKind::NoPasswordGiven`] - If no password is given
     pub fn open(self) -> RusticResult<Repository<P, OpenStatus>> {
         let password = self
             .password()?
@@ -400,10 +400,10 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::NoRepositoryConfigFound`] if no repository config file is found
-    /// * [`RepositoryErrorKind::KeysDontMatchForRepositories`] if the keys of the hot and cold backend don't match
-    /// * [`RepositoryErrorKind::IncorrectPassword`] if the password is incorrect
-    /// * [`RepositoryErrorKind::NoSuitableKeyFound`] if no suitable key is found
+    /// * [`RepositoryErrorKind::NoRepositoryConfigFound`] - If no repository config file is found
+    /// * [`RepositoryErrorKind::KeysDontMatchForRepositories`] - If the keys of the hot and cold backend don't match
+    /// * [`RepositoryErrorKind::IncorrectPassword`] - If the password is incorrect
+    /// * [`RepositoryErrorKind::NoSuitableKeyFound`] - If no suitable key is found
     pub fn open_with_password(self, password: &str) -> RusticResult<Repository<P, OpenStatus>> {
         let config_id = self
             .config_id()?
@@ -446,7 +446,7 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::NoPasswordGiven`] if no password is given
+    /// * [`RepositoryErrorKind::NoPasswordGiven`] - If no password is given
     pub fn init(
         self,
         key_opts: &KeyOptions,
@@ -470,7 +470,7 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::ConfigFileExists`] if a config file already exists
+    /// * [`RepositoryErrorKind::ConfigFileExists`] - If a config file already exists
     pub fn init_with_password(
         self,
         pass: &str,
@@ -513,8 +513,8 @@ impl<P, S> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::HotRepositoryFlagMissing`] if the config file has `is_hot` set to `true` but the repository is not hot
-    /// * [`RepositoryErrorKind::IsNotHotRepository`] if the config file has `is_hot` set to `false` but the repository is hot
+    /// * [`RepositoryErrorKind::HotRepositoryFlagMissing`] - If the config file has `is_hot` set to `true` but the repository is not hot
+    /// * [`RepositoryErrorKind::IsNotHotRepository`] - If the config file has `is_hot` set to `false` but the repository is hot
     fn open_raw(self, key: Key, config: ConfigFile) -> RusticResult<Repository<P, OpenStatus>> {
         match (config.is_hot == Some(true), self.be_hot.is_some()) {
             (true, false) => return Err(RepositoryErrorKind::HotRepositoryFlagMissing.into()),
@@ -1015,7 +1015,7 @@ impl<P, S: IndexedFull> Repository<P, S> {
     ///
     /// # Errors
     ///
-    /// * [`RepositoryErrorKind::IdNotFound`] if the id is not found in the index
+    /// * [`RepositoryErrorKind::IdNotFound`] - If the id is not found in the index
     pub fn get_index_entry(&self, tpe: BlobType, id: &Id) -> RusticResult<IndexEntry> {
         let ie = self
             .index()

@@ -93,7 +93,7 @@ pub trait ReadIndex {
     ///
     /// # Returns
     ///
-    /// The [`IndexEntry`] if it exists otherwise `None`
+    /// The [`IndexEntry`] - If it exists otherwise `None`
     fn get_id(&self, tpe: BlobType, id: &Id) -> Option<IndexEntry>;
 
     /// Get the total size of all blobs of the given type
@@ -208,7 +208,7 @@ impl<BE: DecryptReadBackend> ReadIndex for IndexBackend<BE> {
     ///
     /// # Returns
     ///
-    /// The [`IndexEntry`] if it exists otherwise `None`
+    /// The [`IndexEntry`] - If it exists otherwise `None`
     fn get_id(&self, tpe: BlobType, id: &Id) -> Option<IndexEntry> {
         self.index.get_id(tpe, id)
     }

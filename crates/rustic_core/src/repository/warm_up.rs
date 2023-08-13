@@ -65,7 +65,7 @@ pub(crate) fn warm_up<P: ProgressBars, S>(
 ///
 /// # Errors
 ///
-/// * [`RepositoryErrorKind::FromNomError`] if the command could not be parsed.
+/// * [`RepositoryErrorKind::FromNomError`] - If the command could not be parsed.
 fn warm_up_command<P: ProgressBars>(
     packs: impl ExactSizeIterator<Item = Id>,
     command: &str,
@@ -97,7 +97,7 @@ fn warm_up_command<P: ProgressBars>(
 ///
 /// # Errors
 ///
-/// * [`RepositoryErrorKind::FromThreadPoolbilderError`] if the thread pool could not be created.
+/// * [`RepositoryErrorKind::FromThreadPoolbilderError`] - If the thread pool could not be created.
 fn warm_up_access<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     packs: impl ExactSizeIterator<Item = Id>,

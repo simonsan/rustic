@@ -80,7 +80,7 @@ impl LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::DirectoryCreationFailed`] if the directory could not be created.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
     // TODO: We should use `impl Into<Path/PathBuf>` here. we even use it in the body!
     pub fn new(path: &str) -> RusticResult<Self> {
         let path = path.into();
@@ -124,10 +124,10 @@ impl LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FromAhoCorasick`] if the patterns could not be compiled.
-    /// * [`LocalErrorKind::FromNomError`] if the command could not be parsed.
-    /// * [`LocalErrorKind::CommandExecutionFailed`] if the command could not be executed.
-    /// * [`LocalErrorKind::CommandNotSuccessful`] if the command was not successful.
+    /// * [`LocalErrorKind::FromAhoCorasick`] - If the patterns could not be compiled.
+    /// * [`LocalErrorKind::FromNomError`] - If the command could not be parsed.
+    /// * [`LocalErrorKind::CommandExecutionFailed`] - If the command could not be executed.
+    /// * [`LocalErrorKind::CommandNotSuccessful`] - If the command was not successful.
     ///
     /// # Notes
     ///
@@ -235,9 +235,9 @@ impl ReadBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::QueryingMetadataFailed`] if the metadata of the file could not be queried.
-    /// * [`LocalErrorKind::FromTryIntError`] if the length of the file could not be converted to u32.
-    /// * [`LocalErrorKind::QueryingWalkDirMetadataFailed`] if the metadata of the file could not be queried.
+    /// * [`LocalErrorKind::QueryingMetadataFailed`] - If the metadata of the file could not be queried.
+    /// * [`LocalErrorKind::FromTryIntError`] - If the length of the file could not be converted to u32.
+    /// * [`LocalErrorKind::QueryingWalkDirMetadataFailed`] - If the metadata of the file could not be queried.
     ///
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         trace!("listing tpe: {tpe:?}");
@@ -286,7 +286,7 @@ impl ReadBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::ReadingContentsOfFileFailed`] if the file could not be read.
+    /// * [`LocalErrorKind::ReadingContentsOfFileFailed`] - If the file could not be read.
     fn read_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         trace!("reading tpe: {tpe:?}, id: {id}");
         Ok(fs::read(self.path(tpe, id))
@@ -306,10 +306,10 @@ impl ReadBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::OpeningFileFailed`] if the file could not be opened.
-    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] if the file could not be seeked to the given position.
-    /// * [`LocalErrorKind::FromTryIntError`] if the length of the file could not be converted to u32.
-    /// * [`LocalErrorKind::ReadingExactLengthOfFileFailed`] if the length of the file could not be read.
+    /// * [`LocalErrorKind::OpeningFileFailed`] - If the file could not be opened.
+    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] - If the file could not be seeked to the given position.
+    /// * [`LocalErrorKind::FromTryIntError`] - If the length of the file could not be converted to u32.
+    /// * [`LocalErrorKind::ReadingExactLengthOfFileFailed`] - If the length of the file could not be read.
     fn read_partial(
         &self,
         tpe: FileType,
@@ -339,7 +339,7 @@ impl WriteBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::DirectoryCreationFailed`] if the directory could not be created.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
     fn create(&self) -> RusticResult<()> {
         trace!("creating repo at {:?}", self.path);
 
@@ -365,11 +365,11 @@ impl WriteBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::OpeningFileFailed`] if the file could not be opened.
-    /// * [`LocalErrorKind::FromTryIntError`] if the length of the bytes could not be converted to u64.
-    /// * [`LocalErrorKind::SettingFileLengthFailed`] if the length of the file could not be set.
-    /// * [`LocalErrorKind::CouldNotWriteToBuffer`] if the bytes could not be written to the file.
-    /// * [`LocalErrorKind::SyncingOfOsMetadataFailed`] if the metadata of the file could not be synced.
+    /// * [`LocalErrorKind::OpeningFileFailed`] - If the file could not be opened.
+    /// * [`LocalErrorKind::FromTryIntError`] - If the length of the bytes could not be converted to u64.
+    /// * [`LocalErrorKind::SettingFileLengthFailed`] - If the length of the file could not be set.
+    /// * [`LocalErrorKind::CouldNotWriteToBuffer`] - If the bytes could not be written to the file.
+    /// * [`LocalErrorKind::SyncingOfOsMetadataFailed`] - If the metadata of the file could not be synced.
     fn write_bytes(
         &self,
         tpe: FileType,
@@ -412,7 +412,7 @@ impl WriteBackend for LocalBackend {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FileRemovalFailed`] if the file could not be removed.
+    /// * [`LocalErrorKind::FileRemovalFailed`] - If the file could not be removed.
     fn remove(&self, tpe: FileType, id: &Id, _cacheable: bool) -> RusticResult<()> {
         trace!("removing tpe: {:?}, id: {}", &tpe, &id);
         let filename = self.path(tpe, id);
@@ -446,7 +446,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::DirectoryCreationFailed`] if the directory could not be created.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
     // TODO: We should use `impl Into<Path/PathBuf>` here. we even use it in the body!
     pub fn new(path: &str, create: bool, expect_file: bool) -> RusticResult<Self> {
         let is_dir = path.ends_with('/');
@@ -497,7 +497,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::DirectoryRemovalFailed`] if the directory could not be removed.
+    /// * [`LocalErrorKind::DirectoryRemovalFailed`] - If the directory could not be removed.
     ///
     /// # Notes
     ///
@@ -514,7 +514,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FileRemovalFailed`] if the file could not be removed.
+    /// * [`LocalErrorKind::FileRemovalFailed`] - If the file could not be removed.
     ///
     /// # Notes
     ///
@@ -535,7 +535,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::DirectoryCreationFailed`] if the directory could not be created.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
     ///
     /// # Notes
     ///
@@ -555,7 +555,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::SettingTimeMetadataFailed`] if the times could not be set
+    /// * [`LocalErrorKind::SettingTimeMetadataFailed`] - If the times could not be set
     pub fn set_times(&self, item: impl AsRef<Path>, meta: &Metadata) -> RusticResult<()> {
         let filename = self.path(item);
         if let Some(mtime) = meta.mtime {
@@ -600,7 +600,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FromErrnoError`] if the user/group could not be set.
+    /// * [`LocalErrorKind::FromErrnoError`] - If the user/group could not be set.
     pub fn set_user_group(&self, item: impl AsRef<Path>, meta: &Metadata) -> RusticResult<()> {
         let filename = self.path(item);
 
@@ -649,7 +649,7 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FromErrnoError`] if the uid/gid could not be set.
+    /// * [`LocalErrorKind::FromErrnoError`] - If the uid/gid could not be set.
     pub fn set_uid_gid(&self, item: impl AsRef<Path>, meta: &Metadata) -> RusticResult<()> {
         let filename = self.path(item);
 
@@ -687,7 +687,7 @@ impl LocalDestination {
     ///
     /// # Errors        
     ///
-    /// * [`LocalErrorKind::SettingFilePermissionsFailed`] if the permissions could not be set.
+    /// * [`LocalErrorKind::SettingFilePermissionsFailed`] - If the permissions could not be set.
     pub fn set_permission(&self, item: impl AsRef<Path>, node: &Node) -> RusticResult<()> {
         if node.is_symlink() {
             return Ok(());
@@ -734,9 +734,9 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::ListingXattrsFailed`] if listing the extended attributes failed.
-    /// * [`LocalErrorKind::GettingXattrFailed`] if getting an extended attribute failed.
-    /// * [`LocalErrorKind::SettingXattrFailed`] if setting an extended attribute failed.
+    /// * [`LocalErrorKind::ListingXattrsFailed`] - If listing the extended attributes failed.
+    /// * [`LocalErrorKind::GettingXattrFailed`] - If getting an extended attribute failed.
+    /// * [`LocalErrorKind::SettingXattrFailed`] - If setting an extended attribute failed.
     pub fn set_extended_attributes(
         &self,
         item: impl AsRef<Path>,
@@ -802,10 +802,10 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::FileDoesNotHaveParent`] if the file does not have a parent.
-    /// * [`LocalErrorKind::DirectoryCreationFailed`] if the directory could not be created.
-    /// * [`LocalErrorKind::OpeningFileFailed`] if the file could not be opened.
-    /// * [`LocalErrorKind::SettingFileLengthFailed`] if the length of the file could not be set.
+    /// * [`LocalErrorKind::FileDoesNotHaveParent`] - If the file does not have a parent.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
+    /// * [`LocalErrorKind::OpeningFileFailed`] - If the file could not be opened.
+    /// * [`LocalErrorKind::SettingFileLengthFailed`] - If the length of the file could not be set.
     ///
     /// # Notes
     ///
@@ -845,9 +845,9 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::SymlinkingFailed`] if the symlink could not be created.
-    /// * [`LocalErrorKind::FromTryIntError`] if the device could not be converted to the correct type.
-    /// * [`LocalErrorKind::FromErrnoError`] if the device could not be created.
+    /// * [`LocalErrorKind::SymlinkingFailed`] - If the symlink could not be created.
+    /// * [`LocalErrorKind::FromTryIntError`] - If the device could not be converted to the correct type.
+    /// * [`LocalErrorKind::FromErrnoError`] - If the device could not be created.
     pub fn create_special(&self, item: impl AsRef<Path>, node: &Node) -> RusticResult<()> {
         let filename = self.path(item);
 
@@ -911,10 +911,10 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::OpeningFileFailed`] if the file could not be opened.
-    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] if the file could not be seeked to the given position.
-    /// * [`LocalErrorKind::FromTryIntError`] if the length of the file could not be converted to u32.
-    /// * [`LocalErrorKind::ReadingExactLengthOfFileFailed`] if the length of the file could not be read.
+    /// * [`LocalErrorKind::OpeningFileFailed`] - If the file could not be opened.
+    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] - If the file could not be seeked to the given position.
+    /// * [`LocalErrorKind::FromTryIntError`] - If the length of the file could not be converted to u32.
+    /// * [`LocalErrorKind::ReadingExactLengthOfFileFailed`] - If the length of the file could not be read.
     pub fn read_at(&self, item: impl AsRef<Path>, offset: u64, length: u64) -> RusticResult<Bytes> {
         let filename = self.path(item);
         let mut file = File::open(filename).map_err(LocalErrorKind::OpeningFileFailed)?;
@@ -962,9 +962,9 @@ impl LocalDestination {
     ///
     /// # Errors
     ///
-    /// * [`LocalErrorKind::OpeningFileFailed`] if the file could not be opened.
-    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] if the file could not be seeked to the given position.
-    /// * [`LocalErrorKind::CouldNotWriteToBuffer`] if the bytes could not be written to the file.
+    /// * [`LocalErrorKind::OpeningFileFailed`] - If the file could not be opened.
+    /// * [`LocalErrorKind::CouldNotSeekToPositionInFile`] - If the file could not be seeked to the given position.
+    /// * [`LocalErrorKind::CouldNotWriteToBuffer`] - If the bytes could not be written to the file.
     ///
     /// # Notes
     ///

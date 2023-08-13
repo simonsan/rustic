@@ -6,8 +6,8 @@ use crate::{
         WriteBackend,
     },
     error::BackendErrorKind,
+    error::RusticResult,
     id::Id,
-    RusticResult,
 };
 
 /// Backend helper that chooses the correct backend based on the url.
@@ -30,7 +30,10 @@ impl ChooseBackend {
     ///
     /// # Errors
     ///
-    /// If the url is not supported.
+    /// * [`BackendErrorKind::BackendNotSupported`] - If the backend is not supported.
+    /// * [`LocalErrorKind::DirectoryCreationFailed`] - If the directory could not be created.
+    /// * [`RestErrorKind::UrlParsingFailed`] - If the url could not be parsed.
+    /// * [`RestErrorKind::BuildingClientFailed`] - If the client could not be built.
     pub fn from_url(url: &str) -> RusticResult<Self> {
         Ok(match url.split_once(':') {
             #[cfg(windows)]
@@ -62,10 +65,6 @@ impl ReadBackend for ChooseBackend {
     ///
     /// * `option` - The option to set.
     /// * `value` - The value to set the option to.
-    ///
-    /// # Errors
-    ///
-    /// If the option is not supported.
     fn set_option(&mut self, option: &str, value: &str) -> RusticResult<()> {
         match self {
             Self::Local(local) => local.set_option(option, value),
@@ -104,7 +103,9 @@ impl ReadBackend for ChooseBackend {
     ///
     /// # Errors
     ///
-    /// If the file does not exist.
+    /// * [`LocalErrorKind::ReadingContentsOfFileFailed`] - If the file could not be read.
+    /// * [`reqwest::Error`] - If the request failed.
+    /// * [`RestErrorKind::BackoffError`] - If the backoff failed.
     ///
     /// # Returns
     ///

@@ -122,7 +122,7 @@ impl ConfigFile {
     ///
     /// # Errors
     ///
-    /// * [`ConfigFileErrorKind::ParsingFailedForPolynomial`] if the polynomial could not be parsed
+    /// * [`ConfigFileErrorKind::ParsingFailedForPolynomial`] - If the polynomial could not be parsed
     pub fn poly(&self) -> RusticResult<u64> {
         Ok(u64::from_str_radix(&self.chunker_polynomial, 16)
             .map_err(ConfigFileErrorKind::ParsingFailedForPolynomial)?)
@@ -132,7 +132,7 @@ impl ConfigFile {
     ///
     /// # Errors
     ///
-    /// * [`ConfigFileErrorKind::ConfigVersionNotSupported`] if the version is not supported
+    /// * [`ConfigFileErrorKind::ConfigVersionNotSupported`] - If the version is not supported
     pub fn zstd(&self) -> RusticResult<Option<i32>> {
         match (self.version, self.compression) {
             (1, _) | (2, Some(0)) => Ok(None),

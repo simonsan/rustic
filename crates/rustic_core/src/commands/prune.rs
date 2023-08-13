@@ -148,8 +148,8 @@ impl PruneOptions {
     ///
     /// # Errors
     ///
-    /// * [`CommandErrorKind::RepackUncompressedRepoV1`] if `repack_uncompressed` is set and the repository is a version 1 repository
-    /// * [`CommandErrorKind::FromOutOfRangeError`] if `keep_pack` or `keep_delete` is out of range
+    /// * [`CommandErrorKind::RepackUncompressedRepoV1`] - If `repack_uncompressed` is set and the repository is a version 1 repository
+    /// * [`CommandErrorKind::FromOutOfRangeError`] - If `keep_pack` or `keep_delete` is out of range
     pub fn get_plan<P: ProgressBars, S: Open>(
         &self,
         repo: &Repository<P, S>,

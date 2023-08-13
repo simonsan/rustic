@@ -131,8 +131,8 @@ impl RestoreOptions {
     ///
     /// # Errors
     ///
-    /// * [`CommandErrorKind::ErrorCreating`] if a directory could not be created.
-    /// * [`CommandErrorKind::ErrorCollecting`] if the restore information could not be collected.
+    /// * [`CommandErrorKind::ErrorCreating`] - If a directory could not be created.
+    /// * [`CommandErrorKind::ErrorCollecting`] - If the restore information could not be collected.
     pub(crate) fn collect_and_prepare<P: ProgressBars, S: IndexedFull>(
         self,
         repo: &Repository<P, S>,
@@ -393,8 +393,8 @@ impl RestoreOptions {
 ///
 /// # Errors
 ///
-/// * [`CommandErrorKind::ErrorSettingLength`] if the length of a file could not be set.
-/// * [`CommandErrorKind::FromRayonError`] if the restore failed.
+/// * [`CommandErrorKind::ErrorSettingLength`] - If the length of a file could not be set.
+/// * [`CommandErrorKind::FromRayonError`] - If the restore failed.
 fn restore_contents<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
     dest: &LocalDestination,

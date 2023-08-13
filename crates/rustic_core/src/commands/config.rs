@@ -138,13 +138,13 @@ impl ConfigOptions {
     ///
     /// # Errors
     ///
-    /// * [`CommandErrorKind::VersionNotSupported`] if the version is not supported
-    /// * [`CommandErrorKind::CannotDowngrade`] if the version is lower than the current version
-    /// * [`CommandErrorKind::NoCompressionV1Repo`] if compression is set for a v1 repo
-    /// * [`CommandErrorKind::CompressionLevelNotSupported`] if the compression level is not supported
-    /// * [`CommandErrorKind::SizeTooLarge`] if the size is too large
-    /// * [`CommandErrorKind::MinPackSizeTolerateWrong`] if the min packsize tolerate percent is wrong
-    /// * [`CommandErrorKind::MaxPackSizeTolerateWrong`] if the max packsize tolerate percent is wrong
+    /// * [`CommandErrorKind::VersionNotSupported`] - If the version is not supported
+    /// * [`CommandErrorKind::CannotDowngrade`] - If the version is lower than the current version
+    /// * [`CommandErrorKind::NoCompressionV1Repo`] - If compression is set for a v1 repo
+    /// * [`CommandErrorKind::CompressionLevelNotSupported`] - If the compression level is not supported
+    /// * [`CommandErrorKind::SizeTooLarge`] - If the size is too large
+    /// * [`CommandErrorKind::MinPackSizeTolerateWrong`] - If the min packsize tolerate percent is wrong
+    /// * [`CommandErrorKind::MaxPackSizeTolerateWrong`] - If the max packsize tolerate percent is wrong
     pub fn apply(&self, config: &mut ConfigFile) -> RusticResult<()> {
         if let Some(version) = self.set_version {
             let range = 1..=2;

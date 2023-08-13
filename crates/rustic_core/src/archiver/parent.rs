@@ -7,7 +7,7 @@ use log::warn;
 
 use crate::{
     archiver::tree::TreeType, backend::node::Node, blob::tree::Tree, error::ArchiverErrorKind,
-    id::Id, index::IndexedBackend, RusticResult,
+    error::RusticResult, id::Id, index::IndexedBackend,
 };
 
 /// The `ItemWithParent` is a `TreeType` wrapping the result of a parent search and a type `O`.
@@ -209,7 +209,7 @@ impl Parent {
     ///
     /// # Errors
     ///
-    /// * [`ArchiverErrorKind::TreeStackEmpty`] if the tree stack is empty.
+    /// * [`ArchiverErrorKind::TreeStackEmpty`] - If the tree stack is empty.
     fn finish_dir(&mut self) -> RusticResult<()> {
         let (tree, node_idx) = self
             .stack
@@ -241,7 +241,7 @@ impl Parent {
     ///
     /// # Errors
     ///
-    /// * [`ArchiverErrorKind::TreeStackEmpty`] if the tree stack is empty.
+    /// * [`ArchiverErrorKind::TreeStackEmpty`] - If the tree stack is empty.
     pub(crate) fn process<BE: IndexedBackend, O>(
         &mut self,
         be: &BE,

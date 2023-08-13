@@ -58,8 +58,8 @@ impl KeyFile {
     ///
     /// # Errors
     ///
-    /// * [`KeyFileErrorKind::InvalidSCryptParameters`] if the parameters of the key derivation function are invalid
-    /// * [`KeyFileErrorKind::OutputLengthInvalid`] if the output length of the key derivation function is invalid
+    /// * [`KeyFileErrorKind::InvalidSCryptParameters`] - If the parameters of the key derivation function are invalid
+    /// * [`KeyFileErrorKind::OutputLengthInvalid`] - If the output length of the key derivation function is invalid
     ///
     /// # Returns
     ///
@@ -84,7 +84,7 @@ impl KeyFile {
     ///
     /// # Errors
     ///
-    /// * [`KeyFileErrorKind::DeserializingFromSliceFailed`] if the data could not be deserialized
+    /// * [`KeyFileErrorKind::DeserializingFromSliceFailed`] - If the data could not be deserialized
     ///
     /// # Returns
     ///
@@ -105,7 +105,7 @@ impl KeyFile {
     ///
     /// # Errors
     ///
-    /// * [`KeyFileErrorKind::InvalidSCryptParameters`] if the parameters of the key derivation function are invalid
+    /// * [`KeyFileErrorKind::InvalidSCryptParameters`] - If the parameters of the key derivation function are invalid
     ///
     /// # Returns
     ///
@@ -126,8 +126,8 @@ impl KeyFile {
     ///
     /// # Errors
     ///
-    /// * [`KeyFileErrorKind::OutputLengthInvalid`] if the output length of the key derivation function is invalid
-    /// * [`KeyFileErrorKind::CouldNotSerializeAsJsonByteVector`] if the [`KeyFile`] could not be serialized
+    /// * [`KeyFileErrorKind::OutputLengthInvalid`] - If the output length of the key derivation function is invalid
+    /// * [`KeyFileErrorKind::CouldNotSerializeAsJsonByteVector`] - If the [`KeyFile`] could not be serialized
     ///
     /// # Returns
     ///
@@ -176,7 +176,7 @@ impl KeyFile {
     ///
     /// # Errors
     ///
-    /// * [`KeyFileErrorKind::ReadingFromBackendFailed`] if the [`KeyFile`] could not be read from the backend
+    /// * [`KeyFileErrorKind::ReadingFromBackendFailed`] - If the [`KeyFile`] could not be read from the backend
     ///
     /// # Returns
     ///
@@ -198,7 +198,7 @@ impl KeyFile {
 ///
 /// # Errors
 ///
-/// * [`KeyFileErrorKind::ConversionFromU32ToU8Failed`] if the conversion from `u32` to `u8` failed
+/// * [`KeyFileErrorKind::ConversionFromU32ToU8Failed`] - If the conversion from `u32` to `u8` failed
 ///
 /// # Returns
 ///
@@ -273,7 +273,7 @@ impl MasterKey {
 ///
 /// # Errors
 ///
-/// * [`KeyFileErrorKind::ReadingFromBackendFailed`] if the [`KeyFile`] could not be read from the backend
+/// * [`KeyFileErrorKind::ReadingFromBackendFailed`] - If the [`KeyFile`] could not be read from the backend
 pub(crate) fn key_from_backend<B: ReadBackend>(
     be: &B,
     id: &Id,
@@ -294,7 +294,7 @@ pub(crate) fn key_from_backend<B: ReadBackend>(
 ///
 /// # Errors
 ///
-/// * [`KeyFileErrorKind::NoSuitableKeyFound`] if no suitable key was found
+/// * [`KeyFileErrorKind::NoSuitableKeyFound`] - If no suitable key was found
 ///
 /// # Returns
 ///

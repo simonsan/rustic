@@ -73,7 +73,7 @@ pub(crate) fn merge_snapshots<P: ProgressBars, S: IndexedTree>(
 ///
 /// # Errors
 ///
-/// * [`CommandErrorKind::ConversionToU64Failed`] if the size of the tree is too large
+/// * [`CommandErrorKind::ConversionToU64Failed`] - If the size of the tree is too large
 ///
 /// # Returns
 ///
