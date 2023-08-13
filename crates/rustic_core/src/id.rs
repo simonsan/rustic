@@ -137,7 +137,7 @@ impl fmt::Debug for Id {
 }
 
 #[derive(Copy, Clone, Debug)]
-/// An [`Id`] in hexadecimal format
+/// An `Id` in hexadecimal format
 pub struct HexId([u8; constants::HEX_LEN]);
 
 impl HexId {
