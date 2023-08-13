@@ -23,13 +23,12 @@ use crate::{
     Progress, RusticResult,
 };
 
-/**
-A backend that can decrypt data.
-This is a trait that is implemented by all backends that can decrypt data.
-It is implemented for all backends that implement `DecryptWriteBackend` and `DecryptReadBackend`.
-This trait is used by the `Repository` to decrypt data.
-*/
+/// A backend that can decrypt data.
+/// This is a trait that is implemented by all backends that can decrypt data.
+/// It is implemented for all backends that implement `DecryptWriteBackend` and `DecryptReadBackend`.
+/// This trait is used by the `Repository` to decrypt data.
 pub trait DecryptFullBackend: DecryptWriteBackend + DecryptReadBackend {}
+
 impl<T: DecryptWriteBackend + DecryptReadBackend> DecryptFullBackend for T {}
 
 pub trait DecryptReadBackend: ReadBackend {
@@ -65,7 +64,8 @@ pub trait DecryptReadBackend: ReadBackend {
     ///
     /// # Errors
     ///
-    /// If the data could not be decrypted or the length of the uncompressed data does not match.
+    /// * [`CryptBackendErrorKind::DecodingZstdCompressedDataFailed`] - If the data could not be decoded.
+    /// * [`CryptBackendErrorKind::LengthOfUncompressedDataDoesNotMatch`] - If the length of the uncompressed data does not match the given length.
     fn read_encrypted_from_partial(
         &self,
         data: &[u8],
@@ -202,7 +202,7 @@ pub trait DecryptWriteBackend: WriteBackend {
     ///
     /// # Errors
     ///
-    /// If the file could not be saved.
+    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the file could not be serialized to json.
     ///
     /// # Returns
     ///
@@ -272,6 +272,11 @@ pub trait DecryptWriteBackend: WriteBackend {
 }
 
 /// A backend that can decrypt data.
+///
+/// # Type Parameters
+///
+/// * `R` - The type of the backend to decrypt.
+/// * `C` - The type of the key to decrypt the backend with.
 #[derive(Clone, Debug)]
 pub struct DecryptBackend<R, C> {
     /// The backend to decrypt.
@@ -284,6 +289,11 @@ pub struct DecryptBackend<R, C> {
 
 impl<R: ReadBackend, C: CryptoKey> DecryptBackend<R, C> {
     /// Creates a new decrypt backend.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `R` - The type of the backend to decrypt.
+    /// * `C` - The type of the key to decrypt the backend with.
     ///
     /// # Arguments
     ///
@@ -320,11 +330,11 @@ impl<R: WriteBackend, C: CryptoKey> DecryptWriteBackend for DecryptBackend<R, C>
     ///
     /// # Errors
     ///
-    /// If the data could not be written.
+    /// * [`CryptBackendErrorKind::CopyEncodingDataFailed`] - If the data could not be encoded.
     ///
     /// # Returns
     ///
-    /// The id of the data. (TODO: Check if this is correct)
+    /// The id of the data.
     fn hash_write_full(&self, tpe: FileType, data: &[u8]) -> RusticResult<Id> {
         let data = match self.zstd {
             Some(level) => {
@@ -351,10 +361,30 @@ impl<R: WriteBackend, C: CryptoKey> DecryptWriteBackend for DecryptBackend<R, C>
 }
 
 impl<R: ReadBackend, C: CryptoKey> DecryptReadBackend for DecryptBackend<R, C> {
+    /// Decrypts the given data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to decrypt.
+    ///
+    /// # Returns
+    ///
+    /// A vector containing the decrypted data.
     fn decrypt(&self, data: &[u8]) -> RusticResult<Vec<u8>> {
         self.key.decrypt_data(data)
     }
 
+    /// Reads encrypted data from the backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `tpe` - The type of the file.
+    /// * `id` - The id of the file.
+    ///
+    /// # Errors
+    ///
+    /// * [`CryptBackendErrorKind::DecryptionNotSupportedForBackend`] - If the backend does not support decryption.
+    /// * [`CryptBackendErrorKind::DecodingZstdCompressedDataFailed`] - If the data could not be decoded.
     fn read_encrypted_full(&self, tpe: FileType, id: &Id) -> RusticResult<Bytes> {
         let decrypted = self.decrypt(&self.read_full(tpe, id)?)?;
         Ok(match decrypted.first() {

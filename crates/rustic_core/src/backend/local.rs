@@ -478,9 +478,8 @@ impl LocalDestination {
     ///
     /// # Notes
     ///
-    /// If the destination is a file, this will return the base path.
-    ///
-    /// If the destination is a directory, this will return the base path joined with the item.
+    /// * If the destination is a file, this will return the base path.
+    /// * If the destination is a directory, this will return the base path joined with the item.
     pub(crate) fn path(&self, item: impl AsRef<Path>) -> PathBuf {
         if self.is_file {
             self.path.clone()
@@ -520,9 +519,8 @@ impl LocalDestination {
     ///
     /// This will remove the file.
     ///
-    /// If the file is a symlink, the symlink will be removed, not the file it points to.
-    ///
-    /// If the file is a directory or device, this will fail.
+    /// * If the file is a symlink, the symlink will be removed, not the file it points to.
+    /// * If the file is a directory or device, this will fail.
     pub fn remove_file(&self, filename: impl AsRef<Path>) -> RusticResult<()> {
         Ok(fs::remove_file(filename).map_err(LocalErrorKind::FileRemovalFailed)?)
     }
