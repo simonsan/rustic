@@ -371,7 +371,7 @@ impl PruneIndex {
 /// Task to be executed by a `PrunePlan` on Packs
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PackToDo {
-    // TODO
+    // TODO: Add documentation
     Undecided,
     /// The pack should be kept
     Keep,
@@ -379,9 +379,9 @@ enum PackToDo {
     Repack,
     /// The pack should be marked for deletion
     MarkDelete,
-    // TODO
+    // TODO: Add documentation
     KeepMarked,
-    // TODO
+    // TODO: Add documentation
     KeepMarkedAndCorrect,
     /// The pack should be recovered
     Recover,
