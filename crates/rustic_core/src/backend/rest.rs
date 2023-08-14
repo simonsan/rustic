@@ -169,7 +169,7 @@ impl RestBackend {
             "config".to_string()
         } else {
             let hex_id = id.to_hex();
-            let mut path = tpe.to_string();
+            let mut path = tpe.dirname().to_string();
             path.push('/');
             path.push_str(&hex_id);
             path
@@ -256,7 +256,7 @@ impl ReadBackend for RestBackend {
                 .join("config")
                 .map_err(RestErrorKind::JoiningUrlFailed)?
         } else {
-            let mut path = tpe.to_string();
+            let mut path = tpe.dirname().to_string();
             path.push('/');
             self.url
                 .join(&path)

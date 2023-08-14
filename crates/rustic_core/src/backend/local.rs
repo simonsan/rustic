@@ -110,7 +110,7 @@ impl LocalBackend {
         match tpe {
             FileType::Config => self.path.join("config"),
             FileType::Pack => self.path.join("data").join(&hex_id[0..2]).join(hex_id),
-            _ => self.path.join(tpe.to_string()).join(hex_id),
+            _ => self.path.join(tpe.dirname()).join(hex_id),
         }
     }
 
@@ -140,7 +140,7 @@ impl LocalBackend {
         let id = id.to_hex();
         let patterns = &["%file", "%type", "%id"];
         let ac = AhoCorasick::new(patterns).map_err(LocalErrorKind::FromAhoCorasick)?;
-        let replace_with = &[filename.to_str().unwrap(), tpe.into(), id.as_str()];
+        let replace_with = &[filename.to_str().unwrap(), tpe.dirname(), id.as_str()];
         let actual_command = ac.replace_all(command, replace_with);
         debug!("calling {actual_command}...");
         let commands = parse_command::<()>(&actual_command)
@@ -219,7 +219,7 @@ impl ReadBackend for LocalBackend {
             });
         }
 
-        let walker = WalkDir::new(self.path.join(tpe.to_string()))
+        let walker = WalkDir::new(self.path.join(tpe.dirname()))
             .into_iter()
             .filter_map(walkdir::Result::ok)
             .filter(|e| e.file_type().is_file())
@@ -242,7 +242,7 @@ impl ReadBackend for LocalBackend {
     ///
     fn list_with_size(&self, tpe: FileType) -> RusticResult<Vec<(Id, u32)>> {
         trace!("listing tpe: {tpe:?}");
-        let path = self.path.join(tpe.to_string());
+        let path = self.path.join(tpe.dirname());
 
         if tpe == FileType::Config {
             return Ok(if path.exists() {
@@ -345,7 +345,7 @@ impl WriteBackend for LocalBackend {
         trace!("creating repo at {:?}", self.path);
 
         for tpe in ALL_FILE_TYPES {
-            fs::create_dir_all(self.path.join(tpe.to_string()))
+            fs::create_dir_all(self.path.join(tpe.dirname()))
                 .map_err(LocalErrorKind::DirectoryCreationFailed)?;
         }
         for i in 0u8..=255 {

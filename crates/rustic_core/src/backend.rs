@@ -13,7 +13,6 @@ pub(crate) mod stdin;
 use std::{io::Read, path::PathBuf};
 
 use bytes::Bytes;
-use displaydoc::Display;
 use log::trace;
 use serde::{Deserialize, Serialize};
 
@@ -28,7 +27,7 @@ pub const ALL_FILE_TYPES: [FileType; 4] = [
 ];
 
 /// Type for describing the kind of a file that can occur.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FileType {
     /// Config file
     #[serde(rename = "config")]
@@ -47,9 +46,9 @@ pub enum FileType {
     Pack,
 }
 
-impl From<FileType> for &'static str {
-    fn from(value: FileType) -> &'static str {
-        match value {
+impl FileType {
+    const fn dirname(self) -> &'static str {
+        match self {
             FileType::Config => "config",
             FileType::Snapshot => "snapshots",
             FileType::Index => "index",
@@ -57,9 +56,7 @@ impl From<FileType> for &'static str {
             FileType::Pack => "data",
         }
     }
-}
 
-impl FileType {
     /// Returns if the file type is cacheable.
     const fn is_cacheable(self) -> bool {
         match self {

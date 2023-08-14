@@ -13,8 +13,8 @@ use walkdir::WalkDir;
 use crate::{
     backend::{FileType, ReadBackend, WriteBackend},
     error::CacheBackendErrorKind,
-    id::Id,
     error::RusticResult,
+    id::Id,
 };
 
 /// Backend that caches data.
@@ -267,7 +267,7 @@ impl Cache {
     #[must_use]
     pub fn dir(&self, tpe: FileType, id: &Id) -> PathBuf {
         let hex_id = id.to_hex();
-        self.path.join(tpe.to_string()).join(&hex_id[0..2])
+        self.path.join(tpe.dirname()).join(&hex_id[0..2])
     }
 
     /// Returns the path to the given file.
@@ -280,7 +280,7 @@ impl Cache {
     pub fn path(&self, tpe: FileType, id: &Id) -> PathBuf {
         let hex_id = id.to_hex();
         self.path
-            .join(tpe.to_string())
+            .join(tpe.dirname())
             .join(&hex_id[0..2])
             .join(hex_id)
     }
@@ -295,7 +295,7 @@ impl Cache {
     ///
     /// * [`CacheBackendErrorKind::FromIoError`] - If the cache directory could not be read.
     pub fn list_with_size(&self, tpe: FileType) -> RusticResult<HashMap<Id, u32>> {
-        let path = self.path.join(tpe.to_string());
+        let path = self.path.join(tpe.dirname());
 
         let walker = WalkDir::new(path)
             .into_iter()

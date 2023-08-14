@@ -68,7 +68,7 @@ impl CheckOptions {
                     // TODO: Only list the files once...
                     _ = be.list_with_size(file_type)?;
 
-                    let p = pb.progress_bytes(format!("checking {file_type} in cache..."));
+                    let p = pb.progress_bytes(format!("checking {file_type:?} in cache..."));
                     // TODO: Make concurrency (20) customizable
                     check_cache_files(20, cache, raw_be, file_type, &p)?;
                 }
@@ -150,7 +150,7 @@ fn check_hot_files(
     file_type: FileType,
     pb: &impl ProgressBars,
 ) -> RusticResult<()> {
-    let p = pb.progress_spinner(format!("checking {file_type} in hot repo..."));
+    let p = pb.progress_spinner(format!("checking {file_type:?} in hot repo..."));
     let mut files = be
         .list_with_size(file_type)?
         .into_iter()
