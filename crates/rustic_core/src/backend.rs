@@ -49,11 +49,11 @@ pub enum FileType {
 impl FileType {
     const fn dirname(self) -> &'static str {
         match self {
-            FileType::Config => "config",
-            FileType::Snapshot => "snapshots",
-            FileType::Index => "index",
-            FileType::Key => "keys",
-            FileType::Pack => "data",
+            Self::Config => "config",
+            Self::Snapshot => "snapshots",
+            Self::Index => "index",
+            Self::Key => "keys",
+            Self::Pack => "data",
         }
     }
 
