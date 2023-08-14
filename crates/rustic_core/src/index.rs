@@ -318,7 +318,7 @@ impl<BE: DecryptReadBackend> IndexBackend<BE> {
     ///
     /// If the index could not be read
     pub fn only_full_trees(be: &BE, p: &impl Progress) -> RusticResult<Self> {
-        Self::new_from_collector(be, p, IndexCollector::new(IndexType::FullTrees))
+        Self::new_from_collector(be, p, IndexCollector::new(IndexType::DataIds))
     }
 
     /// Convert the Arc<Index> to an Index

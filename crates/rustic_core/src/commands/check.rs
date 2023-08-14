@@ -262,7 +262,7 @@ fn check_packs(
     let mut index_collector = IndexCollector::new(if read_data {
         IndexType::Full
     } else {
-        IndexType::FullTrees
+        IndexType::DataIds
     });
 
     let mut process_pack = |p: IndexPack, check_time: bool| {

@@ -28,8 +28,8 @@ pub(crate) struct SortedEntry {
 pub enum IndexType {
     /// Index everything.
     Full,
-    // TODO: What is the difference between `FullTrees` and `Full`?
-    FullTrees,
+    /// Index only Ids for data blobs (+ full information for tree blobs)
+    DataIds,
     /// Index only trees.
     OnlyTrees,
 }
@@ -83,7 +83,7 @@ impl IndexCollector {
         collector.0[BlobType::Tree].entries = EntriesVariants::FullEntries(Vec::new());
         collector.0[BlobType::Data].entries = match tpe {
             IndexType::OnlyTrees => EntriesVariants::None,
-            IndexType::FullTrees => EntriesVariants::Ids(Vec::new()),
+            IndexType::DataIds => EntriesVariants::Ids(Vec::new()),
             IndexType::Full => EntriesVariants::FullEntries(Vec::new()),
         };
 
@@ -335,7 +335,7 @@ mod tests {
 
     #[test]
     fn all_index_types() {
-        for it in [IndexType::OnlyTrees, IndexType::FullTrees, IndexType::Full] {
+        for it in [IndexType::OnlyTrees, IndexType::DataIds, IndexType::Full] {
             let index = index(it);
 
             let id = parse("0000000000000000000000000000000000000000000000000000000000000000");
@@ -386,7 +386,7 @@ mod tests {
 
     #[test]
     fn full_trees() {
-        let index = index(IndexType::FullTrees);
+        let index = index(IndexType::DataIds);
 
         let id = parse("fac5e908151e565267570108127b96e6bae22bcdda1d3d867f63ed1555fc8aef");
         assert!(index.has(BlobType::Data, &id));

@@ -41,11 +41,11 @@ pub struct Parent {
 /// * `T` - The type of the matched parent.
 #[derive(Clone, Debug)]
 pub(crate) enum ParentResult<T> {
-    /// The parent was found.
+    /// The parent was found and matches.
     Matched(T),
     /// The parent was not found.
     NotFound,
-    /// The parent was found but not matched.
+    /// The parent was found but doesn't match.
     NotMatched,
 }
 

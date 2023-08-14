@@ -969,16 +969,17 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     }
 }
 
-// TODO: add documenation!
+/// A repository which is indexed such that all tree blobs are contained in the index.
 pub trait IndexedTree: Open {
     type I: IndexedBackend;
     fn index(&self) -> &Self::I;
 }
 
-// TODO: Repository is fully indexed
+/// A repository which is indexed such that all tree blobs are contained in the index
+/// and additionally the `Id`s of data blobs are also contained in the index.
 pub trait IndexedIds: IndexedTree {}
 
-// TODO: Repository is fully indexed
+/// A repository which is indexed such that all blob information is fully contained in the index.
 pub trait IndexedFull: IndexedIds {}
 
 impl<P, S: IndexedTree> IndexedTree for Repository<P, S> {
