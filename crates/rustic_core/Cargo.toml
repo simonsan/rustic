@@ -123,7 +123,6 @@ sha2 = "0.10"
 xattr = "1"
 
 [dev-dependencies]
-criterion = { workspace = true }
 expect-test = "1.4.1"
 pretty_assertions = { workspace = true }
 public-api = "0.31.3"
@@ -144,7 +143,7 @@ codegen-units = 4
 
 [profile.release]
 opt-level = 3
-debug = false # true for profiling
+debug = false            # true for profiling
 rpath = false
 lto = "fat"
 debug-assertions = false
@@ -161,7 +160,7 @@ codegen-units = 4
 
 [profile.bench]
 opt-level = 3
-debug = true # true for profiling
+debug = true             # true for profiling
 rpath = false
 lto = true
 debug-assertions = false

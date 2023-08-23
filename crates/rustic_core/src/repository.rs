@@ -426,7 +426,7 @@ impl<P, S: Open> Open for Repository<P, S> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OpenStatus {
     key: Key,
     cache: Option<Cache>,
@@ -612,7 +612,7 @@ impl<P, S: IndexedTree> IndexedTree for Repository<P, S> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IndexedStatus<T, S: Open> {
     open: S,
     index: IndexBackend<S::DBE>,

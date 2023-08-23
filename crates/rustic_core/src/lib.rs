@@ -97,7 +97,7 @@ pub(crate) mod id;
 pub(crate) mod index;
 pub(crate) mod progress;
 pub(crate) mod repofile;
-pub(crate) mod repository;
+pub mod repository;
 
 pub(crate) use crate::crypto::aespoly1305::Key;
 // rustic_core Public API
