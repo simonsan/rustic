@@ -123,6 +123,7 @@ sha2 = "0.10"
 xattr = "1"
 
 [dev-dependencies]
+criterion = { workspace = true }
 expect-test = "1.4.1"
 pretty_assertions = { workspace = true }
 public-api = "0.31.3"

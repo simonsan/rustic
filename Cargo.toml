@@ -109,6 +109,7 @@ merge = { workspace = true }
 
 bytesize = { workspace = true }
 comfy-table = { workspace = true }
+criterion = { workspace = true }
 dialoguer = "0.10.4"
 directories = { workspace = true }
 dunce = { workspace = true }
@@ -238,6 +239,7 @@ tempfile = "3.8"
 pretty_assertions = "1.4"
 toml = "0.7"
 dircmp = "0.2"
+criterion = "0.5.1"
 
 # cargo-binstall support
 # https://github.com/cargo-bins/cargo-binstall/blob/HEAD/SUPPORT.md
